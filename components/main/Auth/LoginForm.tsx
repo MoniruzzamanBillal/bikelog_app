@@ -134,7 +134,6 @@ export function LoginForm() {
           loading={loginMutation.isPending}
           disabled={loginMutation.isPending}
           style={styles.button}
-          labelStyle={{ color: COLORS.white }}
         >
           {loginMutation.isPending ? "Logging in..." : "Log In"}
         </Button>

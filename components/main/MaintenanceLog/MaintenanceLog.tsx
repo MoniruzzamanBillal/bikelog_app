@@ -48,7 +48,6 @@ export function MaintenanceLog() {
         <Button
           mode="contained"
           onPress={() => setModalOpen(true)}
-          labelStyle={{ color: COLORS.white }}
         >
           Add Log
         </Button>

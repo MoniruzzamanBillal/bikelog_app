@@ -131,7 +131,6 @@ export function RegisterForm() {
           loading={registerMutation.isPending}
           disabled={registerMutation.isPending}
           style={styles.button}
-          labelStyle={{ color: COLORS.white }}
         >
           {registerMutation.isPending ? "Registering..." : "Register"}
         </Button>

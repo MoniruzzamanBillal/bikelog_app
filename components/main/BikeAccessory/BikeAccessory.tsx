@@ -78,7 +78,6 @@ export function BikeAccessory() {
         <Button
           mode="contained"
           onPress={() => setModalOpen(true)}
-          labelStyle={{ color: COLORS.white }}
         >
           Add
         </Button>

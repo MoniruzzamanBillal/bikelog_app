@@ -252,7 +252,6 @@ export function FuelLogFormModal({
             loading={isPending}
             disabled={isPending}
             style={styles.button}
-            labelStyle={{ color: COLORS.white }}
           >
             {initialFuelLog ? "Update" : "Add"}
           </Button>

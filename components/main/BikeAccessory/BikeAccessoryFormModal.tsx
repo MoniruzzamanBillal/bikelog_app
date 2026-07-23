@@ -142,7 +142,6 @@ export function BikeAccessoryFormModal({
             loading={isPending}
             disabled={isPending}
             style={styles.button}
-            labelStyle={{ color: COLORS.white }}
           >
             {initialAccessory ? "Update" : "Add"}
           </Button>

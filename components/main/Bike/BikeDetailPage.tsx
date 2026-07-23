@@ -75,7 +75,6 @@ export function BikeDetailPage() {
         <Button
           mode="contained"
           onPress={() => setEditOpen(true)}
-          labelStyle={{ color: COLORS.white }}
         >
           Edit
         </Button>

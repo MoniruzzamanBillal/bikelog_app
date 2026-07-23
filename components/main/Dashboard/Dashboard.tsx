@@ -33,7 +33,6 @@ export function Dashboard() {
         <Button
           mode="contained"
           onPress={() => setModalOpen(true)}
-          labelStyle={{ color: COLORS.white }}
         >
           Add Bike
         </Button>
