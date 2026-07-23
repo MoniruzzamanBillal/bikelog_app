@@ -1,12 +1,12 @@
+import { BikeFormModal } from "@/components/main/Bike/BikeFormModal";
+import { EmptyState, SectionLoading } from "@/components/main/shared";
+import { useFetchData } from "@/hooks/useApi";
+import { TBike } from "@/types/bike.types";
+import { COLORS } from "@/utils/colors";
 import { useRef, useState } from "react";
 import { RefreshControl, ScrollView, StyleSheet, View } from "react-native";
-import { Button, Text } from "react-native-paper";
 import { SwipeableMethods } from "react-native-gesture-handler/ReanimatedSwipeable";
-import { EmptyState, SectionLoading } from "@/components/main/shared";
-import { BikeFormModal } from "@/components/main/Bike/BikeFormModal";
-import { useFetchData } from "@/hooks/useApi";
-import { COLORS } from "@/utils/colors";
-import { TBike } from "@/types/bike.types";
+import { Button, Text } from "react-native-paper";
 import { BikeCard } from "./BikeCard";
 
 export function Dashboard() {
@@ -30,10 +30,7 @@ export function Dashboard() {
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>My Bikes</Text>
-        <Button
-          mode="contained"
-          onPress={() => setModalOpen(true)}
-        >
+        <Button mode="contained" onPress={() => setModalOpen(true)}>
           Add Bike
         </Button>
       </View>

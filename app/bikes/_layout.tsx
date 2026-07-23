@@ -1,5 +1,5 @@
-import { Slot } from "expo-router";
 import AuthGuard from "@/utils/AuthGuard";
+import { Slot } from "expo-router";
 
 export default function BikesLayout() {
   return (

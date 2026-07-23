@@ -1,14 +1,15 @@
-import { useState } from "react";
-import { StyleSheet, TouchableOpacity, View } from "react-native";
-import { useLocalSearchParams, useRouter } from "expo-router";
-import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
-import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { Button, Text } from "react-native-paper";
 import { EmptyState, SectionLoading } from "@/components/main/shared";
 import { confirmDelete } from "@/components/main/shared/ConfirmDelete";
 import { useDelete, useFetchData } from "@/hooks/useApi";
-import { COLORS } from "@/utils/colors";
 import { TBike } from "@/types/bike.types";
+import { COLORS } from "@/utils/colors";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { format } from "date-fns";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { useState } from "react";
+import { StyleSheet, TouchableOpacity, View } from "react-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
+import { Button, Text } from "react-native-paper";
 import { BikeFormModal } from "./BikeFormModal";
 
 type TTile = {
@@ -37,6 +38,8 @@ export function BikeDetailPage() {
     { enabled: !!bikeId },
   );
   const bike = data?.data;
+
+  // console.log("bike = ", bike);
 
   const deleteMutation = useDelete([["bikes"]]);
 
@@ -69,13 +72,13 @@ export function BikeDetailPage() {
         <Text style={styles.detail}>Reg: {bike.registrationNumber}</Text>
         <Text style={styles.detail}>Tank: {bike.fuelTankCapacityLiters}L</Text>
         <Text style={styles.detail}>Odometer: {bike.currentOdometer} km</Text>
+        <Text style={styles.detail}>
+          Purchased: {format(new Date(bike.purchaseDate), "dd MMM yyyy")}
+        </Text>
       </View>
 
       <View style={styles.actions}>
-        <Button
-          mode="contained"
-          onPress={() => setEditOpen(true)}
-        >
+        <Button mode="contained" onPress={() => setEditOpen(true)}>
           Edit
         </Button>
         <Button
@@ -95,9 +98,15 @@ export function BikeDetailPage() {
             style={styles.tile}
             // These destination routes don't exist until specs 07–12 build them,
             // so typed-routes has no type for them yet.
-            onPress={() => router.push(`/bikes/${bikeId}/${tile.segment}` as never)}
+            onPress={() =>
+              router.push(`/bikes/${bikeId}/${tile.segment}` as never)
+            }
           >
-            <MaterialCommunityIcons name={tile.icon} size={32} color={COLORS.primary} />
+            <MaterialCommunityIcons
+              name={tile.icon}
+              size={32}
+              color={COLORS.primary}
+            />
             <Text style={styles.tileLabel}>{tile.label}</Text>
           </TouchableOpacity>
         ))}
