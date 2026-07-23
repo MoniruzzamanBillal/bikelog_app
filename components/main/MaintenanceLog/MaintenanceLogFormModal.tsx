@@ -3,7 +3,7 @@ import { StyleSheet, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { Button, Modal, Portal, Text, TextInput } from "react-native-paper";
 import Toast from "react-native-toast-message";
-import { SelectPickerField } from "@/components/main/shared";
+import { DatePickerField, SelectPickerField } from "@/components/main/shared";
 import { useFetchData, usePatch, usePost } from "@/hooks/useApi";
 import { COLORS } from "@/utils/colors";
 import { TMaintenanceType, TEngineOilType } from "@/types/catalog.types";
@@ -238,27 +238,20 @@ export function MaintenanceLogFormModal({
             />
           </View>
 
-          <View style={styles.field}>
-            <TextInput
-              placeholder="Service Date (YYYY-MM-DD)"
-              value={serviceDate}
-              onChangeText={setServiceDate}
-              editable={!isPending}
-              textColor={COLORS.text}
-              style={styles.input}
-            />
-          </View>
+          <DatePickerField
+            label="Service Date"
+            value={serviceDate}
+            onChange={setServiceDate}
+            maximumDate={new Date()}
+            disabled={isPending}
+          />
 
-          <View style={styles.field}>
-            <TextInput
-              placeholder="Next Due Date (optional, YYYY-MM-DD)"
-              value={nextDueDate}
-              onChangeText={setNextDueDate}
-              editable={!isPending}
-              textColor={COLORS.text}
-              style={styles.input}
-            />
-          </View>
+          <DatePickerField
+            label="Next Due Date (optional)"
+            value={nextDueDate}
+            onChange={setNextDueDate}
+            disabled={isPending}
+          />
 
           <View style={styles.field}>
             <TextInput

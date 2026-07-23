@@ -4,11 +4,11 @@ import { format } from "date-fns";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { Button, Modal, Portal, Text, TextInput } from "react-native-paper";
 import Toast from "react-native-toast-message";
+import { DatePickerField } from "@/components/main/shared";
 import { usePatch, usePost } from "@/hooks/useApi";
 import { COLORS } from "@/utils/colors";
 import { TBike, TCreateBikePayload, TUpdateBikePayload } from "@/types/bike.types";
 
-const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
 const DECIMAL_REGEX = /^\d+(\.\d{0,2})?$/;
 
 interface BikeFormModalProps {
@@ -63,14 +63,6 @@ export function BikeFormModal({ open, onClose, initialBike }: BikeFormModalProps
       !fuelTankCapacityLiters.trim()
     ) {
       Toast.show({ type: "error", text1: "All fields are required", position: "top" });
-      return;
-    }
-    if (!DATE_REGEX.test(purchaseDate.trim())) {
-      Toast.show({
-        type: "error",
-        text1: "Purchase date must be YYYY-MM-DD",
-        position: "top",
-      });
       return;
     }
     if (!DECIMAL_REGEX.test(fuelTankCapacityLiters.trim())) {
@@ -180,16 +172,13 @@ export function BikeFormModal({ open, onClose, initialBike }: BikeFormModalProps
             />
           </View>
 
-          <View style={styles.field}>
-            <TextInput
-              placeholder="Purchase Date (YYYY-MM-DD)"
-              value={purchaseDate}
-              onChangeText={setPurchaseDate}
-              editable={!isPending}
-              textColor={COLORS.text}
-              style={styles.input}
-            />
-          </View>
+          <DatePickerField
+            label="Purchase Date"
+            value={purchaseDate}
+            onChange={setPurchaseDate}
+            maximumDate={new Date()}
+            disabled={isPending}
+          />
 
           <View style={styles.field}>
             <TextInput

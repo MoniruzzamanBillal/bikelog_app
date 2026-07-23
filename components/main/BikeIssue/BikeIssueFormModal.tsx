@@ -4,6 +4,7 @@ import { format } from "date-fns";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { Button, Modal, Portal, Text, TextInput } from "react-native-paper";
 import Toast from "react-native-toast-message";
+import { DatePickerField } from "@/components/main/shared";
 import { usePatch, usePost } from "@/hooks/useApi";
 import { COLORS } from "@/utils/colors";
 import {
@@ -119,16 +120,13 @@ export function BikeIssueFormModal({
             />
           </View>
 
-          <View style={styles.field}>
-            <TextInput
-              placeholder="Date Reported (YYYY-MM-DD)"
-              value={dateReported}
-              onChangeText={setDateReported}
-              editable={!isPending}
-              textColor={COLORS.text}
-              style={styles.input}
-            />
-          </View>
+          <DatePickerField
+            label="Date Reported"
+            value={dateReported}
+            onChange={setDateReported}
+            maximumDate={new Date()}
+            disabled={isPending}
+          />
 
           <Button
             mode="contained"
