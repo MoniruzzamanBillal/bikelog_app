@@ -193,6 +193,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     width: 80,
     borderRadius: 6,
+    height: "90%",
   },
   editAction: {
     backgroundColor: COLORS.success,

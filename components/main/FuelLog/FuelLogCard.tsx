@@ -1,15 +1,15 @@
+import { StatusBadge } from "@/components/main/shared";
+import { confirmDelete } from "@/components/main/shared/ConfirmDelete";
+import { useDelete } from "@/hooks/useApi";
+import { TFuelLog } from "@/types/fuel-log.types";
+import { COLORS } from "@/utils/colors";
+import { format } from "date-fns";
 import { useRef, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
-import { format } from "date-fns";
 import { TouchableOpacity } from "react-native-gesture-handler";
 import Swipeable, {
   SwipeableMethods,
 } from "react-native-gesture-handler/ReanimatedSwipeable";
-import { StatusBadge } from "@/components/main/shared";
-import { confirmDelete } from "@/components/main/shared/ConfirmDelete";
-import { useDelete } from "@/hooks/useApi";
-import { COLORS } from "@/utils/colors";
-import { TFuelLog } from "@/types/fuel-log.types";
 import { FuelLogFormModal } from "./FuelLogFormModal";
 
 interface FuelLogCardProps {
@@ -22,7 +22,11 @@ const fullTankColors = {
   true: { bg: COLORS.primary, text: COLORS.white },
 };
 
-export function FuelLogCard({ fuelLog, bikeId, openSwipeableRef }: FuelLogCardProps) {
+export function FuelLogCard({
+  fuelLog,
+  bikeId,
+  openSwipeableRef,
+}: FuelLogCardProps) {
   const [editOpen, setEditOpen] = useState(false);
   const swipeableRef = useRef<SwipeableMethods>(null);
 
@@ -161,6 +165,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     width: 80,
     borderRadius: 6,
+    height: "90%",
   },
   editAction: {
     backgroundColor: COLORS.success,

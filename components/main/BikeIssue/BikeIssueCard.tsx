@@ -1,17 +1,17 @@
+import { issueStatusColors, StatusBadge } from "@/components/main/shared";
+import { confirmDelete } from "@/components/main/shared/ConfirmDelete";
+import { useDelete, usePatch } from "@/hooks/useApi";
+import { TBikeIssue } from "@/types/bike-issue.types";
+import { COLORS } from "@/utils/colors";
+import { format } from "date-fns";
 import { useRef, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
-import { format } from "date-fns";
-import { Button } from "react-native-paper";
-import Toast from "react-native-toast-message";
 import { TouchableOpacity } from "react-native-gesture-handler";
 import Swipeable, {
   SwipeableMethods,
 } from "react-native-gesture-handler/ReanimatedSwipeable";
-import { issueStatusColors, StatusBadge } from "@/components/main/shared";
-import { confirmDelete } from "@/components/main/shared/ConfirmDelete";
-import { useDelete, usePatch } from "@/hooks/useApi";
-import { COLORS } from "@/utils/colors";
-import { TBikeIssue } from "@/types/bike-issue.types";
+import { Button } from "react-native-paper";
+import Toast from "react-native-toast-message";
 import { BikeIssueFormModal } from "./BikeIssueFormModal";
 
 interface BikeIssueCardProps {
@@ -20,7 +20,11 @@ interface BikeIssueCardProps {
   openSwipeableRef: React.MutableRefObject<SwipeableMethods | null>;
 }
 
-export function BikeIssueCard({ issue, bikeId, openSwipeableRef }: BikeIssueCardProps) {
+export function BikeIssueCard({
+  issue,
+  bikeId,
+  openSwipeableRef,
+}: BikeIssueCardProps) {
   const [editOpen, setEditOpen] = useState(false);
   const swipeableRef = useRef<SwipeableMethods>(null);
 
@@ -122,7 +126,9 @@ export function BikeIssueCard({ issue, bikeId, openSwipeableRef }: BikeIssueCard
             mode="outlined"
             onPress={handleToggleStatus}
             style={styles.statusButton}
-            textColor={issue.status === "open" ? COLORS.success : COLORS.warning}
+            textColor={
+              issue.status === "open" ? COLORS.success : COLORS.warning
+            }
           >
             {issue.status === "open" ? "Mark as Resolved" : "Reopen Issue"}
           </Button>
@@ -186,6 +192,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     width: 80,
     borderRadius: 6,
+    height: "90%",
   },
   editAction: {
     backgroundColor: COLORS.success,

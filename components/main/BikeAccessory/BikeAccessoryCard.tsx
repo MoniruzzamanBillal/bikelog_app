@@ -1,9 +1,3 @@
-import { useRef, useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
-import { TouchableOpacity } from "react-native-gesture-handler";
-import Swipeable, {
-  SwipeableMethods,
-} from "react-native-gesture-handler/ReanimatedSwipeable";
 import {
   accessoryStatusColors,
   accessoryUrgencyColors,
@@ -11,8 +5,14 @@ import {
 } from "@/components/main/shared";
 import { confirmDelete } from "@/components/main/shared/ConfirmDelete";
 import { useDelete } from "@/hooks/useApi";
-import { COLORS } from "@/utils/colors";
 import { TBikeAccessory } from "@/types/bike-accessory.types";
+import { COLORS } from "@/utils/colors";
+import { useRef, useState } from "react";
+import { StyleSheet, Text, View } from "react-native";
+import { TouchableOpacity } from "react-native-gesture-handler";
+import Swipeable, {
+  SwipeableMethods,
+} from "react-native-gesture-handler/ReanimatedSwipeable";
 import { BikeAccessoryFormModal } from "./BikeAccessoryFormModal";
 
 interface BikeAccessoryCardProps {
@@ -144,6 +144,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     width: 80,
     borderRadius: 6,
+    height: "90%",
   },
   editAction: {
     backgroundColor: COLORS.success,
