@@ -1,0 +1,80 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## What this is
+
+The mobile client for **Bike Log** — an Expo (SDK 54) + `expo-router` React Native app that talks to the same `bikelog_server` REST API as `../../bikelog_client(web)`. This is the developer's real target platform (the web client was a deliberately-sequenced prototype built first). See `ai context/project-overview.md` for the full product scope.
+
+This directory (`bikelog_client(app)/`) is the actual npm/yarn project root (`package.json`, `app.json`, etc. live here) inside the parent `bikelog_client(mobile)/` folder. It is not under git.
+
+## Current state — read `progress-tracker.md` first, every time
+
+All 13 specs of the build plan are complete: foundation/cleanup, shared components, auth (login/register), dashboard/bike-list, bike hub, fuel logs, mileage, maintenance catalog settings, maintenance logs & reminders, spending summary, bike issues, bike accessories. Feature parity with the already-shipped web client is achieved for every bike-scoped screen.
+
+**`ai context/progress-tracker.md` is the single source of truth for what's actually built** — its "Known Gaps / Open Questions" section tracks real, still-open issues (nothing in this app has ever been exercised against a live backend or a real device/simulator — see Verification below). Read it before touching code; it's kept more current than `architecture.md`/`code-standards.md` when they drift, and both have had real inaccuracies that progress-tracker.md documents and corrects in place.
+
+A source-level review pass across specs 09–13 (re-checking implementations directly against the backend's actual code, not just the spec files) found and fixed one real, live bug — see "Known gotchas" below (maintenanceType/oilType resolution). Specs 01–08 have not had this same after-the-fact re-audit; if you're touching those areas, don't assume a clean `expo lint`/`tsc` at the time they were built means no logic bugs remain — it only means no *type* bugs remain.
+
+Read order for planning docs:
+
+1. `ai context/progress-tracker.md` — current build status, Known Gaps, Recent Activity (**read this one first**).
+2. `ai context/specs/00-build-plan.md` — the 13-spec build order and per-spec status (all ✅ complete).
+3. `ai context/specs/<NN>-*.md` — the spec for whatever domain you're touching. Every spec's Verify section has been annotated in place with corrections found during implementation or later review — read it even if the Design/Implementation sections look authoritative, since several were wrong in ways only caught by cross-checking the real backend source. An unchecked `[ ]` item you find in a spec file is itself a signal something wasn't finished — as of this writing there are none, but don't assume that stays true.
+4. `ai context/project-overview.md`, `architecture.md`, `code-standards.md`, `ai-workflow-rules.md`, `ui-context.md` — background/conventions. Treat specific factual claims in these (response shapes, field names) as unverified until cross-checked against the backend source or the already-shipped web client — several were stale or wrong.
+5. `../PLAN.md` — the original file-by-file analysis the six context docs were derived from; rationale, not a doc to keep in sync separately.
+
+## Commands
+
+Run from this directory (`bikelog_client(app)/`):
+
+```bash
+yarn install          # install deps
+yarn start             # = yarn dev = expo start
+yarn android            # expo start --android
+yarn ios                 # expo start --ios
+yarn web                  # expo start --web
+yarn lint                  # expo lint — must be clean before considering any screen done
+npx tsc --noEmit             # full type-check; expo lint alone doesn't catch everything
+```
+
+No automated test suite (no `test` script). Verification is manual: run on-device/simulator against a real `bikelog_server` instance, cross-checked against `bikelog_server/postman/dummy-data.md` and the Postman collection.
+
+**No emulator/simulator/device or live backend has ever been available in this working environment, for any spec.** Every screen in this app is lint/type/contract-verified only — cross-checked against `dummy-data.md`, the Postman collection, and (increasingly, and more reliably) the backend's actual source read directly — but never actually rendered or exercised end-to-end. Say so explicitly if you're in the same boat; don't claim visual or runtime verification you didn't do. This is the single highest-priority thing to do once a device/simulator + running backend are available, and the maintenance-logs/reminders screens are the highest-value place to start (see Known gotchas — that's where the one bug static review actually found was hiding).
+
+`yarn reset-project` runs `scripts/reset-project.js`, a stock `create-expo-app` script — unrelated to this project's own history, don't use it.
+
+## Architecture
+
+- **Routing**: `app/` is file-based routing via `expo-router`. Every route file is a one-line wrapper — import a `components/main/<Domain>/` component and render it. No fetch calls, `useState`, or business logic in `app/`. Full route table: `app/auth.tsx`, `app/register.tsx` (unauthenticated); `app/(tabs)/index.tsx` (Dashboard), `app/(tabs)/settings.tsx` (SettingsCatalog); `app/bikes/[bikeId]/index.tsx` (hub) plus sibling `fuel-logs.tsx`, `mileage.tsx`, `maintenance-logs.tsx`, `spending.tsx`, `issues.tsx`, `accessories.tsx`.
+- **Auth gating is wired in *two* places, not one**: `app/(tabs)/_layout.tsx` wraps the tab group in `AuthGuard`, and `app/bikes/_layout.tsx` separately wraps the whole `app/bikes/[bikeId]/` stack (and everything under it) in its own `AuthGuard` — that stack sits outside `(tabs)` (so the tab bar doesn't follow the user into a drill-down flow) and is *not* covered by the tabs layout's guard. `architecture.md`'s System Boundaries section calls this out explicitly; several spec files' own Design tables didn't, so don't assume a new route is gated just because it's under `app/bikes/`.
+- **Domain folders**: `components/main/<Domain>/` — one per backend module: `Auth`, `Bike` (shared `BikeFormModal` + hub page), `Dashboard`, `FuelLog`, `Mileage`, `SettingsCatalog`, `MaintenanceLog`, `Spending`, `BikeIssue`, `BikeAccessory`. A component reused across two different screens of the *same* backend module (e.g. `BikeFormModal`, used by both the dashboard's create flow and the bike hub's edit flow) belongs in that module's own folder, not in whichever screen's folder happened to need it first. Cross-domain shared pieces (`StatusBadge`, `ConfirmDelete`, `EmptyState`, `SectionLoading`, `SelectPickerField`) live in `components/main/shared/`, exported from its `index.ts` barrel.
+- **UI kit**: `react-native-paper` (`Button`, `TextInput`, `Text`, `Modal`+`Portal`, `IconButton`) + plain `StyleSheet.create()` per file. No NativeWind/Tailwind/styled-components. `TextInput`s use a borderless-underline look (`borderWidth: 0, backgroundColor: "transparent", padding: 0` inside a `View` with `borderBottomWidth: 1`) — **not** Paper's own `mode="flat"`/`outlined` variants, even though some spec sample code uses `mode="flat"`. `ui-context.md` is the authoritative source for this. 3+-option enum fields (urgency/status on accessories, maintenanceType/oilType pickers) use `SelectPickerField` (wraps `@react-native-picker/picker`) — this is real, shipped, and in use in several forms now, but its visual fit with Paper has still never been confirmed on an actual device.
+- **Swipe rows**: use `react-native-gesture-handler/ReanimatedSwipeable` (the modern, non-deprecated Reanimated-based component), not the plain `import { Swipeable } from "react-native-gesture-handler"` export — that one is a deprecated, `Animated.Value`-based class component. In this library's coordinate system, swiping a row *leftward* reveals the *right*-side action panel (`renderRightActions`), and swiping rightward reveals the left panel (`renderLeftActions`) — the convention here is delete=red on left-swipe (`renderRightActions`), edit=green on right-swipe (`renderLeftActions`). "Only one row open at a time" is done via a `useRef<SwipeableMethods | null>` created in the parent list and passed down, with each row's `onSwipeableWillOpen` closing whichever other row was open.
+- **Server state**: TanStack Query v5 via `hooks/useApi.ts`'s four hooks — `useFetchData`, `usePost`, `usePatch`, `useDelete` (no PUT hook — `bikelog_server` has no PUT routes). `url`/`payload` are supplied at the `mutateAsync()` call site, never baked into the hook. **The resolved value is the raw backend envelope (`{success, message, data, statusCode}`), not the payload directly — always drill into `.data`.** Below that, the shape of `.data` itself varies *per endpoint* and has to be checked per case, not assumed: bikes and both catalog lists (`maintenance-types`, `engine-oil-types`) are plain arrays (`data?.data ?? []`); fuel logs, maintenance logs, issues, and accessories are paginated (`data?.data?.result ?? []` + `data?.data?.meta`); spending summary and single-entity fetches (`GET /bikes/:id`) are the object directly (`data?.data`). When adding a new endpoint, check the backend source, don't assume last endpoint's shape carries over.
+- **HTTP**: single axios instance (`utils/axiosInstance.ts`) — request interceptor attaches `Authorization: Bearer <token>` from `AsyncStorage` (key `"token"`, alongside `"user"`); response interceptor clears storage + redirects to `/auth` on 401, and rejects the promise (normalized to `{statusCode, message, errors}`) on any other error.
+- **Auth**: `context/user.context.tsx` (`useUserContext()`) holds `user`/`token`/`isLoading`, hydrated from AsyncStorage on mount, exposes `handleSetToken`/`handleSetUser` (write-through) vs. `setToken`/`setUser` (state-only, don't use these for login/logout). **The login response's `data` field is always `null`** — there is no user object to read from it. Post-login, the user is derived by decoding the JWT client-side with `jwt-decode` (`{userId, userEmail}` — the real payload has no `name` claim, which is why `IUser.name` is optional). Don't add a `GET /auth/me` round-trip to fill this in; that's an explicitly-rejected pattern here.
+- **IDs are `_id`, not `id`** on every backend entity — Mongoose's default serialization, no `toJSON` transform aliases it.
+- **Populated vs. bare-ObjectId reference fields — check per endpoint, never assume.** `maintenanceType`/`oilType` on maintenance logs, and `maintenanceType` on reminders, are **never populated** by the backend (confirmed directly in `maintenanceLog.service.ts` — both `getMaintenanceLogsFromDB` and `getRemindersFromDB` return bare ObjectId strings, no `.populate()` call anywhere). A real, live bug shipped here once already: both `RemindersBanner.tsx` and `MaintenanceLogCard.tsx` assumed a populated `{_id, name}` object and silently rendered blank/generic text for every single log until a later review caught it (the already-shipped web client has the same bug, still unfixed there — separate project, not this repo's to fix). The working pattern: fetch the relevant catalog (`maintenance-types`/`engine-oil-types`) once in the parent screen, pass it down as a prop, and resolve the ObjectId string against it client-side (`catalog.find(c => c._id === refId)?.name`). Spending summary's `maintenanceLogs` aggregation *does* populate (`spending.service.ts` explicitly does `.populate("maintenanceType", "name")`) — so populate behavior is genuinely inconsistent across endpoints in this backend; verify per-endpoint, don't generalize from one.
+- **Forms**: plain `useState` per field + manual validation before submit — no react-hook-form, no Zod/Yup. Numeric fields stay strings in state, regex-validated on change, parsed only at submit. Edit-modal prefill uses a `useEffect` keyed on `[entity, open]`, not a mount-once/`defaultValues` approach (Paper's `Modal` doesn't unmount its children on close).
+- **`expo-router` typed routes** (`experiments.typedRoutes: true`): navigating to a route that exists should use the typed object form — `router.push({ pathname: "/bikes/[bikeId]", params: { bikeId } })` — not a template-literal string, which typed-routes rejects.
+- **`.expo/types/router.d.ts` is a gitignored, generated file** that only regenerates when a real `expo start`/`expo export` runs. It has gone stale in this environment before (listing routes deleted long ago) because no dev server has ever run here — if `tsc` rejects an otherwise-correct typed-routes call, check whether this file is lying before assuming the code is wrong. Deleting it is safe (expo-router falls back to a permissive base `Href` type); don't hand-edit it.
+- **Native interaction patterns**: `Alert.alert()` for confirmations (via the shared `confirmDelete()` helper), pull-to-refresh via `ScrollView`'s `refreshControl` prop bound to local `refreshing` state + `refetch()` (`RefreshControl` is a prop, not a wrapper component), `KeyboardAwareScrollView` on every form screen, `Toast.show({..., position: "top"})` via `react-native-toast-message`.
+
+## Invariants (don't regress these)
+
+1. Never call `axios`/`fetch` directly from a component — always through `hooks/useApi.ts`.
+2. Every bike-scoped screen takes `bikeId` from the route param (`useLocalSearchParams`), never component state.
+3. Never send server-derived fields in a mutation payload (`totalCost` on fuel logs, `nextDueOdometer` on maintenance logs, `owner`/`currentOdometer` on bike edit, `status` on bike-issue generic edit). See `bikelog_server/postman/dummy-data.md`'s "Fields you will never see accepted" table for the authoritative list. Prefer encoding this at the type level (e.g. `TUpdateBikePayload = Partial<Omit<TCreateBikePayload, "currentOdometer">>`) over just remembering not to include a field.
+4. Reuse `components/main/shared/*` before writing a one-off.
+5. No react-hook-form — plain `useState` per field.
+6. No global client-state library, no charting library.
+7. No tab/bike screen renders without a valid session — enforced by `AuthGuard`, wired separately into `(tabs)/_layout.tsx` and `bikes/_layout.tsx` (see Architecture above).
+8. The axios error interceptor must reject on failure, not resolve with the error object.
+9. Bike issue status changes only through the dedicated `PATCH .../issues/:id/status` endpoint, never through the generic edit form (the backend silently strips `status` from generic PATCH bodies anyway, but don't rely on that — build the UI so it's never attempted).
+
+## Cross-project rules
+
+- Don't edit `../../bikelog_server/` or `../../bikelog_client(web)/` from work in this app — both are separate, complete, independently-tracked projects. If this app's work reveals a backend gap or a web-app bug (e.g. the reminders-populate bug above), note it in `ai context/progress-tracker.md`'s Known Gaps and flag it to the user instead of editing either other project.
+- When a field, endpoint, or response shape is unclear or a spec's claim about it seems off, verify against the backend source (`bikelog_server/src/app/modules/<module>/`) first, then `bikelog_server/postman/dummy-data.md`, then the already-shipped `bikelog_client(web)/components/(main)/<Domain>/` implementation as a third reference — the web client is "already-shipped" but not infallible (see the reminders bug); reading the backend source directly is the one source that can't be stale.
+- Workflow for touching any spec/screen: mark it in-progress in `progress-tracker.md` (and the spec's own status line) before starting; implement or fix; run `expo lint` + `npx tsc --noEmit`; update the spec's Verify checklist in place (checking off items, annotating corrections — "code-verified only" where on-device verification wasn't possible); mark complete; add a `progress-tracker.md` Recent Activity entry and update Known Gaps. A spec marked "Complete" with unchecked `[ ]` Verify items is itself a documentation bug — fix that inconsistency if you find it, don't just add new content around it.

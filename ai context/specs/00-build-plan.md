@@ -1,0 +1,25 @@
+# 00: Build Plan (Mobile / React Native)
+
+This is an index, not a spec — it lists every spec in build order and its current status. Update the status column here whenever a spec's own status line changes (see `../ai-workflow-rules.md`'s Documentation Sync rule).
+
+Specs are numbered in the order they should be built — spec 01 is the foundation (cleanup + infrastructure fix), spec 02 builds shared reusable components, and specs 03–13 are mostly independent of each other except: spec 04 comes immediately after 03 (auth pair), spec 10 depends on 09 (maintenance catalog must exist before maintenance logs can pick from it), and spec 13 uses the Picker decision from spec 02.
+
+| # | Spec | Status | One-line summary |
+|---|---|---|---|
+| 01 | [01-project-setup-cleanup.md](01-project-setup-cleanup.md) | ✅ Complete | Strip inherited expense-tracker domain code (routes, components, types); keep+adapt infra; **apply the one deliberate axios-interceptor fix** (port web's rejecting normalizer); delete scaffold leftovers; fix `app.json`; build the one `COLORS` theme. Prerequisite for everything below. |
+| 02 | [02-shared-components.md](02-shared-components.md) | ✅ Complete | Build `StatusBadge`, `ConfirmDelete`, `EmptyState`, `SectionLoading`, and resolve the Picker-vs-Menu decision for 3+-option selects. These components are reused by specs 03–13, so build once, use everywhere. |
+| 03 | [03-login.md](03-login.md) | ✅ Complete | Login screen (`app/auth.tsx` + `LoginForm`), plain useState fields, `POST /api/auth/login` (token is top-level), AsyncStorage persist, redirect to Dashboard, link to Register. |
+| 04 | [04-register.md](04-register.md) | ✅ Complete | Register screen (`app/register.tsx`), `POST /api/auth/register`, no token in response, redirect to Login, link back. Sibling to 03; both are auth scaffolding. |
+| 05 | [05-dashboard-bike-list.md](05-dashboard-bike-list.md) | ✅ Complete | Dashboard (bike list), `GET /bikes`, `BikeCard`, create-bike modal (`BikeFormModal`, `POST /bikes`). First real domain screen and the entry point once logged in. |
+| 06 | [06-bike-hub.md](06-bike-hub.md) | ✅ Complete | Bike hub detail page, bike info card, edit/delete actions, 6 nav tiles to bike-scoped screens (fuel/mileage/maintenance/spending/issues/accessories). Prerequisite for all bike-scoped screens below. |
+| 07 | [07-fuel-logs.md](07-fuel-logs.md) | ✅ Complete | Fuel log list + create/edit modal. `POST/GET/PATCH/DELETE .../fuel-logs`; never send `totalCost` (server-computed); handle 409-if-mileage-record-closed on edit/delete. |
+| 08 | [08-mileage.md](08-mileage.md) | ✅ Complete | Mileage stats with 4 sub-tabs (History/Monthly/Yearly/Lifetime), 4 GET-only endpoints, client-side average computation where API doesn't return one, handle null `approximate` block. |
+| 09 | [09-maintenance-catalog-settings.md](09-maintenance-catalog-settings.md) | ✅ Complete | Settings tab with inline maintenance-type + engine-oil-type create + list. Shared catalogs (not per-bike). Prerequisite for spec 10 (maintenance logs need these to pick from). |
+| 10 | [10-maintenance-logs-reminders.md](10-maintenance-logs-reminders.md) | ✅ Complete | Maintenance log list + create/edit modal (uses Picker from spec 02) + reminders banner. Never send `nextDueOdometer`. Resolve `maintenanceType` ObjectId lookup client-side. Depends on 09. |
+| 11 | [11-spending-summary.md](11-spending-summary.md) | ✅ Complete | Spending summary with 3 sub-tabs (Month/Year/Lifetime), `GET .../spending-summary?period=...`, totals + category breakdown, client-side average computation. |
+| 12 | [12-bike-issues.md](12-bike-issues.md) | ✅ Complete | Bike issues list + status filter, create/edit modal. Status changed **only** via `PATCH /:id/status` (guarded endpoint, not generic edit). |
+| 13 | [13-bike-accessories.md](13-bike-accessories.md) | ✅ Complete | Bike accessories list + urgency/status filters, plain CRUD. Both `urgency`/`status` freely PATCH-able. Recommended first real usage of the spec-02 Picker decision (simplest form: two selects, no catalog dependency). |
+
+**Important note on spec 01's context**: `progress-tracker.md` claims "nothing has been built yet, no `app/`/`components/` folder exists yet." This is stale/inaccurate. The app folder currently contains a full, unmodified copy of a different finished Expo project (`expenseTracker2/client`, not the `expenseTrackerReactNative` path the older docs reference — that path doesn't exist on disk). Spec 01 is therefore "strip this inherited expense-tracker domain code and fix the one axios bug," not "scaffold from zero." This has been noted accurately in spec 01 itself per the `ai-workflow-rules.md` "Documentation Sync" rule to fix doc drift rather than repeat it.
+
+Status values: `⛔ Not started`, `🔨 In progress`, `✅ Complete`. See `../progress-tracker.md` for the same table plus narrative detail once implementation begins.
