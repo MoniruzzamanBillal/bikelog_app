@@ -7,6 +7,7 @@ export type TBikeAccessory = {
   name: string;
   urgency: TAccessoryUrgency;
   status: TAccessoryStatus;
+  price?: number;
   isDeleted: boolean;
   createdAt: string;
   updatedAt: string;
@@ -16,12 +17,14 @@ export type TCreateBikeAccessoryPayload = {
   name: string;
   urgency: TAccessoryUrgency;
   status?: TAccessoryStatus;
+  price?: number;
 };
 
 export type TUpdateBikeAccessoryPayload = {
   name?: string;
   urgency?: TAccessoryUrgency;
   status?: TAccessoryStatus;
+  price?: number;
 };
 
 export type TBikeAccessoriesApiResponse = {

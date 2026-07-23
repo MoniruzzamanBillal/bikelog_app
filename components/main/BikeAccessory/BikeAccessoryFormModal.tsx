@@ -13,6 +13,8 @@ import {
   TCreateBikeAccessoryPayload,
 } from "@/types/bike-accessory.types";
 
+const DECIMAL_REGEX = /^\d+(\.\d{0,2})?$/;
+
 const URGENCY_OPTIONS = [
   { label: "Immediate", value: "immediate" },
   { label: "Medium", value: "medium" },
@@ -41,6 +43,7 @@ export function BikeAccessoryFormModal({
   const [name, setName] = useState("");
   const [urgency, setUrgency] = useState<TAccessoryUrgency>("medium");
   const [status, setStatus] = useState<TAccessoryStatus>("pending");
+  const [price, setPrice] = useState("");
 
   const createMutation = usePost([["accessories", bikeId]]);
   const updateMutation = usePatch([["accessories", bikeId]]);
@@ -54,10 +57,12 @@ export function BikeAccessoryFormModal({
       setName(initialAccessory.name || "");
       setUrgency(initialAccessory.urgency || "medium");
       setStatus(initialAccessory.status || "pending");
+      setPrice(initialAccessory.price?.toString() ?? "");
     } else {
       setName("");
       setUrgency("medium");
       setStatus("pending");
+      setPrice("");
     }
   }, [initialAccessory, open]);
 
@@ -70,11 +75,23 @@ export function BikeAccessoryFormModal({
       });
       return;
     }
+    if (
+      price.trim() &&
+      (!DECIMAL_REGEX.test(price.trim()) || parseFloat(price) <= 0)
+    ) {
+      Toast.show({
+        type: "error",
+        text1: "Enter a valid price greater than 0",
+        position: "top",
+      });
+      return;
+    }
 
     const payload: TCreateBikeAccessoryPayload = {
       name: name.trim(),
       urgency,
       status,
+      ...(price.trim() ? { price: parseFloat(price) } : {}),
     };
 
     try {
@@ -135,6 +152,18 @@ export function BikeAccessoryFormModal({
             options={STATUS_OPTIONS}
             required
           />
+
+          <View style={styles.field}>
+            <TextInput
+              placeholder="Price (optional)"
+              value={price}
+              onChangeText={setPrice}
+              keyboardType="decimal-pad"
+              editable={!isPending}
+              textColor={COLORS.text}
+              style={styles.input}
+            />
+          </View>
 
           <Button
             mode="contained"

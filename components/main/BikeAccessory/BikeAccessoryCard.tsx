@@ -82,6 +82,9 @@ export function BikeAccessoryCard({
           activeOpacity={0.7}
         >
           <Text style={styles.name}>{accessory.name}</Text>
+          {accessory.price !== undefined && (
+            <Text style={styles.price}>৳{accessory.price.toFixed(2)}</Text>
+          )}
           <View style={styles.badgesRow}>
             <StatusBadge
               label={accessory.urgency}
@@ -121,6 +124,12 @@ const styles = StyleSheet.create({
   },
   name: {
     fontSize: 16,
+    fontWeight: "600",
+    color: COLORS.text,
+    marginBottom: 8,
+  },
+  price: {
+    fontSize: 14,
     fontWeight: "600",
     color: COLORS.text,
     marginBottom: 8,
