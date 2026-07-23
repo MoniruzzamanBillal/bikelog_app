@@ -6,7 +6,8 @@ import { COLORS } from "@/utils/colors";
 import { format } from "date-fns";
 import { useRouter } from "expo-router";
 import { useRef, useState } from "react";
-import { StyleSheet, Text, TouchableOpacity } from "react-native";
+import { StyleSheet, Text } from "react-native";
+import { TouchableOpacity } from "react-native-gesture-handler";
 import Swipeable, {
   SwipeableMethods,
 } from "react-native-gesture-handler/ReanimatedSwipeable";
@@ -127,7 +128,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     width: 80,
-    marginBottom: 12,
     borderRadius: 6,
   },
   editAction: {

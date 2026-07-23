@@ -3,7 +3,11 @@ import { StyleSheet, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { Button, Modal, Portal, Text, TextInput } from "react-native-paper";
 import Toast from "react-native-toast-message";
-import { DatePickerField, SelectPickerField } from "@/components/main/shared";
+import {
+  DatePickerField,
+  SectionLoading,
+  SelectPickerField,
+} from "@/components/main/shared";
 import { useFetchData, usePatch, usePost } from "@/hooks/useApi";
 import { COLORS } from "@/utils/colors";
 import { TMaintenanceType, TEngineOilType } from "@/types/catalog.types";
@@ -185,13 +189,17 @@ export function MaintenanceLogFormModal({
             {log ? "Edit Maintenance" : "Add Maintenance"}
           </Text>
 
-          <SelectPickerField
-            label="Maintenance Type"
-            value={maintenanceType}
-            onChange={setMaintenanceType}
-            options={mtOptions}
-            required
-          />
+          {maintenanceTypes.length === 0 ? (
+            <SectionLoading count={1} />
+          ) : (
+            <SelectPickerField
+              label="Maintenance Type"
+              value={maintenanceType}
+              onChange={setMaintenanceType}
+              options={mtOptions}
+              required
+            />
+          )}
 
           <View style={styles.field}>
             <TextInput
@@ -206,12 +214,16 @@ export function MaintenanceLogFormModal({
           </View>
 
           {isEngineOil && (
-            <SelectPickerField
-              label="Engine Oil Type"
-              value={oilType}
-              onChange={setOilType}
-              options={oilOptions}
-            />
+            oilTypes.length === 0 ? (
+              <SectionLoading count={1} />
+            ) : (
+              <SelectPickerField
+                label="Engine Oil Type"
+                value={oilType}
+                onChange={setOilType}
+                options={oilOptions}
+              />
+            )
           )}
 
           <View style={styles.field}>
