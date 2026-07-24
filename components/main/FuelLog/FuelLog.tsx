@@ -41,7 +41,6 @@ export function FuelLog() {
         <Button
           mode="contained"
           onPress={() => setModalOpen(true)}
-          labelStyle={{ color: COLORS.white }}
         >
           Add Log
         </Button>

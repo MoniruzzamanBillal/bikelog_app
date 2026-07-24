@@ -1,15 +1,16 @@
-import { useRef, useState } from "react";
-import { StyleSheet, Text, TouchableOpacity } from "react-native";
+import { BikeFormModal } from "@/components/main/Bike/BikeFormModal";
+import { confirmDelete } from "@/components/main/shared/ConfirmDelete";
+import { useDelete } from "@/hooks/useApi";
+import { TBike } from "@/types/bike.types";
+import { COLORS } from "@/utils/colors";
+import { format } from "date-fns";
 import { useRouter } from "expo-router";
+import { useRef, useState } from "react";
+import { StyleSheet, Text } from "react-native";
+import { TouchableOpacity } from "react-native-gesture-handler";
 import Swipeable, {
   SwipeableMethods,
 } from "react-native-gesture-handler/ReanimatedSwipeable";
-import { confirmDelete } from "@/components/main/shared/ConfirmDelete";
-import { BikeFormModal } from "@/components/main/Bike/BikeFormModal";
-import { useDelete } from "@/hooks/useApi";
-import { COLORS } from "@/utils/colors";
-import { TBike } from "@/types/bike.types";
-
 interface BikeCardProps {
   bike: TBike;
   openSwipeableRef: React.MutableRefObject<SwipeableMethods | null>;
@@ -68,7 +69,10 @@ export function BikeCard({ bike, openSwipeableRef }: BikeCardProps) {
       >
         <TouchableOpacity
           onPress={() =>
-            router.push({ pathname: "/bikes/[bikeId]", params: { bikeId: bike._id } })
+            router.push({
+              pathname: "/bikes/[bikeId]",
+              params: { bikeId: bike._id },
+            })
           }
           style={styles.card}
           activeOpacity={0.7}
@@ -78,6 +82,9 @@ export function BikeCard({ bike, openSwipeableRef }: BikeCardProps) {
             {bike.brand} {bike.model}
           </Text>
           <Text style={styles.reg}>Reg: {bike.registrationNumber}</Text>
+          <Text style={styles.reg}>
+            Purchased: {format(new Date(bike.purchaseDate), "dd MMM yyyy")}
+          </Text>
         </TouchableOpacity>
       </Swipeable>
 
@@ -121,8 +128,8 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     width: 80,
-    marginBottom: 12,
     borderRadius: 6,
+    height: "90%",
   },
   editAction: {
     backgroundColor: COLORS.success,

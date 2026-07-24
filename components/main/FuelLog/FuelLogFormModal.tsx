@@ -4,6 +4,7 @@ import { format } from "date-fns";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { Button, Modal, Portal, Text, TextInput } from "react-native-paper";
 import Toast from "react-native-toast-message";
+import { DatePickerField } from "@/components/main/shared";
 import { usePatch, usePost } from "@/hooks/useApi";
 import { COLORS } from "@/utils/colors";
 import {
@@ -222,16 +223,13 @@ export function FuelLogFormModal({
             />
           </View>
 
-          <View style={styles.field}>
-            <TextInput
-              placeholder="Date (YYYY-MM-DD)"
-              value={date}
-              onChangeText={setDate}
-              editable={!isPending}
-              textColor={COLORS.text}
-              style={styles.input}
-            />
-          </View>
+          <DatePickerField
+            label="Date"
+            value={date}
+            onChange={setDate}
+            maximumDate={new Date()}
+            disabled={isPending}
+          />
 
           <View style={styles.field}>
             <TextInput
@@ -252,7 +250,6 @@ export function FuelLogFormModal({
             loading={isPending}
             disabled={isPending}
             style={styles.button}
-            labelStyle={{ color: COLORS.white }}
           >
             {initialFuelLog ? "Update" : "Add"}
           </Button>

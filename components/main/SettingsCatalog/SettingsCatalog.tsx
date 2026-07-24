@@ -1,11 +1,13 @@
 import { useState } from "react";
-import { StyleSheet, TouchableOpacity, View } from "react-native";
+import { Alert, StyleSheet, TouchableOpacity, View } from "react-native";
 import { ScrollView } from "react-native-gesture-handler";
 import { Button, Text, TextInput } from "react-native-paper";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { router } from "expo-router";
 import Toast from "react-native-toast-message";
 import { EmptyState, SectionLoading } from "@/components/main/shared";
 import { useFetchData, usePost } from "@/hooks/useApi";
+import { useUserContext } from "@/context/user.context";
 import { COLORS } from "@/utils/colors";
 import {
   TMaintenanceType,
@@ -13,6 +15,7 @@ import {
 } from "@/types/catalog.types";
 
 export function SettingsCatalog() {
+  const { user, logoutFunction } = useUserContext();
   const { data: maintData, isLoading: maintLoading, refetch: refetchMaint } =
     useFetchData<TMaintenanceType[]>(["maintenance-types"], "/maintenance-types");
   const { data: oilData, isLoading: oilLoading, refetch: refetchOil } =
@@ -97,6 +100,20 @@ export function SettingsCatalog() {
     }
   };
 
+  const handleLogout = () => {
+    Alert.alert("Log Out?", "Are you sure you want to log out?", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Log Out",
+        style: "destructive",
+        onPress: async () => {
+          await logoutFunction();
+          router.replace("/auth");
+        },
+      },
+    ]);
+  };
+
   return (
     <ScrollView
       style={styles.container}
@@ -161,7 +178,6 @@ export function SettingsCatalog() {
             loading={createMaintType.isPending}
             disabled={createMaintType.isPending}
             style={styles.formButton}
-            labelStyle={{ color: COLORS.white }}
           >
             Add Type
           </Button>
@@ -234,7 +250,6 @@ export function SettingsCatalog() {
             loading={createOilType.isPending}
             disabled={createOilType.isPending}
             style={styles.formButton}
-            labelStyle={{ color: COLORS.white }}
           >
             Add Oil Type
           </Button>
@@ -253,6 +268,22 @@ export function SettingsCatalog() {
           </View>
         ))
       )}
+
+      {/* Account Section */}
+      <Text style={[styles.sectionTitle, { marginTop: 32 }]}>Account</Text>
+
+      <View style={styles.accountCard}>
+        {user?.email && <Text style={styles.accountEmail}>{user.email}</Text>}
+
+        <Button
+          mode="outlined"
+          onPress={handleLogout}
+          textColor={COLORS.danger}
+          style={[styles.formButton, { borderColor: COLORS.danger }]}
+        >
+          Log Out
+        </Button>
+      </View>
     </ScrollView>
   );
 }
@@ -285,6 +316,22 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "600",
     color: COLORS.primary,
+  },
+  accountCard: {
+    backgroundColor: COLORS.card,
+    borderRadius: 6,
+    padding: 16,
+    marginBottom: 32,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  accountEmail: {
+    fontSize: 15,
+    color: COLORS.text,
+    marginBottom: 14,
   },
   formContainer: {
     backgroundColor: COLORS.card,

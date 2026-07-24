@@ -1,8 +1,3 @@
-import { useRef, useState } from "react";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import Swipeable, {
-  SwipeableMethods,
-} from "react-native-gesture-handler/ReanimatedSwipeable";
 import {
   accessoryStatusColors,
   accessoryUrgencyColors,
@@ -10,8 +5,14 @@ import {
 } from "@/components/main/shared";
 import { confirmDelete } from "@/components/main/shared/ConfirmDelete";
 import { useDelete } from "@/hooks/useApi";
-import { COLORS } from "@/utils/colors";
 import { TBikeAccessory } from "@/types/bike-accessory.types";
+import { COLORS } from "@/utils/colors";
+import { useRef, useState } from "react";
+import { StyleSheet, Text, View } from "react-native";
+import { TouchableOpacity } from "react-native-gesture-handler";
+import Swipeable, {
+  SwipeableMethods,
+} from "react-native-gesture-handler/ReanimatedSwipeable";
 import { BikeAccessoryFormModal } from "./BikeAccessoryFormModal";
 
 interface BikeAccessoryCardProps {
@@ -82,6 +83,9 @@ export function BikeAccessoryCard({
           activeOpacity={0.7}
         >
           <Text style={styles.name}>{accessory.name}</Text>
+          {accessory.price !== undefined && (
+            <Text style={styles.price}>৳{accessory.price.toFixed(2)}</Text>
+          )}
           <View style={styles.badgesRow}>
             <StatusBadge
               label={accessory.urgency}
@@ -125,6 +129,12 @@ const styles = StyleSheet.create({
     color: COLORS.text,
     marginBottom: 8,
   },
+  price: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: COLORS.text,
+    marginBottom: 8,
+  },
   badgesRow: {
     flexDirection: "row",
     gap: 8,
@@ -133,8 +143,8 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     width: 80,
-    marginBottom: 12,
     borderRadius: 6,
+    height: "90%",
   },
   editAction: {
     backgroundColor: COLORS.success,

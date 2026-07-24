@@ -57,6 +57,6 @@ const styles = StyleSheet.create({
     borderBottomColor: COLORS.border,
   },
   picker: {
-    height: 40,
+    height: 50,
   },
 });

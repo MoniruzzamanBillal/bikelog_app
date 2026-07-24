@@ -49,7 +49,6 @@ export function BikeIssue() {
         <Button
           mode="contained"
           onPress={() => setModalOpen(true)}
-          labelStyle={{ color: COLORS.white }}
         >
           Report
         </Button>

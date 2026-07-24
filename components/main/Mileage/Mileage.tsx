@@ -1,7 +1,7 @@
 import { COLORS } from "@/utils/colors";
 import { useLocalSearchParams } from "expo-router";
 import { useState } from "react";
-import { ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
+import { StyleSheet, TouchableOpacity, View } from "react-native";
 import { Text } from "react-native-paper";
 import { LifetimeMileageTab } from "./LifetimeMileageTab";
 import { MileageHistoryTab } from "./MileageHistoryTab";
@@ -25,12 +25,7 @@ export function Mileage() {
     <View style={styles.container}>
       <Text style={styles.title}>Mileage</Text>
 
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={styles.tabBar}
-        contentContainerStyle={styles.tabBarContent}
-      >
+      <View style={styles.tabBar}>
         {TABS.map(({ key, label }) => (
           <TouchableOpacity
             key={key}
@@ -47,7 +42,7 @@ export function Mileage() {
             </Text>
           </TouchableOpacity>
         ))}
-      </ScrollView>
+      </View>
 
       <View style={styles.tabContent}>
         {activeTab === "history" && <MileageHistoryTab bikeId={bikeId} />}
@@ -72,11 +67,9 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   tabBar: {
-    marginBottom: 16,
-  },
-  tabBarContent: {
     flexDirection: "row",
     gap: 8,
+    marginBottom: 16,
   },
   tab: {
     paddingVertical: 10,
