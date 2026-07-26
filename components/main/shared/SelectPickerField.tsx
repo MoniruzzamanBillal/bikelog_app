@@ -1,5 +1,6 @@
-import { Picker } from "@react-native-picker/picker";
-import { StyleSheet, Text, View } from "react-native";
+import { useState } from "react";
+import { StyleSheet, View } from "react-native";
+import { Menu, Text, TouchableRipple } from "react-native-paper";
 import { COLORS } from "@/utils/colors";
 
 interface SelectPickerFieldProps {
@@ -17,46 +18,60 @@ export function SelectPickerField({
   options,
   required,
 }: SelectPickerFieldProps) {
+  const [menuVisible, setMenuVisible] = useState(false);
+  const selectedLabel = options.find((opt) => opt.value === value)?.label;
+
   return (
     <View style={styles.container}>
       <Text style={styles.label}>
         {label}
         {required && <Text style={styles.required}>*</Text>}
       </Text>
-      <View style={styles.pickerWrapper}>
-        <Picker
-          selectedValue={value || ""}
-          onValueChange={onChange}
-          style={styles.picker}
-        >
-          <Picker.Item label="Select..." value="" />
-          {options.map((opt) => (
-            <Picker.Item key={opt.value} label={opt.label} value={opt.value} />
-          ))}
-        </Picker>
-      </View>
+      <Menu
+        visible={menuVisible}
+        onDismiss={() => setMenuVisible(false)}
+        anchor={
+          <TouchableRipple
+            onPress={() => setMenuVisible(true)}
+            style={styles.touchable}
+          >
+            <Text
+              style={selectedLabel ? styles.valueText : styles.placeholderText}
+            >
+              {selectedLabel ?? "Select..."}
+            </Text>
+          </TouchableRipple>
+        }
+      >
+        {options.map((opt) => (
+          <Menu.Item
+            key={opt.value}
+            title={opt.label}
+            onPress={() => {
+              onChange(opt.value);
+              setMenuVisible(false);
+            }}
+          />
+        ))}
+      </Menu>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    marginBottom: 16,
-  },
+  container: { marginBottom: 16 },
   label: {
     fontSize: 14,
     fontWeight: "600",
     marginBottom: 6,
     color: COLORS.text,
   },
-  required: {
-    color: COLORS.danger,
-  },
-  pickerWrapper: {
+  required: { color: COLORS.danger },
+  touchable: {
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border,
+    paddingVertical: 12,
   },
-  picker: {
-    height: 50,
-  },
+  valueText: { fontSize: 16, color: COLORS.text },
+  placeholderText: { fontSize: 16, color: COLORS.textLight },
 });

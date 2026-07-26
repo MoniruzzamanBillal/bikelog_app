@@ -2,8 +2,7 @@ import { useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { format } from "date-fns";
 import { ScrollView } from "react-native-gesture-handler";
-import { TextInput } from "react-native-paper";
-import { SectionLoading } from "@/components/main/shared";
+import { MonthStepper, SectionLoading } from "@/components/main/shared";
 import { useFetchData } from "@/hooks/useApi";
 import { COLORS } from "@/utils/colors";
 import { TMonthlyMileage } from "@/types/mileage.types";
@@ -34,18 +33,7 @@ export function MonthlyMileageTab({ bikeId }: MonthlyMileageTabProps) {
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      <View style={styles.selectorRow}>
-        <Text style={styles.selectorLabel}>Month: </Text>
-        <View style={styles.monthInputWrapper}>
-          <TextInput
-            placeholder="yyyy-MM"
-            value={targetMonth}
-            onChangeText={setTargetMonth}
-            textColor={COLORS.text}
-            style={styles.input}
-          />
-        </View>
-      </View>
+      <MonthStepper targetMonth={targetMonth} onChange={setTargetMonth} />
 
       {monthly && monthly.fuelLogCount > 0 ? (
         <>
@@ -75,27 +63,6 @@ export function MonthlyMileageTab({ bikeId }: MonthlyMileageTabProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  selectorRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 16,
-  },
-  selectorLabel: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: COLORS.text,
-    marginRight: 8,
-  },
-  monthInputWrapper: {
-    flex: 1,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
-  },
-  input: {
-    borderWidth: 0,
-    backgroundColor: "transparent",
-    padding: 0,
   },
   summaryCard: {
     backgroundColor: COLORS.card,
