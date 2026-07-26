@@ -1,8 +1,7 @@
 import { useState } from "react";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import { ScrollView } from "react-native-gesture-handler";
-import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { SectionLoading } from "@/components/main/shared";
+import { SectionLoading, YearStepper } from "@/components/main/shared";
 import { useFetchData } from "@/hooks/useApi";
 import { COLORS } from "@/utils/colors";
 import { TYearlyMileage } from "@/types/mileage.types";
@@ -29,29 +28,7 @@ export function YearlyMileageTab({ bikeId }: YearlyMileageTabProps) {
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      <View style={styles.yearSelector}>
-        <TouchableOpacity
-          onPress={() => setYear((y) => (Number(y) - 1).toString())}
-          style={styles.yearButton}
-        >
-          <MaterialCommunityIcons
-            name="chevron-left"
-            size={24}
-            color={COLORS.text}
-          />
-        </TouchableOpacity>
-        <Text style={styles.yearText}>{year}</Text>
-        <TouchableOpacity
-          onPress={() => setYear((y) => (Number(y) + 1).toString())}
-          style={styles.yearButton}
-        >
-          <MaterialCommunityIcons
-            name="chevron-right"
-            size={24}
-            color={COLORS.text}
-          />
-        </TouchableOpacity>
-      </View>
+      <YearStepper year={year} onChange={setYear} />
 
       {yearly?.monthlySummary && yearly.monthlySummary.length > 0 ? (
         yearly.monthlySummary.map((m) => {
@@ -85,26 +62,6 @@ export function YearlyMileageTab({ bikeId }: YearlyMileageTabProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  yearSelector: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 16,
-    marginBottom: 20,
-  },
-  yearButton: {
-    padding: 8,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-  },
-  yearText: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: COLORS.text,
-    minWidth: 60,
-    textAlign: "center",
   },
   monthCard: {
     backgroundColor: COLORS.card,

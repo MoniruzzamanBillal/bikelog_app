@@ -1,4 +1,9 @@
-import { EmptyState, SectionLoading } from "@/components/main/shared";
+import {
+  EmptyState,
+  MonthStepper,
+  SectionLoading,
+  YearStepper,
+} from "@/components/main/shared";
 import { useFetchData } from "@/hooks/useApi";
 import { TSpendingSummary } from "@/types/spending.types";
 import { COLORS } from "@/utils/colors";
@@ -13,7 +18,7 @@ import {
   View,
 } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
-import { Text, TextInput } from "react-native-paper";
+import { Text } from "react-native-paper";
 import { SpendingSummaryView } from "./SpendingSummaryView";
 
 type TPeriod = "month" | "year" | "lifetime";
@@ -48,16 +53,7 @@ function MonthTab({ bikeId }: { bikeId: string }) {
       }
       showsVerticalScrollIndicator={false}
     >
-      <View style={styles.selector}>
-        <TextInput
-          placeholder="yyyy-MM"
-          value={targetMonth}
-          onChangeText={setTargetMonth}
-          keyboardType="default"
-          textColor={COLORS.text}
-          style={styles.input}
-        />
-      </View>
+      <MonthStepper targetMonth={targetMonth} onChange={setTargetMonth} />
 
       {isLoading ? (
         <SectionLoading count={3} />
@@ -95,16 +91,7 @@ function YearTab({ bikeId }: { bikeId: string }) {
       }
       showsVerticalScrollIndicator={false}
     >
-      <View style={styles.selector}>
-        <TextInput
-          placeholder="yyyy"
-          value={targetYear}
-          onChangeText={setTargetYear}
-          keyboardType="number-pad"
-          textColor={COLORS.text}
-          style={styles.input}
-        />
-      </View>
+      <YearStepper year={targetYear} onChange={setTargetYear} />
 
       {isLoading ? (
         <SectionLoading count={3} />
@@ -229,15 +216,5 @@ const styles = StyleSheet.create({
   },
   tabContent: {
     flex: 1,
-  },
-  selector: {
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
-    marginBottom: 16,
-  },
-  input: {
-    borderWidth: 0,
-    backgroundColor: "transparent",
-    padding: 0,
   },
 });
