@@ -20,6 +20,7 @@ import {
 import { BarChart, PieChart } from "react-native-gifted-charts";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { Text } from "react-native-paper";
+import { AiSpendingInsightCard } from "./AiSpendingInsightCard";
 import { SpendingSummaryView } from "./SpendingSummaryView";
 
 type TPeriod = "month" | "year" | "lifetime" | "trend";
@@ -209,6 +210,8 @@ export function Spending() {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Spending</Text>
+
+      <AiSpendingInsightCard bikeId={bikeId} />
 
       <View style={styles.tabBar}>
         {TABS.map(({ key, label }) => (

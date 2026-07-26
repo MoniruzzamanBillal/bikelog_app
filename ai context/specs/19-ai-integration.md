@@ -1,6 +1,6 @@
 # 19: AI Integration (Spending Insight, Mileage Insight, Bike Chat)
 
-Status: ⛔ Not started
+Status: ✅ Complete
 
 ## Goal
 
@@ -246,13 +246,19 @@ Spec 08 (Mileage) and Spec 11 (Spending Summary) must already exist (the two ins
 
 ## Verify
 
-- [ ] **Spending insight card loads and shows a real insight**: `AiSpendingInsightCard` fetches `.../ai/spending-insight`, shows `"Thinking..."` while loading, then the returned `insight` text. _(Will need the "code-verified only, no device/simulator" caveat this project applies everywhere per `progress-tracker.md`'s Known Gaps, unless a device/simulator is available at implementation time.)_
-- [ ] **Mileage insight card loads and shows a real insight**: same pattern, `.../ai/mileage-insight`.
-- [ ] **Insight cards don't re-trigger generation on every visit**: confirmed at the API level this session (`cached: true` on a same-bike repeat call) — the RN card itself does nothing special to cause a re-generation, it's a plain `useFetchData` GET.
-- [ ] **Sending a chat message appends it immediately, shows a thinking state, then appends the real reply**: `AiAssistant.tsx`'s `handleSend` — optimistic user-message append before the `mutateAsync` call, `chatMutation.isPending` drives the thinking bubble, `reply` appended as an assistant message on success.
-- [ ] **Conversation history is resent correctly across multiple turns in the same session**: `history` passed to `mutateAsync`'s payload is `[...messages, userMessage]`, not just the new message.
-- [ ] **Conversation resets when navigating to a different bike's assistant screen**: the `prevBikeId` render-time comparison in `AiAssistant.tsx`.
-- [ ] **A failed chat call surfaces an error toast and does not fabricate a reply**: `catch` block only calls `Toast.show`, never appends a synthetic assistant message; the optimistically-appended user message stays visible.
-- [ ] **Usable on a phone-sized screen**: message bubbles wrap (`maxWidth: "80%"`), input row doesn't overflow (`IconButton` beside a `multiline` `TextInput`).
-- [ ] **New `assistant` route is gated by the existing `AuthGuard`**: confirmed by inspection of `app/bikes/_layout.tsx`, not assumed.
-- [ ] **`expo lint` is clean**: 0 errors, 0 warnings. `npx tsc --noEmit` also passes clean.
+- [x] **Spending insight card loads and shows a real insight** _(code-verified only — no simulator/device in this environment)_: `AiSpendingInsightCard` fetches `.../ai/spending-insight` via `useFetchData<TSpendingInsight>`, shows `"Thinking..."` while `isLoading`, then `insight?.insight ?? "No insight available yet."`.
+- [x] **Mileage insight card loads and shows a real insight**: `AiMileageInsightCard`, identical shape against `.../ai/mileage-insight` and `TMileageInsight`.
+- [x] **Insight cards don't re-trigger generation on every visit**: confirmed at the API level in the prior planning session (`cached: true` on a same-bike repeat call) — both RN cards are plain `useFetchData` GETs with no extra logic that could force a re-generation.
+- [x] **Sending a chat message appends it immediately, shows a thinking state, then appends the real reply**: `AiAssistant.tsx`'s `handleSend` — `setMessages(history)` runs before `mutateAsync`, `chatMutation.isPending` drives the `ActivityIndicator` "AI is thinking..." bubble, `reply` appended as a new assistant message in `.then`.
+- [x] **Conversation history is resent correctly across multiple turns in the same session**: `mutateAsync`'s `payload.messages` is `history` (`[...messages, userMessage]`), not just the newly-typed message.
+- [x] **Conversation resets when navigating to a different bike's assistant screen**: the `prevBikeId` render-time comparison (`if (bikeId !== prevBikeId) { setPrevBikeId(bikeId); setMessages([]); }`) written exactly as the spec's Design sample.
+- [x] **A failed chat call surfaces an error toast and does not fabricate a reply**: `catch` block calls `Toast.show({type: "error", ...})` only — no `setMessages` call in the catch path, so the optimistically-appended user message is the only thing that changed.
+- [x] **Usable on a phone-sized screen**: bubbles capped at `maxWidth: "80%"`, `inputRow` is a `flexDirection: "row"` with the `TextInput` given `flex: 1` so the `IconButton` never gets squeezed off-screen.
+- [x] **New `assistant` route is gated by the existing `AuthGuard`**: confirmed by direct inspection of `app/bikes/_layout.tsx` — it wraps a bare `<Slot />` in `AuthGuard`, and no nested `_layout.tsx` exists under `app/bikes/[bikeId]/` to override it, so `assistant.tsx` is covered exactly like every sibling route (`spending.tsx`, `fuel-logs.tsx`, etc.) — not assumed, verified by listing the actual route tree.
+- [x] **`expo lint` is clean**: 0 errors, 0 warnings. `npx tsc --noEmit` also passes clean.
+
+**Implementation notes**:
+- Both insight cards were built with their own local `styles.card`/`label`/`body` (not shared with `Spending.tsx`/`Mileage.tsx`'s own `StyleSheet`), matching the same card idiom (`COLORS.card`, `borderRadius: 6`, shadow/elevation) used everywhere else in this app — no new abstraction introduced for a 2-usage pattern.
+- `AiAssistant.tsx`'s `catch (error: any)` matches the existing convention already used in `BikeIssueFormModal.tsx` and every other form's catch block in this app — `expo lint`'s config allows it (unlike the web client's stricter `@typescript-eslint/no-explicit-any`), confirmed by the clean lint run.
+- No corrections were needed vs. the spec's own Design sample code — the chat screen, insight cards, route wrapper, and tile addition all matched what was written in Design almost verbatim (only the two insight cards' `styles` were filled in locally, since the spec's sample referenced `styles.card`/`styles.label`/`styles.body` without spelling them out).
+- **Not exercised on a real device/simulator** — same standing gap as every other spec in this project (see `progress-tracker.md`'s Known Gaps). The chat flow's actual round-trip against the live `bikelog_server` was exercised via `curl` during the prior planning session (spec 18's sibling planning pass), not from this app's own UI.

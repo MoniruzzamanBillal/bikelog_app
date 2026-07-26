@@ -21,3 +21,9 @@ export type TSpendingTrend = {
   months: number;
   monthlySummary: TMonthlySpending[];
 };
+
+export type TSpendingInsight = {
+  insight: string;
+  generated: boolean;
+  cached: boolean;
+};

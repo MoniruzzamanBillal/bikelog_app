@@ -3,6 +3,7 @@ import { useLocalSearchParams } from "expo-router";
 import { useState } from "react";
 import { StyleSheet, TouchableOpacity, View } from "react-native";
 import { Text } from "react-native-paper";
+import { AiMileageInsightCard } from "./AiMileageInsightCard";
 import { LifetimeMileageTab } from "./LifetimeMileageTab";
 import { MileageHistoryTab } from "./MileageHistoryTab";
 import { MileageTrendTab } from "./MileageTrendTab";
@@ -26,6 +27,8 @@ export function Mileage() {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Mileage</Text>
+
+      <AiMileageInsightCard bikeId={bikeId} />
 
       <View style={styles.tabBar}>
         {TABS.map(({ key, label }) => (
