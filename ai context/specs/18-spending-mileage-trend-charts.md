@@ -1,6 +1,6 @@
 # 18: Spending & Mileage Trend Charts
 
-Status: ⛔ Not started
+Status: ✅ Complete
 
 ## Goal
 
@@ -26,18 +26,18 @@ Add a "Trend" view to the existing Spending screen and a "Trends" tab to the exi
 
 ### Files to create/modify
 
-| Path | Action | Notes |
-|---|---|---|
-| `package.json` | Modify | Add `react-native-gifted-charts` + `react-native-svg`. |
-| `types/spending.types.ts` | Modify | Add `TMonthlySpending`, `TSpendingTrend`. |
-| `types/mileage.types.ts` | Modify | Add `TMileageTrend` (reuses existing `TMonthlySummary`). |
-| `utils/colors.ts` | Modify | Add `CHART_COLORS: string[]` (5 values), shared by both new components. |
-| `components/main/Spending/Spending.tsx` | Modify | `TPeriod` gains `"trend"`, `TABS` gains a 4th pill, new inline `TrendTab` function added alongside the existing inline `MonthTab`/`YearTab`/`LifetimeTab`. |
-| `components/main/Mileage/Mileage.tsx` | Modify | `TTab` gains `"trends"`, `TABS` gains a 5th pill, renders new `MileageTrendTab`. |
-| `components/main/Mileage/MileageTrendTab.tsx` | Create | New separate file, mirroring `MonthlyMileageTab.tsx`'s shape — Mileage already splits every tab into its own file, unlike Spending. |
-| `architecture.md` | Modify | Flip Invariant 6 to reflect the new charting dependency. |
-| `project-overview.md` | Modify | Remove "Charts of any kind" from Out of Scope; note it as delivered in this spec. |
-| `ui-context.md` | Modify | Update the "Rich text / animation / charts: none" line. |
+| Path                                          | Action | Notes                                                                                                                                                      |
+| --------------------------------------------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `package.json`                                | Modify | Add `react-native-gifted-charts` + `react-native-svg`.                                                                                                     |
+| `types/spending.types.ts`                     | Modify | Add `TMonthlySpending`, `TSpendingTrend`.                                                                                                                  |
+| `types/mileage.types.ts`                      | Modify | Add `TMileageTrend` (reuses existing `TMonthlySummary`).                                                                                                   |
+| `utils/colors.ts`                             | Modify | Add `CHART_COLORS: string[]` (5 values), shared by both new components.                                                                                    |
+| `components/main/Spending/Spending.tsx`       | Modify | `TPeriod` gains `"trend"`, `TABS` gains a 4th pill, new inline `TrendTab` function added alongside the existing inline `MonthTab`/`YearTab`/`LifetimeTab`. |
+| `components/main/Mileage/Mileage.tsx`         | Modify | `TTab` gains `"trends"`, `TABS` gains a 5th pill, renders new `MileageTrendTab`.                                                                           |
+| `components/main/Mileage/MileageTrendTab.tsx` | Create | New separate file, mirroring `MonthlyMileageTab.tsx`'s shape — Mileage already splits every tab into its own file, unlike Spending.                        |
+| `architecture.md`                             | Modify | Flip Invariant 6 to reflect the new charting dependency.                                                                                                   |
+| `project-overview.md`                         | Modify | Remove "Charts of any kind" from Out of Scope; note it as delivered in this spec.                                                                          |
+| `ui-context.md`                               | Modify | Update the "Rich text / animation / charts: none" line.                                                                                                    |
 
 ### Spending.tsx — new inline `TrendTab`
 
@@ -88,7 +88,14 @@ function TrendTab({ bikeId }: { bikeId: string }) {
       {pieData.length > 0 ? (
         <View style={styles.chartCard}>
           <Text style={styles.chartTitle}>
-            By category ({latest ? format(parse(latest.targetMonth, "yyyy-MM", new Date()), "MMM yyyy") : ""})
+            By category (
+            {latest
+              ? format(
+                  parse(latest.targetMonth, "yyyy-MM", new Date()),
+                  "MMM yyyy",
+                )
+              : ""}
+            )
           </Text>
           <PieChart data={pieData} donut radius={90} innerRadius={60} />
         </View>
@@ -110,7 +117,9 @@ const TABS: { key: TPeriod; label: string }[] = [
   { key: "trend", label: "Trend" },
 ];
 // ...
-{activeTab === "trend" && <TrendTab bikeId={bikeId} />}
+{
+  activeTab === "trend" && <TrendTab bikeId={bikeId} />;
+}
 ```
 
 ### Mileage/MileageTrendTab.tsx — new separate file
@@ -190,10 +199,16 @@ Spec 08 (Mileage) and Spec 11 (Spending Summary) must already exist — this spe
 
 ## Verify
 
-- [ ] **Spending Trend tab renders a bar chart of the last 3 months' totals**: `TrendTab` in `Spending.tsx`, `useFetchData<TSpendingTrend>` against `.../spending-summary/trend?months=3`, `BarChart` fed `totalSpending` per `targetMonth`. *(Will need the "code-verified only, no device/simulator" caveat this project applies everywhere per `progress-tracker.md`'s Known Gaps, unless a device/simulator is available at implementation time.)*
-- [ ] **Spending Trend tab renders a donut of the most recent month's category breakdown, with no second network request**: confirm `latestBreakdown` is read from the same `trend` response used for the bar chart, not a separate `useFetchData` call.
-- [ ] **A zero-activity month renders as a real zero-valued bar, not a gap or crash**: confirm no `monthlySummary` entry is ever filtered out before being passed to `barData`.
-- [ ] **Mileage Trends tab renders a bar chart of `totalDistanceKm` per month**: `MileageTrendTab.tsx`, same pattern as the spending bar chart, no donut on this side.
-- [ ] **Both new tabs' pill buttons behave like every existing tab**: active/inactive styling matches `styles.tab`/`styles.tabActive` exactly, no new tab-bar styling introduced.
-- [ ] **`architecture.md`/`project-overview.md`/`ui-context.md` no longer claim "no charting library"**: all three updated in the same pass as the code, not left stale.
-- [ ] **`expo lint` is clean**: 0 errors, 0 warnings. `npx tsc --noEmit` also passes clean.
+- [x] **Spending Trend tab renders a bar chart of the last 3 months' totals** _(code-verified only — no simulator/device in this environment)_: `TrendTab` in `Spending.tsx`, `useFetchData<TSpendingTrend>` against `.../spending-summary/trend?months=3`, `BarChart` fed `totalSpending` per `targetMonth` (formatted `MMM` via `date-fns`).
+- [x] **Spending Trend tab renders a donut of the most recent month's category breakdown, with no second network request**: `latestBreakdown` is read from `trend.monthlySummary`'s last entry — the same response object the bar chart's `barData` is built from, no second `useFetchData` call.
+- [x] **A zero-activity month renders as a real zero-valued bar, not a gap or crash**: `barData`/`pieData` are built via a plain `.map()` over the full `monthlySummary` array — no filter ever drops an entry.
+- [x] **Mileage Trends tab renders a bar chart of `totalDistanceKm` per month**: `MileageTrendTab.tsx`, same pattern as the spending bar chart, no donut on this side (matches the web app's mileage-trend scope exactly).
+- [x] **Both new tabs' pill buttons behave like every existing tab**: `"trend"`/`"trends"` were added as plain entries to the existing `TABS` arrays and render switches in `Spending.tsx`/`Mileage.tsx` — no new tab-bar styling introduced, `styles.tab`/`styles.tabActive` reused as-is.
+- [x] **`architecture.md`/`project-overview.md`/`ui-context.md` no longer claim "no charting library"**: all three updated in this pass — `architecture.md` Invariant 6 now carves out the charting exception, `project-overview.md`'s Out of Scope strikes the charts line, `ui-context.md`'s Conventions gained a dedicated "Charts" line.
+- [x] **`expo lint` is clean**: 0 errors, 0 warnings. `npx tsc --noEmit` also passes clean.
+
+**Implementation notes**:
+- `react-native-svg` was initially installed at `^15.15.5` (latest) but `npx expo install --check` flagged it against Expo SDK 54's expected `15.12.1` — re-ran `npx expo install react-native-svg` to pin the SDK-compatible version rather than leaving a newly-introduced native-module mismatch in place. `react-native-gifted-charts@1.4.77` needed no such pin (not part of Expo's own compatibility table). The other packages `expo install --check` flagged (`expo`, `expo-font`, `expo-linking`, `expo-router`, `expo-web-browser`, `react-native-gesture-handler`) are pre-existing version drift unrelated to this spec — left untouched, out of scope.
+- No `app.json` config-plugin entry was needed for `react-native-svg` (unlike spec 14's `@react-native-community/datetimepicker`) — it autolinks without any native config to inject; confirmed no plugin-related warning was emitted by either install.
+- Chart component props (`BarChart`'s `data`/`barWidth`/`spacing`/`roundedTop`/`yAxisThickness`/`xAxisThickness`, `PieChart`'s `data`/`donut`/`radius`/`innerRadius`) type-checked clean against the installed `react-native-gifted-charts` types as written in the spec's own Design sample — no corrections needed vs. the draft code.
+- **Not exercised on a real device/simulator** — same standing gap as every other spec in this project (see `progress-tracker.md`'s Known Gaps); the chart rendering itself (bar heights, donut segments, label truncation at phone width) is type/lint-verified only.

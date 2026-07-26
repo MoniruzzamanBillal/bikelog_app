@@ -48,3 +48,8 @@ export type TLifetimeMileage = {
   totalLitersConsumed: number;
   fuelLogCount: number;
 };
+
+export type TMileageTrend = {
+  months: number;
+  monthlySummary: TMonthlySummary[];
+};

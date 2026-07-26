@@ -25,18 +25,18 @@ Consume the three AI endpoints already shipped on `bikelog_server` (spec 16): a 
 
 ### Files to create/modify
 
-| Path | Action | Notes |
-|---|---|---|
-| `types/spending.types.ts` | Modify | Add `TSpendingInsight`. |
-| `types/mileage.types.ts` | Modify | Add `TMileageInsight`. |
-| `types/ai-assistant.types.ts` | Create | `TChatMessage`, `TBikeChatResponse` — new file, matches this app's flat `types/<domain>.types.ts` layout. |
-| `components/main/Spending/AiSpendingInsightCard.tsx` | Create | Card, rendered above `Spending.tsx`'s tab bar. |
-| `components/main/Mileage/AiMileageInsightCard.tsx` | Create | Card, rendered above `Mileage.tsx`'s tab bar. |
-| `components/main/Spending/Spending.tsx` | Modify | Render `AiSpendingInsightCard` above `styles.tabBar`. |
-| `components/main/Mileage/Mileage.tsx` | Modify | Render `AiMileageInsightCard` above `styles.tabBar`. |
-| `components/main/AiAssistant/AiAssistant.tsx` | Create | Chat screen. |
-| `app/bikes/[bikeId]/assistant.tsx` | Create | One-liner route wrapper. |
-| `components/main/Bike/BikeDetailPage.tsx` | Modify | `TILES` gains a 7th entry pointing at `assistant`. |
+| Path                                                 | Action | Notes                                                                                                     |
+| ---------------------------------------------------- | ------ | --------------------------------------------------------------------------------------------------------- |
+| `types/spending.types.ts`                            | Modify | Add `TSpendingInsight`.                                                                                   |
+| `types/mileage.types.ts`                             | Modify | Add `TMileageInsight`.                                                                                    |
+| `types/ai-assistant.types.ts`                        | Create | `TChatMessage`, `TBikeChatResponse` — new file, matches this app's flat `types/<domain>.types.ts` layout. |
+| `components/main/Spending/AiSpendingInsightCard.tsx` | Create | Card, rendered above `Spending.tsx`'s tab bar.                                                            |
+| `components/main/Mileage/AiMileageInsightCard.tsx`   | Create | Card, rendered above `Mileage.tsx`'s tab bar.                                                             |
+| `components/main/Spending/Spending.tsx`              | Modify | Render `AiSpendingInsightCard` above `styles.tabBar`.                                                     |
+| `components/main/Mileage/Mileage.tsx`                | Modify | Render `AiMileageInsightCard` above `styles.tabBar`.                                                      |
+| `components/main/AiAssistant/AiAssistant.tsx`        | Create | Chat screen.                                                                                              |
+| `app/bikes/[bikeId]/assistant.tsx`                   | Create | One-liner route wrapper.                                                                                  |
+| `components/main/Bike/BikeDetailPage.tsx`            | Modify | `TILES` gains a 7th entry pointing at `assistant`.                                                        |
 
 ### AiSpendingInsightCard / AiMileageInsightCard
 
@@ -56,7 +56,9 @@ export function AiSpendingInsightCard({ bikeId }: { bikeId: string }) {
     <View style={styles.card}>
       <Text style={styles.label}>AI Insight</Text>
       <Text style={styles.body}>
-        {isLoading ? "Thinking..." : (insight?.insight ?? "No insight available yet.")}
+        {isLoading
+          ? "Thinking..."
+          : (insight?.insight ?? "No insight available yet.")}
       </Text>
     </View>
   );
@@ -129,7 +131,9 @@ export function AiAssistant() {
       <ScrollView
         ref={scrollRef}
         style={styles.messages}
-        onContentSizeChange={() => scrollRef.current?.scrollToEnd({ animated: true })}
+        onContentSizeChange={() =>
+          scrollRef.current?.scrollToEnd({ animated: true })
+        }
         showsVerticalScrollIndicator={false}
       >
         {messages.length === 0 && !chatMutation.isPending && (
@@ -143,17 +147,31 @@ export function AiAssistant() {
             key={index}
             style={[
               styles.bubble,
-              message.role === "user" ? styles.bubbleUser : styles.bubbleAssistant,
+              message.role === "user"
+                ? styles.bubbleUser
+                : styles.bubbleAssistant,
             ]}
           >
-            <Text style={message.role === "user" ? styles.bubbleTextUser : styles.bubbleText}>
+            <Text
+              style={
+                message.role === "user"
+                  ? styles.bubbleTextUser
+                  : styles.bubbleText
+              }
+            >
               {message.content}
             </Text>
           </View>
         ))}
 
         {chatMutation.isPending && (
-          <View style={[styles.bubble, styles.bubbleAssistant, styles.bubbleThinking]}>
+          <View
+            style={[
+              styles.bubble,
+              styles.bubbleAssistant,
+              styles.bubbleThinking,
+            ]}
+          >
             <ActivityIndicator size="small" color={COLORS.primary} />
             <Text style={styles.bubbleText}>AI is thinking...</Text>
           </View>
@@ -228,7 +246,7 @@ Spec 08 (Mileage) and Spec 11 (Spending Summary) must already exist (the two ins
 
 ## Verify
 
-- [ ] **Spending insight card loads and shows a real insight**: `AiSpendingInsightCard` fetches `.../ai/spending-insight`, shows `"Thinking..."` while loading, then the returned `insight` text. *(Will need the "code-verified only, no device/simulator" caveat this project applies everywhere per `progress-tracker.md`'s Known Gaps, unless a device/simulator is available at implementation time.)*
+- [ ] **Spending insight card loads and shows a real insight**: `AiSpendingInsightCard` fetches `.../ai/spending-insight`, shows `"Thinking..."` while loading, then the returned `insight` text. _(Will need the "code-verified only, no device/simulator" caveat this project applies everywhere per `progress-tracker.md`'s Known Gaps, unless a device/simulator is available at implementation time.)_
 - [ ] **Mileage insight card loads and shows a real insight**: same pattern, `.../ai/mileage-insight`.
 - [ ] **Insight cards don't re-trigger generation on every visit**: confirmed at the API level this session (`cached: true` on a same-bike repeat call) — the RN card itself does nothing special to cause a re-generation, it's a plain `useFetchData` GET.
 - [ ] **Sending a chat message appends it immediately, shows a thinking state, then appends the real reply**: `AiAssistant.tsx`'s `handleSend` — optimistic user-message append before the `mutateAsync` call, `chatMutation.isPending` drives the thinking bubble, `reply` appended as an assistant message on success.

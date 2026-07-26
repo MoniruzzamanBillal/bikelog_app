@@ -61,4 +61,5 @@ No dark-mode system, no theme toggle — `COLORS` is a fixed, single active pale
 - **Pull-to-refresh**: every list screen wraps its `ScrollView` in a `RefreshControl` bound to a local `refreshing` boolean + the query's `refetch()` — matches every list screen in the reference project (`HomePage`, `MonthlyTransaction`, `HistoryPage`), no exceptions.
 - **Swipe actions**: `Swipeable` from `react-native-gesture-handler`, left-swipe reveals delete (red background), right-swipe reveals edit (green background) — track "only one row open at a time" via a `useRef<Swipeable|null>` passed down from the parent list as `onSwipeOpen`, exactly as `HomePage.tsx` does.
 - **Currency**: `৳` prefix literal on every money value, matching both sibling projects exactly.
-- **Rich text / animation / charts**: none, matching both sibling projects' stance — see `project-overview.md`'s Out of Scope.
+- **Rich text / animation**: none, matching both sibling projects' stance — see `project-overview.md`'s Out of Scope.
+- **Charts**: `react-native-gifted-charts` as of spec 18 (Spending/Mileage trend tabs) — a bar chart of monthly totals, plus a donut of the most recent month's category breakdown on Spending. Cards/`CHART_COLORS` reuse the same `COLORS` palette as everything else; no new color system introduced for charts specifically.

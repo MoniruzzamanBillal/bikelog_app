@@ -10,3 +10,14 @@ export type TSpendingSummary = {
   totalSpending: number;
   categoryBreakdown: TCategoryBreakdown[];
 };
+
+export type TMonthlySpending = {
+  targetMonth: string;
+  totalSpending: number;
+  categoryBreakdown: TCategoryBreakdown[];
+};
+
+export type TSpendingTrend = {
+  months: number;
+  monthlySummary: TMonthlySpending[];
+};
