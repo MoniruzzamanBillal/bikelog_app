@@ -92,7 +92,7 @@ export function MaintenanceLogCard({
         )}
       >
         <TouchableOpacity
-          onPress={handleEdit}
+          // onPress={handleEdit}
           style={styles.card}
           activeOpacity={0.7}
         >
