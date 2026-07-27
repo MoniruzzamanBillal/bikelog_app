@@ -1,3 +1,5 @@
+import { TCloudinaryImage } from "./image.types";
+
 export type TMaintenanceLog = {
   _id: string;
   bike: string;
@@ -12,6 +14,7 @@ export type TMaintenanceLog = {
   serviceCenter?: string;
   partsReplaced?: string[];
   notes?: string;
+  serviceImage?: TCloudinaryImage;
   isDeleted: boolean;
   createdAt: string;
   updatedAt: string;

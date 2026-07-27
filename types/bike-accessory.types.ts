@@ -1,3 +1,5 @@
+import { TCloudinaryImage } from "./image.types";
+
 export type TAccessoryUrgency = "immediate" | "medium" | "low";
 export type TAccessoryStatus = "pending" | "purchased" | "cancelled";
 
@@ -8,6 +10,7 @@ export type TBikeAccessory = {
   urgency: TAccessoryUrgency;
   status: TAccessoryStatus;
   price?: number;
+  productImage?: TCloudinaryImage;
   isDeleted: boolean;
   createdAt: string;
   updatedAt: string;

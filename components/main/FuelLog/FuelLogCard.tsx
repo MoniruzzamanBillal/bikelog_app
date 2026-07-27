@@ -1,6 +1,10 @@
-import { StatusBadge } from "@/components/main/shared";
+import {
+  ImagePickerField,
+  StatusBadge,
+  TPickedImageFile,
+} from "@/components/main/shared";
 import { confirmDelete } from "@/components/main/shared/ConfirmDelete";
-import { useDelete } from "@/hooks/useApi";
+import { useDelete, usePut } from "@/hooks/useApi";
 import { TFuelLog } from "@/types/fuel-log.types";
 import { COLORS } from "@/utils/colors";
 import { format } from "date-fns";
@@ -10,6 +14,7 @@ import { TouchableOpacity } from "react-native-gesture-handler";
 import Swipeable, {
   SwipeableMethods,
 } from "react-native-gesture-handler/ReanimatedSwipeable";
+import Toast from "react-native-toast-message";
 import { FuelLogFormModal } from "./FuelLogFormModal";
 
 interface FuelLogCardProps {
@@ -31,6 +36,53 @@ export function FuelLogCard({
   const swipeableRef = useRef<SwipeableMethods>(null);
 
   const deleteMutation = useDelete([["fuelLogs", bikeId]]);
+  const { mutateAsync: uploadImage, isPending: isUploading } = usePut([
+    ["fuelLogs", bikeId],
+  ]);
+  const { mutateAsync: deleteImage, isPending: isDeletingImage } = useDelete([
+    ["fuelLogs", bikeId],
+  ]);
+
+  const handleImageUpload = async (file: TPickedImageFile) => {
+    try {
+      const formData = new FormData();
+      formData.append("image", file as any);
+      await uploadImage({
+        url: `/bikes/${bikeId}/fuel-logs/${fuelLog._id}/image`,
+        payload: formData,
+      });
+      Toast.show({
+        type: "success",
+        text1: "Receipt image uploaded",
+        position: "top",
+      });
+    } catch (error: any) {
+      Toast.show({
+        type: "error",
+        text1: error?.message || "Failed to upload receipt image",
+        position: "top",
+      });
+    }
+  };
+
+  const handleImageDelete = async () => {
+    try {
+      await deleteImage({
+        url: `/bikes/${bikeId}/fuel-logs/${fuelLog._id}/image`,
+      });
+      Toast.show({
+        type: "success",
+        text1: "Receipt image deleted",
+        position: "top",
+      });
+    } catch (error: any) {
+      Toast.show({
+        type: "error",
+        text1: error?.message || "Failed to delete receipt image",
+        position: "top",
+      });
+    }
+  };
 
   const handleSwipeableWillOpen = () => {
     if (
@@ -85,27 +137,40 @@ export function FuelLogCard({
           style={styles.card}
           activeOpacity={0.7}
         >
-          <View style={styles.row}>
-            <Text style={styles.odometer}>
-              Odometer: {fuelLog.odometerReading} km
-            </Text>
-            <Text style={styles.date}>
-              {format(new Date(fuelLog.date), "dd MMM")}
-            </Text>
-          </View>
-          <Text style={styles.details}>
-            {fuelLog.litersAdded}L @ ৳{fuelLog.pricePerLiter}/L
-          </Text>
-          <Text style={styles.totalCost}>Total: ৳{totalCost.toFixed(2)}</Text>
-          {fuelLog.isFullTank && (
-            <View style={styles.badgeContainer}>
-              <StatusBadge
-                label="Full Tank"
-                colorKey="true"
-                colors={fullTankColors}
-              />
+          <View style={styles.cardBody}>
+            <ImagePickerField
+              label="Receipt"
+              value={fuelLog.receiptImage}
+              onUpload={handleImageUpload}
+              onDelete={handleImageDelete}
+              uploading={isUploading || isDeletingImage}
+            />
+            <View style={styles.cardContent}>
+              <View style={styles.row}>
+                <Text style={styles.odometer}>
+                  Odometer: {fuelLog.odometerReading} km
+                </Text>
+                <Text style={styles.date}>
+                  {format(new Date(fuelLog.date), "dd MMM")}
+                </Text>
+              </View>
+              <Text style={styles.details}>
+                {fuelLog.litersAdded}L @ ৳{fuelLog.pricePerLiter}/L
+              </Text>
+              <Text style={styles.totalCost}>
+                Total: ৳{totalCost.toFixed(2)}
+              </Text>
+              {fuelLog.isFullTank && (
+                <View style={styles.badgeContainer}>
+                  <StatusBadge
+                    label="Full Tank"
+                    colorKey="true"
+                    colors={fullTankColors}
+                  />
+                </View>
+              )}
             </View>
-          )}
+          </View>
         </TouchableOpacity>
       </Swipeable>
 
@@ -130,6 +195,13 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 2,
     elevation: 2,
+  },
+  cardBody: {
+    flexDirection: "row",
+    gap: 12,
+  },
+  cardContent: {
+    flex: 1,
   },
   row: {
     flexDirection: "row",

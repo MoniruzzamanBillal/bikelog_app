@@ -1,10 +1,12 @@
 import {
   accessoryStatusColors,
   accessoryUrgencyColors,
+  ImagePickerField,
   StatusBadge,
+  TPickedImageFile,
 } from "@/components/main/shared";
 import { confirmDelete } from "@/components/main/shared/ConfirmDelete";
-import { useDelete } from "@/hooks/useApi";
+import { useDelete, usePut } from "@/hooks/useApi";
 import { TBikeAccessory } from "@/types/bike-accessory.types";
 import { COLORS } from "@/utils/colors";
 import { useRef, useState } from "react";
@@ -13,6 +15,7 @@ import { TouchableOpacity } from "react-native-gesture-handler";
 import Swipeable, {
   SwipeableMethods,
 } from "react-native-gesture-handler/ReanimatedSwipeable";
+import Toast from "react-native-toast-message";
 import { BikeAccessoryFormModal } from "./BikeAccessoryFormModal";
 
 interface BikeAccessoryCardProps {
@@ -30,6 +33,53 @@ export function BikeAccessoryCard({
   const swipeableRef = useRef<SwipeableMethods>(null);
 
   const deleteMutation = useDelete([["accessories", bikeId]]);
+  const { mutateAsync: uploadImage, isPending: isUploading } = usePut([
+    ["accessories", bikeId],
+  ]);
+  const { mutateAsync: deleteImage, isPending: isDeletingImage } = useDelete([
+    ["accessories", bikeId],
+  ]);
+
+  const handleImageUpload = async (file: TPickedImageFile) => {
+    try {
+      const formData = new FormData();
+      formData.append("image", file as any);
+      await uploadImage({
+        url: `/bikes/${bikeId}/accessories/${accessory._id}/image`,
+        payload: formData,
+      });
+      Toast.show({
+        type: "success",
+        text1: "Product image uploaded",
+        position: "top",
+      });
+    } catch (error: any) {
+      Toast.show({
+        type: "error",
+        text1: error?.message || "Failed to upload image",
+        position: "top",
+      });
+    }
+  };
+
+  const handleImageDelete = async () => {
+    try {
+      await deleteImage({
+        url: `/bikes/${bikeId}/accessories/${accessory._id}/image`,
+      });
+      Toast.show({
+        type: "success",
+        text1: "Product image deleted",
+        position: "top",
+      });
+    } catch (error: any) {
+      Toast.show({
+        type: "error",
+        text1: error?.message || "Failed to delete image",
+        position: "top",
+      });
+    }
+  };
 
   const handleSwipeableWillOpen = () => {
     if (
@@ -82,21 +132,34 @@ export function BikeAccessoryCard({
           style={styles.card}
           activeOpacity={0.7}
         >
-          <Text style={styles.name}>{accessory.name}</Text>
-          {accessory.price !== undefined && (
-            <Text style={styles.price}>৳{accessory.price.toFixed(2)}</Text>
-          )}
-          <View style={styles.badgesRow}>
-            <StatusBadge
-              label={accessory.urgency}
-              colorKey={accessory.urgency}
-              colors={accessoryUrgencyColors}
+          <View style={styles.cardBody}>
+            <ImagePickerField
+              label="Product"
+              value={accessory.productImage}
+              onUpload={handleImageUpload}
+              onDelete={handleImageDelete}
+              uploading={isUploading || isDeletingImage}
             />
-            <StatusBadge
-              label={accessory.status}
-              colorKey={accessory.status}
-              colors={accessoryStatusColors}
-            />
+            <View style={styles.cardContent}>
+              <Text style={styles.name}>{accessory.name}</Text>
+              {accessory.price !== undefined && (
+                <Text style={styles.price}>
+                  ৳{accessory.price.toFixed(2)}
+                </Text>
+              )}
+              <View style={styles.badgesRow}>
+                <StatusBadge
+                  label={accessory.urgency}
+                  colorKey={accessory.urgency}
+                  colors={accessoryUrgencyColors}
+                />
+                <StatusBadge
+                  label={accessory.status}
+                  colorKey={accessory.status}
+                  colors={accessoryStatusColors}
+                />
+              </View>
+            </View>
           </View>
         </TouchableOpacity>
       </Swipeable>
@@ -122,6 +185,13 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 2,
     elevation: 2,
+  },
+  cardBody: {
+    flexDirection: "row",
+    gap: 12,
+  },
+  cardContent: {
+    flex: 1,
   },
   name: {
     fontSize: 16,
