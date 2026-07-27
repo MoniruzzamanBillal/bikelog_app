@@ -3,18 +3,21 @@ import { useLocalSearchParams } from "expo-router";
 import { useState } from "react";
 import { StyleSheet, TouchableOpacity, View } from "react-native";
 import { Text } from "react-native-paper";
+import { AiMileageInsightCard } from "./AiMileageInsightCard";
 import { LifetimeMileageTab } from "./LifetimeMileageTab";
 import { MileageHistoryTab } from "./MileageHistoryTab";
+import { MileageTrendTab } from "./MileageTrendTab";
 import { MonthlyMileageTab } from "./MonthlyMileageTab";
 import { YearlyMileageTab } from "./YearlyMileageTab";
 
-type TTab = "history" | "monthly" | "yearly" | "lifetime";
+type TTab = "history" | "monthly" | "yearly" | "lifetime" | "trends";
 
 const TABS: { key: TTab; label: string }[] = [
   { key: "history", label: "History" },
   { key: "monthly", label: "Monthly" },
   { key: "yearly", label: "Yearly" },
   { key: "lifetime", label: "Lifetime" },
+  { key: "trends", label: "Trends" },
 ];
 
 export function Mileage() {
@@ -24,6 +27,8 @@ export function Mileage() {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Mileage</Text>
+
+      <AiMileageInsightCard bikeId={bikeId} />
 
       <View style={styles.tabBar}>
         {TABS.map(({ key, label }) => (
@@ -49,6 +54,7 @@ export function Mileage() {
         {activeTab === "monthly" && <MonthlyMileageTab bikeId={bikeId} />}
         {activeTab === "yearly" && <YearlyMileageTab bikeId={bikeId} />}
         {activeTab === "lifetime" && <LifetimeMileageTab bikeId={bikeId} />}
+        {activeTab === "trends" && <MileageTrendTab bikeId={bikeId} />}
       </View>
     </View>
   );
