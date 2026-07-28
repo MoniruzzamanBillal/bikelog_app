@@ -14,3 +14,4 @@ export { MonthStepper } from "./MonthStepper";
 export { ImagePickerField } from "./ImagePickerField";
 export type { TPickedImageFile } from "./ImagePickerField";
 export { MultiImagePickerField } from "./MultiImagePickerField";
+export { ImageViewerModal } from "./ImageViewerModal";

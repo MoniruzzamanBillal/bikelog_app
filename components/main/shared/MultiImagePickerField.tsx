@@ -3,11 +3,13 @@ import { COLORS } from "@/utils/colors";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
+import { useState } from "react";
 import { Alert, StyleSheet, View } from "react-native";
 import { TouchableOpacity } from "react-native-gesture-handler";
 import { ActivityIndicator } from "react-native-paper";
 import Toast from "react-native-toast-message";
 import { TPickedImageFile } from "./ImagePickerField";
+import { ImageViewerModal } from "./ImageViewerModal";
 
 type TGalleryImage = TCloudinaryImage & { _id: string };
 
@@ -38,6 +40,7 @@ export function MultiImagePickerField({
   max = MAX_IMAGES_PER_REQUEST,
 }: MultiImagePickerFieldProps) {
   const remaining = Math.max(max - images.length, 0);
+  const [viewerIndex, setViewerIndex] = useState<number | null>(null);
 
   const takePhoto = async () => {
     const permission = await ImagePicker.requestCameraPermissionsAsync();
@@ -103,15 +106,19 @@ export function MultiImagePickerField({
 
   return (
     <View style={styles.row}>
-      {images.map((image) => (
+      {images.map((image, index) => (
         <View key={image._id} style={styles.wrapper}>
-          <View style={styles.tile}>
+          <TouchableOpacity
+            style={styles.tile}
+            onPress={() => setViewerIndex(index)}
+            activeOpacity={0.8}
+          >
             <Image
               source={{ uri: image.url }}
               style={styles.image}
               contentFit="cover"
             />
-          </View>
+          </TouchableOpacity>
           <TouchableOpacity
             onPress={() => handleRemove(image._id)}
             style={styles.deleteBadge}
@@ -143,6 +150,16 @@ export function MultiImagePickerField({
           )}
         </TouchableOpacity>
       )}
+
+      <ImageViewerModal
+        visible={viewerIndex !== null}
+        images={images.map((image) => ({
+          url: image.url,
+          publicId: image.publicId,
+        }))}
+        initialIndex={viewerIndex ?? 0}
+        onDismiss={() => setViewerIndex(null)}
+      />
     </View>
   );
 }
@@ -180,7 +197,7 @@ const styles = StyleSheet.create({
   },
   deleteBadge: {
     position: "absolute",
-    top: -6,
+    top: -70,
     right: -6,
     width: 18,
     height: 18,
