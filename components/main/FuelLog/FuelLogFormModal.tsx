@@ -1,16 +1,13 @@
+import { DatePickerField } from "@/components/main/shared";
+import { usePatch, usePost } from "@/hooks/useApi";
+import { TCreateFuelLogPayload, TFuelLog } from "@/types/fuel-log.types";
+import { COLORS } from "@/utils/colors";
+import { format } from "date-fns";
 import { useEffect, useState } from "react";
 import { StyleSheet, TouchableOpacity, View } from "react-native";
-import { format } from "date-fns";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { Button, Modal, Portal, Text, TextInput } from "react-native-paper";
 import Toast from "react-native-toast-message";
-import { DatePickerField } from "@/components/main/shared";
-import { usePatch, usePost } from "@/hooks/useApi";
-import { COLORS } from "@/utils/colors";
-import {
-  TFuelLog,
-  TCreateFuelLogPayload,
-} from "@/types/fuel-log.types";
 
 const DECIMAL_REGEX = /^\d+(\.\d{0,2})?$/;
 const INT_REGEX = /^\d+$/;
@@ -113,13 +110,21 @@ export function FuelLogFormModal({
           url: `/bikes/${bikeId}/fuel-logs/${initialFuelLog._id}`,
           payload,
         });
-        Toast.show({ type: "success", text1: "Fuel log updated", position: "top" });
+        Toast.show({
+          type: "success",
+          text1: "Fuel log updated",
+          position: "top",
+        });
       } else {
         const result = await createMutation.mutateAsync({
           url: `/bikes/${bikeId}/fuel-logs`,
           payload,
         });
-        Toast.show({ type: "success", text1: "Fuel log added", position: "top" });
+        Toast.show({
+          type: "success",
+          text1: "Fuel log added",
+          position: "top",
+        });
         if (result?.data?.mileageRecordClosed) {
           Toast.show({
             type: "success",
@@ -148,7 +153,11 @@ export function FuelLogFormModal({
 
   return (
     <Portal>
-      <Modal visible={open} onDismiss={onClose} contentContainerStyle={styles.modal}>
+      <Modal
+        visible={open}
+        onDismiss={onClose}
+        contentContainerStyle={styles.modal}
+      >
         <KeyboardAwareScrollView showsVerticalScrollIndicator={false}>
           <Text style={styles.title}>
             {initialFuelLog ? "Edit Fuel Log" : "Add Fuel Log"}
@@ -185,7 +194,9 @@ export function FuelLogFormModal({
               onPress={() => setIsFullTank(true)}
               disabled={isPending}
             >
-              <Text style={[styles.pillText, isFullTank && styles.pillTextActive]}>
+              <Text
+                style={[styles.pillText, isFullTank && styles.pillTextActive]}
+              >
                 Yes
               </Text>
             </TouchableOpacity>
@@ -194,7 +205,9 @@ export function FuelLogFormModal({
               onPress={() => setIsFullTank(false)}
               disabled={isPending}
             >
-              <Text style={[styles.pillText, !isFullTank && styles.pillTextActive]}>
+              <Text
+                style={[styles.pillText, !isFullTank && styles.pillTextActive]}
+              >
                 No
               </Text>
             </TouchableOpacity>
@@ -254,7 +267,11 @@ export function FuelLogFormModal({
             {initialFuelLog ? "Update" : "Add"}
           </Button>
 
-          <Button onPress={onClose} disabled={isPending} style={styles.cancelButton}>
+          <Button
+            onPress={onClose}
+            disabled={isPending}
+            style={styles.cancelButton}
+          >
             Cancel
           </Button>
         </KeyboardAwareScrollView>

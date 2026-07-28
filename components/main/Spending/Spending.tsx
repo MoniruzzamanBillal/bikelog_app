@@ -213,7 +213,12 @@ export function Spending() {
 
       <AiSpendingInsightCard bikeId={bikeId} />
 
-      <View style={styles.tabBar}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={styles.tabBarScroll}
+        contentContainerStyle={styles.tabBar}
+      >
         {TABS.map(({ key, label }) => (
           <TouchableOpacity
             key={key}
@@ -230,7 +235,7 @@ export function Spending() {
             </Text>
           </TouchableOpacity>
         ))}
-      </View>
+      </ScrollView>
 
       <View style={styles.tabContent}>
         {activeTab === "month" && <MonthTab bikeId={bikeId} />}
@@ -254,8 +259,12 @@ const styles = StyleSheet.create({
     color: COLORS.text,
     marginBottom: 16,
   },
+  tabBarScroll: {
+    flexGrow: 0,
+  },
   tabBar: {
     flexDirection: "row",
+    alignItems: "center",
     gap: 8,
     marginBottom: 16,
   },

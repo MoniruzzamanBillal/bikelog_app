@@ -1,5 +1,6 @@
+import { ImagePickerField, TPickedImageFile } from "@/components/main/shared";
 import { confirmDelete } from "@/components/main/shared/ConfirmDelete";
-import { useDelete } from "@/hooks/useApi";
+import { useDelete, usePut } from "@/hooks/useApi";
 import { TMaintenanceType } from "@/types/catalog.types";
 import { TMaintenanceLog } from "@/types/maintenance-log.types";
 import { COLORS } from "@/utils/colors";
@@ -10,6 +11,7 @@ import { TouchableOpacity } from "react-native-gesture-handler";
 import Swipeable, {
   SwipeableMethods,
 } from "react-native-gesture-handler/ReanimatedSwipeable";
+import Toast from "react-native-toast-message";
 import { MaintenanceLogFormModal } from "./MaintenanceLogFormModal";
 
 interface MaintenanceLogCardProps {
@@ -44,6 +46,53 @@ export function MaintenanceLogCard({
     ["maintenanceLogs", bikeId],
     ["reminders", bikeId],
   ]);
+  const { mutateAsync: uploadImage, isPending: isUploading } = usePut([
+    ["maintenanceLogs", bikeId],
+  ]);
+  const { mutateAsync: deleteImage, isPending: isDeletingImage } = useDelete([
+    ["maintenanceLogs", bikeId],
+  ]);
+
+  const handleImageUpload = async (file: TPickedImageFile) => {
+    try {
+      const formData = new FormData();
+      formData.append("image", file as any);
+      await uploadImage({
+        url: `/bikes/${bikeId}/maintenance-logs/${log._id}/image`,
+        payload: formData,
+      });
+      Toast.show({
+        type: "success",
+        text1: "Service image uploaded",
+        position: "top",
+      });
+    } catch (error: any) {
+      Toast.show({
+        type: "error",
+        text1: error?.message || "Failed to upload image",
+        position: "top",
+      });
+    }
+  };
+
+  const handleImageDelete = async () => {
+    try {
+      await deleteImage({
+        url: `/bikes/${bikeId}/maintenance-logs/${log._id}/image`,
+      });
+      Toast.show({
+        type: "success",
+        text1: "Service image deleted",
+        position: "top",
+      });
+    } catch (error: any) {
+      Toast.show({
+        type: "error",
+        text1: error?.message || "Failed to delete image",
+        position: "top",
+      });
+    }
+  };
 
   const handleSwipeableWillOpen = () => {
     if (
@@ -92,41 +141,52 @@ export function MaintenanceLogCard({
         )}
       >
         <TouchableOpacity
-          onPress={handleEdit}
+          // onPress={handleEdit}
           style={styles.card}
           activeOpacity={0.7}
         >
-          <View style={styles.cardHeader}>
-            <Text style={styles.typeName}>
-              {getTypeName(log, maintenanceTypes)}
-            </Text>
-            <Text style={styles.date}>
-              {format(new Date(log.serviceDate), "dd MMM yyyy")}
-            </Text>
+          <View style={styles.cardBody}>
+            <ImagePickerField
+              label="Service"
+              value={log.serviceImage}
+              onUpload={handleImageUpload}
+              onDelete={handleImageDelete}
+              uploading={isUploading || isDeletingImage}
+            />
+            <View style={styles.cardContent}>
+              <View style={styles.cardHeader}>
+                <Text style={styles.typeName}>
+                  {getTypeName(log, maintenanceTypes)}
+                </Text>
+                <Text style={styles.date}>
+                  {format(new Date(log.serviceDate), "dd MMM yyyy")}
+                </Text>
+              </View>
+              <Text style={styles.odometer}>
+                Odometer: {log.odometerReading.toLocaleString()} km
+              </Text>
+              <View style={styles.detailRow}>
+                <Text style={styles.detail}>
+                  Cost: ৳{log.cost.toLocaleString()}
+                </Text>
+                <Text style={styles.detail}>
+                  Interval: {log.intervalKmUsed.toLocaleString()} km
+                </Text>
+              </View>
+              <Text style={styles.detail}>
+                Next due: {log.nextDueOdometer.toLocaleString()} km
+              </Text>
+              {log.serviceCenter && (
+                <Text style={styles.detail}>At: {log.serviceCenter}</Text>
+              )}
+              {log.partsReplaced && log.partsReplaced.length > 0 && (
+                <Text style={styles.detail}>
+                  Parts: {log.partsReplaced.join(", ")}
+                </Text>
+              )}
+              {log.notes && <Text style={styles.notes}>{log.notes}</Text>}
+            </View>
           </View>
-          <Text style={styles.odometer}>
-            Odometer: {log.odometerReading.toLocaleString()} km
-          </Text>
-          <View style={styles.detailRow}>
-            <Text style={styles.detail}>
-              Cost: ৳{log.cost.toLocaleString()}
-            </Text>
-            <Text style={styles.detail}>
-              Interval: {log.intervalKmUsed.toLocaleString()} km
-            </Text>
-          </View>
-          <Text style={styles.detail}>
-            Next due: {log.nextDueOdometer.toLocaleString()} km
-          </Text>
-          {log.serviceCenter && (
-            <Text style={styles.detail}>At: {log.serviceCenter}</Text>
-          )}
-          {log.partsReplaced && log.partsReplaced.length > 0 && (
-            <Text style={styles.detail}>
-              Parts: {log.partsReplaced.join(", ")}
-            </Text>
-          )}
-          {log.notes && <Text style={styles.notes}>{log.notes}</Text>}
         </TouchableOpacity>
       </Swipeable>
 
@@ -151,6 +211,13 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 2,
     elevation: 2,
+  },
+  cardBody: {
+    flexDirection: "row",
+    gap: 12,
+  },
+  cardContent: {
+    flex: 1,
   },
   cardHeader: {
     flexDirection: "row",

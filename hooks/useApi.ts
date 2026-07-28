@@ -1,4 +1,4 @@
-import { apiDelete, apiGet, apiPatch, apiPost } from "@/utils/api";
+import { apiDelete, apiGet, apiPatch, apiPost, apiPut } from "@/utils/api";
 import {
   useMutation,
   useQuery,
@@ -66,6 +66,30 @@ export const usePatch = (invalidateQueriesKeys?: string[][]) => {
       payload: Record<string, unknown> | FormData;
     }) => {
       return apiPatch(params.url, params.payload);
+    },
+    onSuccess: () => {
+      if (invalidateQueriesKeys) {
+        invalidateQueriesKeys.forEach((key) => {
+          queryClient.invalidateQueries({ queryKey: key });
+        });
+      }
+    },
+    onError: (error) => {
+      // toast.error(error.message || "Failed to update.");
+      throw error;
+    },
+  });
+};
+
+export const usePut = (invalidateQueriesKeys?: string[][]) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (params: {
+      url: string;
+      payload: Record<string, unknown> | FormData;
+    }) => {
+      return apiPut(params.url, params.payload);
     },
     onSuccess: () => {
       if (invalidateQueriesKeys) {

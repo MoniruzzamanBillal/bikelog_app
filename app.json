@@ -40,7 +40,14 @@
           }
         }
       ],
-      "@react-native-community/datetimepicker"
+      "@react-native-community/datetimepicker",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow $(PRODUCT_NAME) to access your photos to attach receipt/service/damage photos.",
+          "cameraPermission": "Allow $(PRODUCT_NAME) to access your camera to take receipt/service/damage photos."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

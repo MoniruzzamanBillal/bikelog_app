@@ -1,6 +1,11 @@
-import { issueStatusColors, StatusBadge } from "@/components/main/shared";
+import {
+  issueStatusColors,
+  MultiImagePickerField,
+  StatusBadge,
+  TPickedImageFile,
+} from "@/components/main/shared";
 import { confirmDelete } from "@/components/main/shared/ConfirmDelete";
-import { useDelete, usePatch } from "@/hooks/useApi";
+import { useDelete, usePatch, usePost } from "@/hooks/useApi";
 import { TBikeIssue } from "@/types/bike-issue.types";
 import { COLORS } from "@/utils/colors";
 import { format } from "date-fns";
@@ -30,6 +35,53 @@ export function BikeIssueCard({
 
   const deleteMutation = useDelete([["issues", bikeId]]);
   const toggleStatusMutation = usePatch([["issues", bikeId]]);
+  const { mutateAsync: addImages, isPending: isAdding } = usePost([
+    ["issues", bikeId],
+  ]);
+  const { mutateAsync: removeImage, isPending: isRemoving } = useDelete([
+    ["issues", bikeId],
+  ]);
+
+  const handleAddImages = async (files: TPickedImageFile[]) => {
+    try {
+      const formData = new FormData();
+      files.forEach((file) => formData.append("images", file as any));
+      await addImages({
+        url: `/bikes/${bikeId}/issues/${issue._id}/images`,
+        payload: formData,
+      });
+      Toast.show({
+        type: "success",
+        text1: "Images added",
+        position: "top",
+      });
+    } catch (error: any) {
+      Toast.show({
+        type: "error",
+        text1: error?.message || "Failed to add images",
+        position: "top",
+      });
+    }
+  };
+
+  const handleRemoveImage = async (imageId: string) => {
+    try {
+      await removeImage({
+        url: `/bikes/${bikeId}/issues/${issue._id}/images/${imageId}`,
+      });
+      Toast.show({
+        type: "success",
+        text1: "Image deleted",
+        position: "top",
+      });
+    } catch (error: any) {
+      Toast.show({
+        type: "error",
+        text1: error?.message || "Failed to delete image",
+        position: "top",
+      });
+    }
+  };
 
   const handleSwipeableWillOpen = () => {
     if (
@@ -99,7 +151,7 @@ export function BikeIssueCard({
         )}
       >
         <TouchableOpacity
-          onPress={handleEdit}
+          // onPress={handleEdit}
           style={styles.card}
           activeOpacity={0.7}
         >
@@ -121,6 +173,15 @@ export function BikeIssueCard({
           <Text style={styles.date}>
             Reported: {format(new Date(issue.dateReported), "dd MMM yyyy")}
           </Text>
+
+          <View style={styles.imagesRow}>
+            <MultiImagePickerField
+              images={issue.images ?? []}
+              onAdd={handleAddImages}
+              onRemove={handleRemoveImage}
+              uploading={isAdding || isRemoving}
+            />
+          </View>
 
           <Button
             mode="outlined"
@@ -181,6 +242,9 @@ const styles = StyleSheet.create({
   date: {
     fontSize: 13,
     color: COLORS.textLight,
+    marginBottom: 10,
+  },
+  imagesRow: {
     marginBottom: 10,
   },
   statusButton: {

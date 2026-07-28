@@ -11,3 +11,6 @@ export { SelectPickerField } from "./SelectPickerField";
 export { DatePickerField } from "./DatePickerField";
 export { YearStepper } from "./YearStepper";
 export { MonthStepper } from "./MonthStepper";
+export { ImagePickerField } from "./ImagePickerField";
+export type { TPickedImageFile } from "./ImagePickerField";
+export { MultiImagePickerField } from "./MultiImagePickerField";

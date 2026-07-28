@@ -1,3 +1,5 @@
+import { TCloudinaryImage } from "./image.types";
+
 export type TFuelLog = {
   _id: string;
   bike: string;
@@ -9,6 +11,7 @@ export type TFuelLog = {
   fuelStation?: string;
   date: string;
   notes?: string;
+  receiptImage?: TCloudinaryImage;
   isDeleted: boolean;
   createdAt: string;
   updatedAt: string;

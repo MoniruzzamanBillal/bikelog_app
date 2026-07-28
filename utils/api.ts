@@ -15,6 +15,11 @@ export const apiPatch = async (endPoint: string, payLoad: any) => {
   return resule?.data;
 };
 
+export const apiPut = async (endPoint: string, payLoad: any) => {
+  const resule = await axiosInstance.put(endPoint, payLoad);
+  return resule?.data;
+};
+
 export const apiDelete = async (endPoint: string) => {
   const resule = await axiosInstance.delete(endPoint);
   return resule?.data;
