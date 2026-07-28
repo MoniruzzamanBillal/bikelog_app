@@ -3,10 +3,12 @@ import { COLORS } from "@/utils/colors";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
+import { useState } from "react";
 import { Alert, StyleSheet, View } from "react-native";
 import { TouchableOpacity } from "react-native-gesture-handler";
 import { ActivityIndicator } from "react-native-paper";
 import Toast from "react-native-toast-message";
+import { ImageViewerModal } from "./ImageViewerModal";
 
 export type TPickedImageFile = { uri: string; name: string; type: string };
 
@@ -35,6 +37,8 @@ export function ImagePickerField({
   uploading,
   disabled,
 }: ImagePickerFieldProps) {
+  const [viewerOpen, setViewerOpen] = useState(false);
+
   const takePhoto = async () => {
     const permission = await ImagePicker.requestCameraPermissionsAsync();
     if (!permission.granted) {
@@ -75,8 +79,7 @@ export function ImagePickerField({
     }
   };
 
-  const handlePress = () => {
-    if (uploading || disabled) return;
+  const openActionSheet = () => {
     Alert.alert("Add Photo", undefined, [
       { text: "Take Photo", onPress: takePhoto },
       { text: "Choose from Library", onPress: pickFromLibrary },
@@ -84,11 +87,32 @@ export function ImagePickerField({
     ]);
   };
 
+  const handlePress = () => {
+    if (uploading || disabled) return;
+    // With a value already set, tapping the tile views it full-screen —
+    // "replace" moved to its own pencil badge. With no value, there's
+    // nothing to view yet, so tapping still opens the action sheet.
+    if (value) {
+      setViewerOpen(true);
+    } else {
+      openActionSheet();
+    }
+  };
+
+  const handleReplace = () => {
+    if (uploading || disabled) return;
+    openActionSheet();
+  };
+
   const handleDelete = () => {
-    Alert.alert("Delete?", `Are you sure you want to delete this ${label.toLowerCase()}?`, [
-      { text: "Cancel", style: "cancel" },
-      { text: "Delete", style: "destructive", onPress: onDelete },
-    ]);
+    Alert.alert(
+      "Delete?",
+      `Are you sure you want to delete this ${label.toLowerCase()}?`,
+      [
+        { text: "Cancel", style: "cancel" },
+        { text: "Delete", style: "destructive", onPress: onDelete },
+      ],
+    );
   };
 
   return (
@@ -123,6 +147,20 @@ export function ImagePickerField({
         )}
       </View>
 
+      {!!value && !uploading && !disabled && (
+        <TouchableOpacity
+          onPress={handleReplace}
+          style={styles.editBadge}
+          hitSlop={8}
+        >
+          <MaterialCommunityIcons
+            name="pencil"
+            size={11}
+            color={COLORS.white}
+          />
+        </TouchableOpacity>
+      )}
+
       {!!value && !uploading && (
         <TouchableOpacity
           onPress={handleDelete}
@@ -131,6 +169,15 @@ export function ImagePickerField({
         >
           <MaterialCommunityIcons name="close" size={12} color={COLORS.white} />
         </TouchableOpacity>
+      )}
+
+      {!!value && (
+        <ImageViewerModal
+          visible={viewerOpen}
+          images={[value]}
+          initialIndex={0}
+          onDismiss={() => setViewerOpen(false)}
+        />
       )}
     </View>
   );
@@ -180,12 +227,23 @@ const styles = StyleSheet.create({
   },
   deleteBadge: {
     position: "absolute",
-    top: -6,
+    top: -75,
     right: -6,
     width: 18,
     height: 18,
     borderRadius: 9,
     backgroundColor: COLORS.danger,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  editBadge: {
+    position: "absolute",
+    top: -75,
+    right: 16,
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: COLORS.primary,
     alignItems: "center",
     justifyContent: "center",
   },

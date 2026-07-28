@@ -1,12 +1,21 @@
-import { useRef, useState } from "react";
-import { RefreshControl, ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
-import { Button, Text } from "react-native-paper";
-import { useLocalSearchParams } from "expo-router";
-import { SwipeableMethods } from "react-native-gesture-handler/ReanimatedSwipeable";
 import { EmptyState, SectionLoading } from "@/components/main/shared";
 import { useFetchData } from "@/hooks/useApi";
+import {
+  TBikeIssueStatus,
+  TBikeIssuesApiResponse,
+} from "@/types/bike-issue.types";
 import { COLORS } from "@/utils/colors";
-import { TBikeIssueStatus, TBikeIssuesApiResponse } from "@/types/bike-issue.types";
+import { useLocalSearchParams } from "expo-router";
+import { useRef, useState } from "react";
+import {
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { SwipeableMethods } from "react-native-gesture-handler/ReanimatedSwipeable";
+import { Button, Text } from "react-native-paper";
 import { BikeIssueCard } from "./BikeIssueCard";
 import { BikeIssueFormModal } from "./BikeIssueFormModal";
 
@@ -15,7 +24,9 @@ const LIMIT = 10;
 export function BikeIssue() {
   const { bikeId } = useLocalSearchParams<{ bikeId: string }>();
   const [page, setPage] = useState(1);
-  const [statusFilter, setStatusFilter] = useState<TBikeIssueStatus | null>(null);
+  const [statusFilter, setStatusFilter] = useState<TBikeIssueStatus | null>(
+    null,
+  );
   const [modalOpen, setModalOpen] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const openSwipeableRef = useRef<SwipeableMethods | null>(null);
@@ -46,26 +57,33 @@ export function BikeIssue() {
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Issues</Text>
-        <Button
-          mode="contained"
-          onPress={() => setModalOpen(true)}
-        >
+        <Button mode="contained" onPress={() => setModalOpen(true)}>
           Report
         </Button>
       </View>
 
       <View style={styles.filterRow}>
-        {([null, "open", "resolved"] as (TBikeIssueStatus | null)[]).map((f) => (
-          <TouchableOpacity
-            key={f ?? "all"}
-            style={[styles.filterBtn, statusFilter === f && styles.filterBtnActive]}
-            onPress={() => handleFilterChange(f)}
-          >
-            <Text style={[styles.filterBtnText, statusFilter === f && styles.filterBtnTextActive]}>
-              {f === null ? "All" : f === "open" ? "Open" : "Resolved"}
-            </Text>
-          </TouchableOpacity>
-        ))}
+        {([null, "open", "resolved"] as (TBikeIssueStatus | null)[]).map(
+          (f) => (
+            <TouchableOpacity
+              key={f ?? "all"}
+              style={[
+                styles.filterBtn,
+                statusFilter === f && styles.filterBtnActive,
+              ]}
+              onPress={() => handleFilterChange(f)}
+            >
+              <Text
+                style={[
+                  styles.filterBtnText,
+                  statusFilter === f && styles.filterBtnTextActive,
+                ]}
+              >
+                {f === null ? "All" : f === "open" ? "Open" : "Resolved"}
+              </Text>
+            </TouchableOpacity>
+          ),
+        )}
       </View>
 
       {isLoading ? (
@@ -76,7 +94,10 @@ export function BikeIssue() {
         <>
           <ScrollView
             refreshControl={
-              <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={handleRefresh}
+              />
             }
             showsVerticalScrollIndicator={false}
           >
