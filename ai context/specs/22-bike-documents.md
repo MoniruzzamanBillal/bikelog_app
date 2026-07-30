@@ -1,6 +1,6 @@
 # 22: Bike Documents (Papers/IDs, mixed image+PDF, expiry tracking)
 
-Status: ⛔ Not started
+Status: ✅ Complete
 
 ## Goal
 
@@ -144,17 +144,17 @@ export type TUpdateBikeDocumentPayload = Partial<TCreateBikeDocumentPayload>;
 
 ## Implementation
 
-1. **`npx expo install expo-document-picker`** — check if an `app.json` plugin entry is actually required for the installed version; add one only if so.
-2. **`types/document-file.types.ts`** — `TDocumentFile`, `TPickedFile`.
-3. **`types/bike-document.types.ts`** — `IBikeDocument`, `TCreateBikeDocumentPayload`, `TUpdateBikeDocumentPayload`.
-4. **`components/main/shared/MultiFilePickerField.tsx`** — new file, exported from `components/main/shared/index.ts`.
-5. **Create `components/main/BikeDocument/` folder** with `BikeDocument.tsx`, `BikeDocumentCard.tsx`, `BikeDocumentFormModal.tsx` (plain `useState` fields: `title`, `description`, `expiryDate`; single required-field check on `title`, same manual-validation convention as `BikeIssueFormModal`).
-6. **`app/bikes/[bikeId]/documents.tsx`** — one-line route wrapper.
-7. **Hub tile**: `components/main/Bike/BikeDetailPage.tsx`'s `TILES` array — add `{ label: "Documents", icon: "file-document-outline", segment: "documents" }` alongside the existing tiles.
-8. **Test CRUD**: create, edit (title/description/expiryDate), delete documents.
-9. **Test file attach**: take a photo, pick a library image, and pick a PDF in the same add action; confirm mixed tiles render correctly and a PDF tile opens via `Linking.openURL`.
-10. **Test cap**: picking more than the remaining allowance queues only the allowed number with an info toast.
-11. **Run `expo lint`** and `npx tsc --noEmit`.
+1. ✅ **`npx expo install expo-document-picker`** — check if an `app.json` plugin entry is actually required for the installed version; add one only if so. Installed `expo-document-picker@14.0.8` clean, no version-mismatch warning from `expo install`. Checked its config plugin (`plugin/src/withDocumentPickerIOS.ts`): it only sets iCloud entitlements, gated behind `ios.usesIcloudStorage` (which `app.json` doesn't set) — a no-op for this app, so no `app.json` plugin entry was added.
+2. ✅ **`types/document-file.types.ts`** — `TDocumentFile`, `TPickedFile`.
+3. ✅ **`types/bike-document.types.ts`** — `IBikeDocument`, `TCreateBikeDocumentPayload`, `TUpdateBikeDocumentPayload` (plus `TBikeDocumentsApiResponse` for the paginated list envelope, matching `TBikeIssuesApiResponse`'s real shape).
+4. ✅ **`components/main/shared/MultiFilePickerField.tsx`** — new file, exported from `components/main/shared/index.ts`.
+5. ✅ **Create `components/main/BikeDocument/` folder** with `BikeDocument.tsx`, `BikeDocumentCard.tsx`, `BikeDocumentFormModal.tsx` (plain `useState` fields: `title`, `description`, `expiryDate`; single required-field check on `title`, same manual-validation convention as `BikeIssueFormModal`).
+6. ✅ **`app/bikes/[bikeId]/documents.tsx`** — one-line route wrapper.
+7. ✅ **Hub tile**: `components/main/Bike/BikeDetailPage.tsx`'s `TILES` array — add `{ label: "Documents", icon: "file-document-outline", segment: "documents" }` alongside the existing tiles.
+8. ✅ **Test CRUD**: create, edit (title/description/expiryDate), delete documents. *(Code-reviewed against the confirmed backend contract — no device available; see step 11's Known Gaps note.)*
+9. ✅ **Test file attach**: take a photo, pick a library image, and pick a PDF in the same add action; confirm mixed tiles render correctly and a PDF tile opens via `Linking.openURL`. *(Code-reviewed only — see above.)*
+10. ✅ **Test cap**: picking more than the remaining allowance queues only the allowed number with an info toast. *(Code-reviewed only — see above.)*
+11. ✅ **Run `expo lint`** and `npx tsc --noEmit`. Both pass clean, no new warnings/errors.
 
 ## Dependencies
 
@@ -162,14 +162,14 @@ export type TUpdateBikeDocumentPayload = Partial<TCreateBikeDocumentPayload>;
 
 ## Verify
 
-- [ ] `expo lint` and `npx tsc --noEmit` both pass clean, no new warnings/errors.
-- [ ] Creating a document with only `title` succeeds; no expiry badge renders on its card.
-- [ ] Creating a document with a past `expiryDate` shows the red "Expired" badge; one within 30 days shows the amber "Expires in N days" badge; one further out shows the neutral formatted-date badge.
-- [ ] Tapping "Add Document" file tile shows the 4-option action sheet (Take Photo / Choose Photo from Library / Choose PDF / Cancel).
-- [ ] Adding one photo and one PDF in the same session shows two distinct tiles — the photo as a thumbnail, the PDF as a file-icon tile labeled with its original filename; tapping the PDF tile opens it via `Linking.openURL`. *(Code-reviewed against the confirmed backend contract and the installed `expo-document-picker` version's actual exported API — no simulator/device available in this environment to literally tap through, same standing limitation as every prior spec in this project.)*
-- [ ] Removing a single file only removes that file from the gallery and (per backend contract) only that file's Cloudinary asset.
-- [ ] Picking more than `10 - current count` files in one picker action only queues the allowed number and shows an info toast.
-- [ ] Editing a document (title/description/expiryDate) never touches its `files[]` — the edit modal has no file field and the PATCH payload never includes `files`.
-- [ ] Swipe-to-delete removes the document from the list (soft-deleted server-side).
-- [ ] The new "Documents" tile on the bike hub navigates to `/bikes/:bikeId/documents` and renders correctly among the existing tiles.
-- [ ] *(Explicit caveat)* No physical device/simulator available in this environment — the action sheet, permission prompts, and actual picker UI are code-reviewed only, not visually confirmed, until run on a real device. Same standing gap as every other spec in this project (see Known Gaps).
+- [x] `expo lint` and `npx tsc --noEmit` both pass clean, no new warnings/errors.
+- [x] Creating a document with only `title` succeeds; no expiry badge renders on its card. *(`getExpiryBadge` in `BikeDocumentCard.tsx` returns `null` when `expiryDate` is falsy, and the payload omits `expiryDate` entirely when the field is left blank — code-reviewed, no device available.)*
+- [x] Creating a document with a past `expiryDate` shows the red "Expired" badge; one within 30 days shows the amber "Expires in N days" badge; one further out shows the neutral formatted-date badge. *(`getExpiryBadge` implements exactly this 3-way branch on `differenceInCalendarDays` — code-reviewed, no device available.)*
+- [x] Tapping "Add Document" file tile shows the 4-option action sheet (Take Photo / Choose Photo from Library / Choose PDF / Cancel). *(`MultiFilePickerField.handleAddPress` — code-reviewed, no device available.)*
+- [x] Adding one photo and one PDF in the same session shows two distinct tiles — the photo as a thumbnail, the PDF as a file-icon tile labeled with its original filename; tapping the PDF tile opens it via `Linking.openURL`. *(Code-reviewed against the confirmed backend contract and the installed `expo-document-picker` version's actual exported API — no simulator/device available in this environment to literally tap through, same standing limitation as every prior spec in this project.)*
+- [x] Removing a single file only removes that file from the gallery and (per backend contract) only that file's Cloudinary asset. *(`handleRemoveFile` calls `DELETE .../files/:fileId`, matching the backend's single-file delete contract — code-reviewed, no device available.)*
+- [x] Picking more than `10 - current count` files in one picker action only queues the allowed number and shows an info toast. *(`notifyIfCapped` + `.slice(0, remaining)` in both the library-image and PDF picker paths — code-reviewed, no device available.)*
+- [x] Editing a document (title/description/expiryDate) never touches its `files[]` — the edit modal has no file field and the PATCH payload never includes `files`. *(`BikeDocumentFormModal`'s payload is built from only `title`/`description`/`expiryDate` state; no `files` field exists anywhere in that component.)*
+- [x] Swipe-to-delete removes the document from the list (soft-deleted server-side). *(`BikeDocumentCard`'s `renderRightActions` → `handleDelete` → `confirmDelete` → `DELETE /bikes/:bikeId/documents/:id`, same shape as `BikeIssueCard`'s already-working delete.)*
+- [x] The new "Documents" tile on the bike hub navigates to `/bikes/:bikeId/documents` and renders correctly among the existing tiles. *(`BikeDetailPage.tsx`'s `TILES` array — new entry follows the identical shape/navigation as every other tile.)*
+- [x] *(Explicit caveat)* No physical device/simulator available in this environment — the action sheet, permission prompts, and actual picker UI are code-reviewed only, not visually confirmed, until run on a real device. Same standing gap as every other spec in this project (see Known Gaps).
