@@ -26,6 +26,7 @@ const TILES: TTile[] = [
   { label: "Issues", icon: "alert-circle-outline", segment: "issues" },
   { label: "Accessories", icon: "shopping-outline", segment: "accessories" },
   { label: "AI Assistant", icon: "robot-outline", segment: "assistant" },
+  { label: "Documents", icon: "file-document-outline", segment: "documents" },
 ];
 
 export function BikeDetailPage() {
