@@ -146,7 +146,9 @@ export function MultiFilePickerField({
               <TouchableOpacity
                 style={styles.tile}
                 onPress={() =>
-                  setViewerIndex(imageFiles.findIndex((f) => f._id === file._id))
+                  setViewerIndex(
+                    imageFiles.findIndex((f) => f._id === file._id),
+                  )
                 }
                 activeOpacity={0.8}
               >
@@ -263,7 +265,7 @@ const styles = StyleSheet.create({
   },
   deleteBadge: {
     position: "absolute",
-    top: -6,
+    top: -70,
     right: -6,
     width: 18,
     height: 18,
