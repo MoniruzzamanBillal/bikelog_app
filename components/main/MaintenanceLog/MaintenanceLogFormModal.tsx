@@ -17,7 +17,6 @@ import {
 } from "@/types/maintenance-log.types";
 
 const DECIMAL_REGEX = /^\d+(\.\d{0,2})?$/;
-const INT_REGEX = /^\d+$/;
 
 interface MaintenanceLogFormModalProps {
   open: boolean;
@@ -126,11 +125,11 @@ export function MaintenanceLogFormModal({
       Toast.show({ type: "error", text1: "Maintenance type is required", position: "top" });
       return;
     }
-    if (!odometerReading.trim() || !INT_REGEX.test(odometerReading.trim())) {
+    if (!odometerReading.trim() || !DECIMAL_REGEX.test(odometerReading.trim())) {
       Toast.show({ type: "error", text1: "Enter a valid odometer reading", position: "top" });
       return;
     }
-    if (!intervalKmUsed.trim() || !INT_REGEX.test(intervalKmUsed.trim())) {
+    if (!intervalKmUsed.trim() || !DECIMAL_REGEX.test(intervalKmUsed.trim())) {
       Toast.show({ type: "error", text1: "Enter a valid service interval", position: "top" });
       return;
     }
@@ -146,8 +145,8 @@ export function MaintenanceLogFormModal({
 
     const payload: TCreateMaintenanceLogPayload = {
       maintenanceType,
-      odometerReading: parseInt(odometerReading, 10),
-      intervalKmUsed: parseInt(intervalKmUsed, 10),
+      odometerReading: parseFloat(odometerReading),
+      intervalKmUsed: parseFloat(intervalKmUsed),
       cost: parseFloat(cost),
       oilType: oilType || undefined,
       serviceDate: serviceDate || new Date().toISOString(),
@@ -206,7 +205,7 @@ export function MaintenanceLogFormModal({
               placeholder="Odometer (km)"
               value={odometerReading}
               onChangeText={setOdometerReading}
-              keyboardType="number-pad"
+              keyboardType="decimal-pad"
               editable={!isPending}
               textColor={COLORS.text}
               style={styles.input}
@@ -231,7 +230,7 @@ export function MaintenanceLogFormModal({
               placeholder="Service Interval (km)"
               value={intervalKmUsed}
               onChangeText={setIntervalKmUsed}
-              keyboardType="number-pad"
+              keyboardType="decimal-pad"
               editable={!isPending}
               textColor={COLORS.text}
               style={styles.input}
