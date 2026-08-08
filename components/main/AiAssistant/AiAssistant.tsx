@@ -2,6 +2,7 @@ import { useRef, useState } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
 import { useLocalSearchParams } from "expo-router";
 import { KeyboardStickyView } from "react-native-keyboard-controller";
+import Markdown from "react-native-markdown-display";
 import {
   ActivityIndicator,
   IconButton,
@@ -84,15 +85,11 @@ export function AiAssistant() {
                 : styles.bubbleAssistant,
             ]}
           >
-            <Text
-              style={
-                message.role === "user"
-                  ? styles.bubbleTextUser
-                  : styles.bubbleText
-              }
-            >
-              {message.content}
-            </Text>
+            {message.role === "user" ? (
+              <Text style={styles.bubbleTextUser}>{message.content}</Text>
+            ) : (
+              <Markdown style={markdownStyles}>{message.content}</Markdown>
+            )}
           </View>
         ))}
 
@@ -131,6 +128,73 @@ export function AiAssistant() {
     </View>
   );
 }
+
+// ! react-native-markdown-display style object — keyed to its own expected shape, not RN
+// ! StyleSheet.create, since it maps element names (paragraph/strong/bullet_list/etc.) to
+// ! styles internally. Only the assistant bubble uses this (see the role check above), so
+// ! text color is fixed to COLORS.text (styles.bubbleText's own color) rather than needing
+// ! a second user-bubble variant. Headings are capped well under styles.title's 22px so they
+// ! don't look oversized inside a small chat bubble.
+const markdownStyles = {
+  body: {
+    color: COLORS.text,
+    fontSize: 14,
+  },
+  paragraph: {
+    marginTop: 0,
+    marginBottom: 6,
+  },
+  heading1: { fontSize: 16, fontWeight: "700" as const, color: COLORS.text },
+  heading2: { fontSize: 15, fontWeight: "700" as const, color: COLORS.text },
+  heading3: { fontSize: 14, fontWeight: "700" as const, color: COLORS.text },
+  heading4: { fontSize: 14, fontWeight: "600" as const, color: COLORS.text },
+  heading5: { fontSize: 13, fontWeight: "600" as const, color: COLORS.text },
+  heading6: { fontSize: 12, fontWeight: "600" as const, color: COLORS.text },
+  strong: {
+    fontWeight: "700" as const,
+  },
+  bullet_list: {
+    marginBottom: 6,
+  },
+  ordered_list: {
+    marginBottom: 6,
+  },
+  list_item: {
+    marginBottom: 2,
+  },
+  code_inline: {
+    backgroundColor: COLORS.card,
+    borderColor: COLORS.border,
+    borderWidth: 1,
+    borderRadius: 4,
+    paddingHorizontal: 4,
+    paddingVertical: 1,
+    fontSize: 12,
+    color: COLORS.text,
+  },
+  code_block: {
+    backgroundColor: COLORS.card,
+    borderColor: COLORS.border,
+    borderWidth: 1,
+    borderRadius: 4,
+    padding: 8,
+    fontSize: 12,
+    color: COLORS.text,
+  },
+  fence: {
+    backgroundColor: COLORS.card,
+    borderColor: COLORS.border,
+    borderWidth: 1,
+    borderRadius: 4,
+    padding: 8,
+    fontSize: 12,
+    color: COLORS.text,
+  },
+  link: {
+    color: COLORS.primary,
+    textDecorationLine: "underline" as const,
+  },
+};
 
 const styles = StyleSheet.create({
   container: {

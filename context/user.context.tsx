@@ -3,10 +3,12 @@ import {
   ReactNode,
   useContext,
   useEffect,
+  useRef,
   useState,
 } from "react";
 
 import { IUser } from "@/types/global.types";
+import { registerPushToken } from "@/utils/registerPushToken";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 type IUserProviderValues = {
@@ -27,6 +29,7 @@ const UserProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<IUser | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const hasRegisteredPushToken = useRef(false);
 
   useEffect(() => {
     const loadUserData = async () => {
@@ -43,6 +46,15 @@ const UserProvider = ({ children }: { children: ReactNode }) => {
 
     loadUserData();
   }, []);
+
+  // ! registers this device's Expo push token once per app session, once a real session
+  // ! exists — covers both the post-login case and an already-stored session on cold launch
+  useEffect(() => {
+    if (user && token && !hasRegisteredPushToken.current) {
+      hasRegisteredPushToken.current = true;
+      registerPushToken();
+    }
+  }, [user, token]);
 
   // Store user in localStorage when set
   const handleSetUser = async (user: IUser | null) => {

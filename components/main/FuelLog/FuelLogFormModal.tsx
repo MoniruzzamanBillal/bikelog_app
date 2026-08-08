@@ -10,7 +10,6 @@ import { Button, Modal, Portal, Text, TextInput } from "react-native-paper";
 import Toast from "react-native-toast-message";
 
 const DECIMAL_REGEX = /^\d+(\.\d{0,2})?$/;
-const INT_REGEX = /^\d+$/;
 
 interface FuelLogFormModalProps {
   open: boolean;
@@ -69,10 +68,10 @@ export function FuelLogFormModal({
       });
       return;
     }
-    if (!INT_REGEX.test(odometer.trim())) {
+    if (!DECIMAL_REGEX.test(odometer.trim())) {
       Toast.show({
         type: "error",
-        text1: "Odometer must be a whole number",
+        text1: "Enter a valid odometer reading",
         position: "top",
       });
       return;
@@ -95,7 +94,7 @@ export function FuelLogFormModal({
     }
 
     const payload: TCreateFuelLogPayload = {
-      odometerReading: parseInt(odometer, 10),
+      odometerReading: parseFloat(odometer),
       litersAdded: parseFloat(liters),
       isFullTank,
       pricePerLiter: parseFloat(pricePerLiter),
@@ -168,7 +167,7 @@ export function FuelLogFormModal({
               placeholder="Odometer (km)"
               value={odometer}
               onChangeText={setOdometer}
-              keyboardType="number-pad"
+              keyboardType="decimal-pad"
               editable={!isPending}
               textColor={COLORS.text}
               style={styles.input}

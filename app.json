@@ -47,7 +47,8 @@
           "photosPermission": "Allow $(PRODUCT_NAME) to access your photos to attach receipt/service/damage photos.",
           "cameraPermission": "Allow $(PRODUCT_NAME) to access your camera to take receipt/service/damage photos."
         }
-      ]
+      ],
+      "expo-notifications"
     ],
     "experiments": {
       "typedRoutes": true,
