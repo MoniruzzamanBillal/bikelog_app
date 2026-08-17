@@ -1,5 +1,6 @@
 import { TSpendingDetails, TSpendingRecord } from "@/types/spending.types";
 import { format } from "date-fns";
+import { formatApiDate } from "@/utils/formatApiDate";
 import { File, Paths } from "expo-file-system";
 import * as Print from "expo-print";
 import * as Sharing from "expo-sharing";
@@ -20,7 +21,7 @@ function escapeHtml(value: string): string {
 function recordRow(record: TSpendingRecord): string {
   return `
     <tr>
-      <td>${format(new Date(record.date), "d MMM yyyy")}</td>
+      <td>${formatApiDate(record.date, "d MMM yyyy")}</td>
       <td>${escapeHtml(record.category)}</td>
       <td>${escapeHtml(record.description)}</td>
       <td>৳${record.amount.toFixed(2)}</td>

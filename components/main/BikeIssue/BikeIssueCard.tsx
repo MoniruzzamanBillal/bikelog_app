@@ -8,7 +8,7 @@ import { confirmDelete } from "@/components/main/shared/ConfirmDelete";
 import { useDelete, usePatch, usePost } from "@/hooks/useApi";
 import { TBikeIssue } from "@/types/bike-issue.types";
 import { COLORS } from "@/utils/colors";
-import { format } from "date-fns";
+import { formatApiDate } from "@/utils/formatApiDate";
 import { useRef, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { TouchableOpacity } from "react-native-gesture-handler";
@@ -171,7 +171,7 @@ export function BikeIssueCard({
           )}
 
           <Text style={styles.date}>
-            Reported: {format(new Date(issue.dateReported), "dd MMM yyyy")}
+            Reported: {formatApiDate(issue.dateReported, "dd MMM yyyy")}
           </Text>
 
           <View style={styles.imagesRow}>

@@ -3,7 +3,7 @@ import { confirmDelete } from "@/components/main/shared/ConfirmDelete";
 import { useDelete } from "@/hooks/useApi";
 import { TBike } from "@/types/bike.types";
 import { COLORS } from "@/utils/colors";
-import { format } from "date-fns";
+import { formatApiDate } from "@/utils/formatApiDate";
 import { useRouter } from "expo-router";
 import { useRef, useState } from "react";
 import { StyleSheet, Text } from "react-native";
@@ -83,7 +83,7 @@ export function BikeCard({ bike, openSwipeableRef }: BikeCardProps) {
           </Text>
           <Text style={styles.reg}>Reg: {bike.registrationNumber}</Text>
           <Text style={styles.reg}>
-            Purchased: {format(new Date(bike.purchaseDate), "dd MMM yyyy")}
+            Purchased: {formatApiDate(bike.purchaseDate, "dd MMM yyyy")}
           </Text>
         </TouchableOpacity>
       </Swipeable>

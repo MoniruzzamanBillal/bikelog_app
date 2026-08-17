@@ -4,7 +4,8 @@ import { useDelete, usePost } from "@/hooks/useApi";
 import { IBikeDocument } from "@/types/bike-document.types";
 import { TPickedFile } from "@/types/document-file.types";
 import { COLORS } from "@/utils/colors";
-import { differenceInCalendarDays, format } from "date-fns";
+import { formatApiDate, parseApiDate } from "@/utils/formatApiDate";
+import { differenceInCalendarDays } from "date-fns";
 import { useRef, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { TouchableOpacity } from "react-native-gesture-handler";
@@ -25,7 +26,7 @@ type TExpiryBadge = { label: string; bg: string; text: string } | null;
 function getExpiryBadge(expiryDate?: string): TExpiryBadge {
   if (!expiryDate) return null;
 
-  const daysUntil = differenceInCalendarDays(new Date(expiryDate), new Date());
+  const daysUntil = differenceInCalendarDays(parseApiDate(expiryDate), new Date());
 
   if (daysUntil < 0) {
     return { label: "Expired", bg: COLORS.danger, text: COLORS.white };
@@ -38,7 +39,7 @@ function getExpiryBadge(expiryDate?: string): TExpiryBadge {
     };
   }
   return {
-    label: format(new Date(expiryDate), "dd MMM yyyy"),
+    label: formatApiDate(expiryDate, "dd MMM yyyy"),
     bg: COLORS.border,
     text: COLORS.text,
   };

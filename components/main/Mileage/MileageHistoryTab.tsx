@@ -1,9 +1,9 @@
 import { StyleSheet, Text, View } from "react-native";
 import { ScrollView } from "react-native-gesture-handler";
-import { format } from "date-fns";
 import { EmptyState, SectionLoading } from "@/components/main/shared";
 import { useFetchData } from "@/hooks/useApi";
 import { COLORS } from "@/utils/colors";
+import { formatApiDate } from "@/utils/formatApiDate";
 import { TMileageHistoryResponse } from "@/types/mileage.types";
 
 interface MileageHistoryTabProps {
@@ -51,7 +51,7 @@ export function MileageHistoryTab({ bikeId }: MileageHistoryTabProps) {
               {records.map((record) => (
                 <View key={record._id} style={styles.record}>
                   <Text style={styles.recordDate}>
-                    {format(new Date(record.periodEndDate), "dd MMM yyyy")}
+                    {formatApiDate(record.periodEndDate, "dd MMM yyyy")}
                   </Text>
                   <Text style={styles.recordDetail}>
                     Odometer: {record.endOdometer} km

@@ -46,7 +46,7 @@ export function FuelLogFormModal({
       setIsFullTank(initialFuelLog.isFullTank || false);
       setPricePerLiter(initialFuelLog.pricePerLiter.toString());
       setStation(initialFuelLog.fuelStation || "");
-      setDate(format(new Date(initialFuelLog.date), "yyyy-MM-dd"));
+      setDate(initialFuelLog.date.split("T")[0]);
       setNotes(initialFuelLog.notes || "");
     } else {
       setOdometer("");
@@ -99,7 +99,7 @@ export function FuelLogFormModal({
       isFullTank,
       pricePerLiter: parseFloat(pricePerLiter),
       fuelStation: station.trim() || undefined,
-      date: date || new Date().toISOString(),
+      date: date || format(new Date(), "yyyy-MM-dd"),
       notes: notes.trim() || undefined,
     };
 

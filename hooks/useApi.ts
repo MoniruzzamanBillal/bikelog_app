@@ -47,13 +47,6 @@ export const usePost = (invalidateQueriesKeys?: string[][]) => {
         });
       }
     },
-    onError: (error: any) => {
-      // console.log("error = ", error?.response?.data?.message);
-      // toast.error(
-      //   error?.response?.data?.message || error.message || "Failed to Add.",
-      // );
-      throw error;
-    },
   });
 };
 
@@ -73,10 +66,6 @@ export const usePatch = (invalidateQueriesKeys?: string[][]) => {
           queryClient.invalidateQueries({ queryKey: key });
         });
       }
-    },
-    onError: (error) => {
-      // toast.error(error.message || "Failed to update.");
-      throw error;
     },
   });
 };
@@ -98,10 +87,6 @@ export const usePut = (invalidateQueriesKeys?: string[][]) => {
         });
       }
     },
-    onError: (error) => {
-      // toast.error(error.message || "Failed to update.");
-      throw error;
-    },
   });
 };
 
@@ -118,10 +103,6 @@ export const useDelete = (invalidateQueriesKeys?: string[][]) => {
           queryClient.invalidateQueries({ queryKey: key });
         });
       }
-    },
-    onError: (error) => {
-      // toast.error(error.message || "Failed to Delete");
-      throw error;
     },
   });
 };

@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { StyleSheet, View } from "react-native";
-import { format } from "date-fns";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { Button, Modal, Portal, Text, TextInput } from "react-native-paper";
 import Toast from "react-native-toast-message";
@@ -39,7 +38,7 @@ export function BikeFormModal({ open, onClose, initialBike }: BikeFormModalProps
       setBrand(initialBike.brand);
       setModel(initialBike.model);
       setRegistrationNumber(initialBike.registrationNumber);
-      setPurchaseDate(format(new Date(initialBike.purchaseDate), "yyyy-MM-dd"));
+      setPurchaseDate(initialBike.purchaseDate.split("T")[0]);
       setFuelTankCapacityLiters(initialBike.fuelTankCapacityLiters.toString());
       setCurrentOdometer("");
     } else {

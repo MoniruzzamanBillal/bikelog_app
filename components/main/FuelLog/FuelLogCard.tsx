@@ -7,7 +7,7 @@ import { confirmDelete } from "@/components/main/shared/ConfirmDelete";
 import { useDelete, usePut } from "@/hooks/useApi";
 import { TFuelLog } from "@/types/fuel-log.types";
 import { COLORS } from "@/utils/colors";
-import { format } from "date-fns";
+import { formatApiDate } from "@/utils/formatApiDate";
 import { useRef, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { TouchableOpacity } from "react-native-gesture-handler";
@@ -151,7 +151,7 @@ export function FuelLogCard({
                   Odometer: {fuelLog.odometerReading} km
                 </Text>
                 <Text style={styles.date}>
-                  {format(new Date(fuelLog.date), "dd MMM")}
+                  {formatApiDate(fuelLog.date, "dd MMM")}
                 </Text>
               </View>
               <Text style={styles.details}>

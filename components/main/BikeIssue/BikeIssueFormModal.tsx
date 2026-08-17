@@ -40,7 +40,7 @@ export function BikeIssueFormModal({
     if (initialIssue) {
       setTitle(initialIssue.title || "");
       setDescription(initialIssue.description || "");
-      setDateReported(format(new Date(initialIssue.dateReported), "yyyy-MM-dd"));
+      setDateReported(initialIssue.dateReported.split("T")[0]);
     } else {
       setTitle("");
       setDescription("");
@@ -61,7 +61,7 @@ export function BikeIssueFormModal({
     const payload: TCreateBikeIssuePayload = {
       title: title.trim(),
       description: description.trim() || undefined,
-      dateReported: dateReported || new Date().toISOString(),
+      dateReported: dateReported || format(new Date(), "yyyy-MM-dd"),
     };
 
     try {

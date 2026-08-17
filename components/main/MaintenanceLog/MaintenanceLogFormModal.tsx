@@ -10,6 +10,7 @@ import {
 } from "@/components/main/shared";
 import { useFetchData, usePatch, usePost } from "@/hooks/useApi";
 import { COLORS } from "@/utils/colors";
+import { format } from "date-fns";
 import { TMaintenanceType, TEngineOilType } from "@/types/catalog.types";
 import {
   TCreateMaintenanceLogPayload,
@@ -112,7 +113,7 @@ export function MaintenanceLogFormModal({
       setOilType(null);
       setIntervalKmUsed("");
       setCost("");
-      setServiceDate(new Date().toISOString().split("T")[0]);
+      setServiceDate(format(new Date(), "yyyy-MM-dd"));
       setNextDueDate("");
       setServiceCenter("");
       setPartsReplaced("");
@@ -149,7 +150,7 @@ export function MaintenanceLogFormModal({
       intervalKmUsed: parseFloat(intervalKmUsed),
       cost: parseFloat(cost),
       oilType: oilType || undefined,
-      serviceDate: serviceDate || new Date().toISOString(),
+      serviceDate: serviceDate || format(new Date(), "yyyy-MM-dd"),
       nextDueDate: nextDueDate || undefined,
       serviceCenter: serviceCenter.trim() || undefined,
       partsReplaced: parts.length > 0 ? parts : undefined,
