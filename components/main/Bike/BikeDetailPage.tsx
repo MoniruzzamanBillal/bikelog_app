@@ -3,8 +3,8 @@ import { confirmDelete } from "@/components/main/shared/ConfirmDelete";
 import { useDelete, useFetchData } from "@/hooks/useApi";
 import { TBike } from "@/types/bike.types";
 import { COLORS } from "@/utils/colors";
+import { formatApiDate } from "@/utils/formatApiDate";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { format } from "date-fns";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
 import { StyleSheet, TouchableOpacity, View } from "react-native";
@@ -75,7 +75,7 @@ export function BikeDetailPage() {
         <Text style={styles.detail}>Tank: {bike.fuelTankCapacityLiters}L</Text>
         <Text style={styles.detail}>Odometer: {bike.currentOdometer} km</Text>
         <Text style={styles.detail}>
-          Purchased: {format(new Date(bike.purchaseDate), "dd MMM yyyy")}
+          Purchased: {formatApiDate(bike.purchaseDate, "dd MMM yyyy")}
         </Text>
       </View>
 

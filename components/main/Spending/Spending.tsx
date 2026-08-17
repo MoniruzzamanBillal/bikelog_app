@@ -5,9 +5,11 @@ import {
   YearStepper,
 } from "@/components/main/shared";
 import { useFetchData } from "@/hooks/useApi";
-import { TSpendingSummary, TSpendingTrend } from "@/types/spending.types";
-import { CHART_COLORS, COLORS } from "@/utils/colors";
-import { format, parse } from "date-fns";
+import { TSpendingDetails, TSpendingSummary } from "@/types/spending.types";
+import { apiGet } from "@/utils/api";
+import { COLORS } from "@/utils/colors";
+import { generateSpendingPdf } from "@/utils/generateSpendingPdf";
+import { format, getDate, getDaysInMonth, isSameMonth, parse } from "date-fns";
 import { useLocalSearchParams } from "expo-router";
 import { useState } from "react";
 import {
@@ -17,24 +19,68 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { BarChart, PieChart } from "react-native-gifted-charts";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
-import { Text } from "react-native-paper";
+import { Button, Text } from "react-native-paper";
+import Toast from "react-native-toast-message";
 import { AiSpendingInsightCard } from "./AiSpendingInsightCard";
 import { SpendingSummaryView } from "./SpendingSummaryView";
 
-type TPeriod = "month" | "year" | "lifetime" | "trend";
+type TPeriod = "month" | "year" | "lifetime";
+
+async function exportSpendingPdf(
+  bikeId: string,
+  period: TPeriod,
+  params: { targetMonth?: string; targetYear?: string },
+  periodLabel: string,
+  setIsExporting: (value: boolean) => void,
+) {
+  setIsExporting(true);
+  try {
+    const query = new URLSearchParams({ period });
+    if (params.targetMonth) query.set("targetMonth", params.targetMonth);
+    if (params.targetYear) query.set("targetYear", params.targetYear);
+
+    const response = await apiGet(
+      `/bikes/${bikeId}/spending-summary/details?${query.toString()}`,
+    );
+    const details = response?.data as TSpendingDetails;
+    await generateSpendingPdf(details, periodLabel);
+  } catch (error) {
+    const message = (error as { message?: string })?.message;
+    Toast.show({
+      type: "error",
+      text1: "Export failed",
+      text2: message ?? "Couldn't generate the PDF",
+      position: "top",
+    });
+  } finally {
+    setIsExporting(false);
+  }
+}
 
 const TABS: { key: TPeriod; label: string }[] = [
   { key: "month", label: "Month" },
   { key: "year", label: "Year" },
   { key: "lifetime", label: "Lifetime" },
-  { key: "trend", label: "Trend" },
 ];
+
+function getElapsedDaysInMonth(targetMonth: string): number {
+  const monthDate = parse(targetMonth, "yyyy-MM", new Date());
+  const now = new Date();
+
+  if (isSameMonth(monthDate, now)) {
+    return getDate(now);
+  }
+  if (monthDate > now) {
+    return 0;
+  }
+  return getDaysInMonth(monthDate);
+}
 
 function MonthTab({ bikeId }: { bikeId: string }) {
   const [targetMonth, setTargetMonth] = useState(format(new Date(), "yyyy-MM"));
   const [refreshing, setRefreshing] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
 
   const { data, isLoading, refetch } = useFetchData<TSpendingSummary>(
     ["spending", bikeId, "month", targetMonth],
@@ -43,11 +89,24 @@ function MonthTab({ bikeId }: { bikeId: string }) {
   );
   const summary = data?.data;
 
+  const daysElapsed = getElapsedDaysInMonth(targetMonth);
+  const avgDailyExpense =
+    daysElapsed > 0 ? (summary?.totalSpending ?? 0) / daysElapsed : 0;
+
   const handleRefresh = async () => {
     setRefreshing(true);
     await refetch();
     setRefreshing(false);
   };
+
+  const handleExportPdf = () =>
+    exportSpendingPdf(
+      bikeId,
+      "month",
+      { targetMonth },
+      format(parse(targetMonth, "yyyy-MM", new Date()), "MMMM yyyy"),
+      setIsExporting,
+    );
 
   return (
     <KeyboardAwareScrollView
@@ -58,10 +117,24 @@ function MonthTab({ bikeId }: { bikeId: string }) {
     >
       <MonthStepper targetMonth={targetMonth} onChange={setTargetMonth} />
 
+      <Button
+        mode="outlined"
+        icon="tray-arrow-down"
+        loading={isExporting}
+        disabled={isExporting}
+        onPress={handleExportPdf}
+        style={styles.exportButton}
+      >
+        {isExporting ? "Exporting..." : "Export PDF"}
+      </Button>
+
       {isLoading ? (
         <SectionLoading count={3} />
       ) : summary && summary.totalSpending > 0 ? (
-        <SpendingSummaryView summary={summary} />
+        <SpendingSummaryView
+          summary={summary}
+          {...(daysElapsed > 0 ? { avgDailyExpense, daysElapsed } : {})}
+        />
       ) : (
         <EmptyState label="No spending data for this month" />
       )}
@@ -72,6 +145,7 @@ function MonthTab({ bikeId }: { bikeId: string }) {
 function YearTab({ bikeId }: { bikeId: string }) {
   const [targetYear, setTargetYear] = useState(format(new Date(), "yyyy"));
   const [refreshing, setRefreshing] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
 
   const { data, isLoading, refetch } = useFetchData<TSpendingSummary>(
     ["spending", bikeId, "year", targetYear],
@@ -86,6 +160,9 @@ function YearTab({ bikeId }: { bikeId: string }) {
     setRefreshing(false);
   };
 
+  const handleExportPdf = () =>
+    exportSpendingPdf(bikeId, "year", { targetYear }, targetYear, setIsExporting);
+
   return (
     <KeyboardAwareScrollView
       style={{ flex: 1 }}
@@ -95,6 +172,17 @@ function YearTab({ bikeId }: { bikeId: string }) {
       showsVerticalScrollIndicator={false}
     >
       <YearStepper year={targetYear} onChange={setTargetYear} />
+
+      <Button
+        mode="outlined"
+        icon="tray-arrow-down"
+        loading={isExporting}
+        disabled={isExporting}
+        onPress={handleExportPdf}
+        style={styles.exportButton}
+      >
+        {isExporting ? "Exporting..." : "Export PDF"}
+      </Button>
 
       {isLoading ? (
         <SectionLoading count={3} />
@@ -109,6 +197,7 @@ function YearTab({ bikeId }: { bikeId: string }) {
 
 function LifetimeTab({ bikeId }: { bikeId: string }) {
   const [refreshing, setRefreshing] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
 
   const { data, isLoading, refetch } = useFetchData<TSpendingSummary>(
     ["spending", bikeId, "lifetime"],
@@ -123,9 +212,8 @@ function LifetimeTab({ bikeId }: { bikeId: string }) {
     setRefreshing(false);
   };
 
-  if (isLoading) {
-    return <SectionLoading count={3} />;
-  }
+  const handleExportPdf = () =>
+    exportSpendingPdf(bikeId, "lifetime", {}, "Lifetime", setIsExporting);
 
   return (
     <ScrollView
@@ -135,69 +223,23 @@ function LifetimeTab({ bikeId }: { bikeId: string }) {
       }
       showsVerticalScrollIndicator={false}
     >
-      {summary && summary.totalSpending > 0 ? (
+      <Button
+        mode="outlined"
+        icon="tray-arrow-down"
+        loading={isExporting}
+        disabled={isExporting}
+        onPress={handleExportPdf}
+        style={styles.exportButton}
+      >
+        {isExporting ? "Exporting..." : "Export PDF"}
+      </Button>
+
+      {isLoading ? (
+        <SectionLoading count={3} />
+      ) : summary && summary.totalSpending > 0 ? (
         <SpendingSummaryView summary={summary} />
       ) : (
         <EmptyState label="No lifetime spending data" />
-      )}
-    </ScrollView>
-  );
-}
-
-function TrendTab({ bikeId }: { bikeId: string }) {
-  const { data, isLoading } = useFetchData<TSpendingTrend>(
-    ["spending", "trend", bikeId],
-    `/bikes/${bikeId}/spending-summary/trend?months=3`,
-  );
-
-  const trend = data?.data;
-  const monthlySummary = trend?.monthlySummary ?? [];
-  const latest = monthlySummary[monthlySummary.length - 1];
-  const latestBreakdown = latest?.categoryBreakdown ?? [];
-
-  const barData = monthlySummary.map((m) => ({
-    value: m.totalSpending,
-    label: format(parse(m.targetMonth, "yyyy-MM", new Date()), "MMM"),
-    frontColor: COLORS.primary,
-  }));
-
-  const pieData = latestBreakdown.map((c, i) => ({
-    value: c.total,
-    text: c.category,
-    color: CHART_COLORS[i % CHART_COLORS.length],
-  }));
-
-  if (isLoading) {
-    return <SectionLoading count={2} />;
-  }
-
-  return (
-    <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
-      <View style={styles.chartCard}>
-        <Text style={styles.chartTitle}>Spending, last 3 months</Text>
-        <BarChart
-          data={barData}
-          barWidth={28}
-          spacing={24}
-          roundedTop
-          yAxisThickness={0}
-          xAxisThickness={0}
-        />
-      </View>
-
-      {pieData.length > 0 ? (
-        <View style={styles.chartCard}>
-          <Text style={styles.chartTitle}>
-            By category (
-            {latest
-              ? format(parse(latest.targetMonth, "yyyy-MM", new Date()), "MMM yyyy")
-              : ""}
-            )
-          </Text>
-          <PieChart data={pieData} donut radius={90} innerRadius={60} />
-        </View>
-      ) : (
-        <EmptyState label="No spending data for this month" />
       )}
     </ScrollView>
   );
@@ -241,7 +283,6 @@ export function Spending() {
         {activeTab === "month" && <MonthTab bikeId={bikeId} />}
         {activeTab === "year" && <YearTab bikeId={bikeId} />}
         {activeTab === "lifetime" && <LifetimeTab bikeId={bikeId} />}
-        {activeTab === "trend" && <TrendTab bikeId={bikeId} />}
       </View>
     </View>
   );
@@ -291,21 +332,8 @@ const styles = StyleSheet.create({
   tabContent: {
     flex: 1,
   },
-  chartCard: {
-    backgroundColor: COLORS.card,
-    borderRadius: 6,
-    padding: 16,
-    marginBottom: 12,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  chartTitle: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: COLORS.text,
-    marginBottom: 12,
+  exportButton: {
+    marginBottom: 16,
+    alignSelf: "flex-start",
   },
 });

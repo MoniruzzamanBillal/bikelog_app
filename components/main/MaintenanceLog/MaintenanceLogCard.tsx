@@ -4,7 +4,7 @@ import { useDelete, usePut } from "@/hooks/useApi";
 import { TMaintenanceType } from "@/types/catalog.types";
 import { TMaintenanceLog } from "@/types/maintenance-log.types";
 import { COLORS } from "@/utils/colors";
-import { format } from "date-fns";
+import { formatApiDate } from "@/utils/formatApiDate";
 import { useRef, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { TouchableOpacity } from "react-native-gesture-handler";
@@ -159,7 +159,7 @@ export function MaintenanceLogCard({
                   {getTypeName(log, maintenanceTypes)}
                 </Text>
                 <Text style={styles.date}>
-                  {format(new Date(log.serviceDate), "dd MMM yyyy")}
+                  {formatApiDate(log.serviceDate, "dd MMM yyyy")}
                 </Text>
               </View>
               <Text style={styles.odometer}>
