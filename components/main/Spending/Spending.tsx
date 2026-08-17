@@ -5,8 +5,10 @@ import {
   YearStepper,
 } from "@/components/main/shared";
 import { useFetchData } from "@/hooks/useApi";
-import { TSpendingSummary } from "@/types/spending.types";
+import { TSpendingDetails, TSpendingSummary } from "@/types/spending.types";
+import { apiGet } from "@/utils/api";
 import { COLORS } from "@/utils/colors";
+import { generateSpendingPdf } from "@/utils/generateSpendingPdf";
 import { format, getDate, getDaysInMonth, isSameMonth, parse } from "date-fns";
 import { useLocalSearchParams } from "expo-router";
 import { useState } from "react";
@@ -18,11 +20,43 @@ import {
   View,
 } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
-import { Text } from "react-native-paper";
+import { Button, Text } from "react-native-paper";
+import Toast from "react-native-toast-message";
 import { AiSpendingInsightCard } from "./AiSpendingInsightCard";
 import { SpendingSummaryView } from "./SpendingSummaryView";
 
 type TPeriod = "month" | "year" | "lifetime";
+
+async function exportSpendingPdf(
+  bikeId: string,
+  period: TPeriod,
+  params: { targetMonth?: string; targetYear?: string },
+  periodLabel: string,
+  setIsExporting: (value: boolean) => void,
+) {
+  setIsExporting(true);
+  try {
+    const query = new URLSearchParams({ period });
+    if (params.targetMonth) query.set("targetMonth", params.targetMonth);
+    if (params.targetYear) query.set("targetYear", params.targetYear);
+
+    const response = await apiGet(
+      `/bikes/${bikeId}/spending-summary/details?${query.toString()}`,
+    );
+    const details = response?.data as TSpendingDetails;
+    await generateSpendingPdf(details, periodLabel);
+  } catch (error) {
+    const message = (error as { message?: string })?.message;
+    Toast.show({
+      type: "error",
+      text1: "Export failed",
+      text2: message ?? "Couldn't generate the PDF",
+      position: "top",
+    });
+  } finally {
+    setIsExporting(false);
+  }
+}
 
 const TABS: { key: TPeriod; label: string }[] = [
   { key: "month", label: "Month" },
@@ -46,6 +80,7 @@ function getElapsedDaysInMonth(targetMonth: string): number {
 function MonthTab({ bikeId }: { bikeId: string }) {
   const [targetMonth, setTargetMonth] = useState(format(new Date(), "yyyy-MM"));
   const [refreshing, setRefreshing] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
 
   const { data, isLoading, refetch } = useFetchData<TSpendingSummary>(
     ["spending", bikeId, "month", targetMonth],
@@ -64,6 +99,15 @@ function MonthTab({ bikeId }: { bikeId: string }) {
     setRefreshing(false);
   };
 
+  const handleExportPdf = () =>
+    exportSpendingPdf(
+      bikeId,
+      "month",
+      { targetMonth },
+      format(parse(targetMonth, "yyyy-MM", new Date()), "MMMM yyyy"),
+      setIsExporting,
+    );
+
   return (
     <KeyboardAwareScrollView
       refreshControl={
@@ -72,6 +116,17 @@ function MonthTab({ bikeId }: { bikeId: string }) {
       showsVerticalScrollIndicator={false}
     >
       <MonthStepper targetMonth={targetMonth} onChange={setTargetMonth} />
+
+      <Button
+        mode="outlined"
+        icon="tray-arrow-down"
+        loading={isExporting}
+        disabled={isExporting}
+        onPress={handleExportPdf}
+        style={styles.exportButton}
+      >
+        {isExporting ? "Exporting..." : "Export PDF"}
+      </Button>
 
       {isLoading ? (
         <SectionLoading count={3} />
@@ -90,6 +145,7 @@ function MonthTab({ bikeId }: { bikeId: string }) {
 function YearTab({ bikeId }: { bikeId: string }) {
   const [targetYear, setTargetYear] = useState(format(new Date(), "yyyy"));
   const [refreshing, setRefreshing] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
 
   const { data, isLoading, refetch } = useFetchData<TSpendingSummary>(
     ["spending", bikeId, "year", targetYear],
@@ -104,6 +160,9 @@ function YearTab({ bikeId }: { bikeId: string }) {
     setRefreshing(false);
   };
 
+  const handleExportPdf = () =>
+    exportSpendingPdf(bikeId, "year", { targetYear }, targetYear, setIsExporting);
+
   return (
     <KeyboardAwareScrollView
       style={{ flex: 1 }}
@@ -113,6 +172,17 @@ function YearTab({ bikeId }: { bikeId: string }) {
       showsVerticalScrollIndicator={false}
     >
       <YearStepper year={targetYear} onChange={setTargetYear} />
+
+      <Button
+        mode="outlined"
+        icon="tray-arrow-down"
+        loading={isExporting}
+        disabled={isExporting}
+        onPress={handleExportPdf}
+        style={styles.exportButton}
+      >
+        {isExporting ? "Exporting..." : "Export PDF"}
+      </Button>
 
       {isLoading ? (
         <SectionLoading count={3} />
@@ -127,6 +197,7 @@ function YearTab({ bikeId }: { bikeId: string }) {
 
 function LifetimeTab({ bikeId }: { bikeId: string }) {
   const [refreshing, setRefreshing] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
 
   const { data, isLoading, refetch } = useFetchData<TSpendingSummary>(
     ["spending", bikeId, "lifetime"],
@@ -141,9 +212,8 @@ function LifetimeTab({ bikeId }: { bikeId: string }) {
     setRefreshing(false);
   };
 
-  if (isLoading) {
-    return <SectionLoading count={3} />;
-  }
+  const handleExportPdf = () =>
+    exportSpendingPdf(bikeId, "lifetime", {}, "Lifetime", setIsExporting);
 
   return (
     <ScrollView
@@ -153,7 +223,20 @@ function LifetimeTab({ bikeId }: { bikeId: string }) {
       }
       showsVerticalScrollIndicator={false}
     >
-      {summary && summary.totalSpending > 0 ? (
+      <Button
+        mode="outlined"
+        icon="tray-arrow-down"
+        loading={isExporting}
+        disabled={isExporting}
+        onPress={handleExportPdf}
+        style={styles.exportButton}
+      >
+        {isExporting ? "Exporting..." : "Export PDF"}
+      </Button>
+
+      {isLoading ? (
+        <SectionLoading count={3} />
+      ) : summary && summary.totalSpending > 0 ? (
         <SpendingSummaryView summary={summary} />
       ) : (
         <EmptyState label="No lifetime spending data" />
@@ -248,5 +331,9 @@ const styles = StyleSheet.create({
   },
   tabContent: {
     flex: 1,
+  },
+  exportButton: {
+    marginBottom: 16,
+    alignSelf: "flex-start",
   },
 });
