@@ -5,9 +5,9 @@ import {
   YearStepper,
 } from "@/components/main/shared";
 import { useFetchData } from "@/hooks/useApi";
-import { TSpendingSummary, TSpendingTrend } from "@/types/spending.types";
-import { CHART_COLORS, COLORS } from "@/utils/colors";
-import { format, parse } from "date-fns";
+import { TSpendingSummary } from "@/types/spending.types";
+import { COLORS } from "@/utils/colors";
+import { format, getDate, getDaysInMonth, isSameMonth, parse } from "date-fns";
 import { useLocalSearchParams } from "expo-router";
 import { useState } from "react";
 import {
@@ -17,20 +17,31 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { BarChart, PieChart } from "react-native-gifted-charts";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { Text } from "react-native-paper";
 import { AiSpendingInsightCard } from "./AiSpendingInsightCard";
 import { SpendingSummaryView } from "./SpendingSummaryView";
 
-type TPeriod = "month" | "year" | "lifetime" | "trend";
+type TPeriod = "month" | "year" | "lifetime";
 
 const TABS: { key: TPeriod; label: string }[] = [
   { key: "month", label: "Month" },
   { key: "year", label: "Year" },
   { key: "lifetime", label: "Lifetime" },
-  { key: "trend", label: "Trend" },
 ];
+
+function getElapsedDaysInMonth(targetMonth: string): number {
+  const monthDate = parse(targetMonth, "yyyy-MM", new Date());
+  const now = new Date();
+
+  if (isSameMonth(monthDate, now)) {
+    return getDate(now);
+  }
+  if (monthDate > now) {
+    return 0;
+  }
+  return getDaysInMonth(monthDate);
+}
 
 function MonthTab({ bikeId }: { bikeId: string }) {
   const [targetMonth, setTargetMonth] = useState(format(new Date(), "yyyy-MM"));
@@ -42,6 +53,10 @@ function MonthTab({ bikeId }: { bikeId: string }) {
     { enabled: !!bikeId && !!targetMonth },
   );
   const summary = data?.data;
+
+  const daysElapsed = getElapsedDaysInMonth(targetMonth);
+  const avgDailyExpense =
+    daysElapsed > 0 ? (summary?.totalSpending ?? 0) / daysElapsed : 0;
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -61,7 +76,10 @@ function MonthTab({ bikeId }: { bikeId: string }) {
       {isLoading ? (
         <SectionLoading count={3} />
       ) : summary && summary.totalSpending > 0 ? (
-        <SpendingSummaryView summary={summary} />
+        <SpendingSummaryView
+          summary={summary}
+          {...(daysElapsed > 0 ? { avgDailyExpense, daysElapsed } : {})}
+        />
       ) : (
         <EmptyState label="No spending data for this month" />
       )}
@@ -144,65 +162,6 @@ function LifetimeTab({ bikeId }: { bikeId: string }) {
   );
 }
 
-function TrendTab({ bikeId }: { bikeId: string }) {
-  const { data, isLoading } = useFetchData<TSpendingTrend>(
-    ["spending", "trend", bikeId],
-    `/bikes/${bikeId}/spending-summary/trend?months=3`,
-  );
-
-  const trend = data?.data;
-  const monthlySummary = trend?.monthlySummary ?? [];
-  const latest = monthlySummary[monthlySummary.length - 1];
-  const latestBreakdown = latest?.categoryBreakdown ?? [];
-
-  const barData = monthlySummary.map((m) => ({
-    value: m.totalSpending,
-    label: format(parse(m.targetMonth, "yyyy-MM", new Date()), "MMM"),
-    frontColor: COLORS.primary,
-  }));
-
-  const pieData = latestBreakdown.map((c, i) => ({
-    value: c.total,
-    text: c.category,
-    color: CHART_COLORS[i % CHART_COLORS.length],
-  }));
-
-  if (isLoading) {
-    return <SectionLoading count={2} />;
-  }
-
-  return (
-    <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
-      <View style={styles.chartCard}>
-        <Text style={styles.chartTitle}>Spending, last 3 months</Text>
-        <BarChart
-          data={barData}
-          barWidth={28}
-          spacing={24}
-          roundedTop
-          yAxisThickness={0}
-          xAxisThickness={0}
-        />
-      </View>
-
-      {pieData.length > 0 ? (
-        <View style={styles.chartCard}>
-          <Text style={styles.chartTitle}>
-            By category (
-            {latest
-              ? format(parse(latest.targetMonth, "yyyy-MM", new Date()), "MMM yyyy")
-              : ""}
-            )
-          </Text>
-          <PieChart data={pieData} donut radius={90} innerRadius={60} />
-        </View>
-      ) : (
-        <EmptyState label="No spending data for this month" />
-      )}
-    </ScrollView>
-  );
-}
-
 export function Spending() {
   const { bikeId } = useLocalSearchParams<{ bikeId: string }>();
   const [activeTab, setActiveTab] = useState<TPeriod>("month");
@@ -241,7 +200,6 @@ export function Spending() {
         {activeTab === "month" && <MonthTab bikeId={bikeId} />}
         {activeTab === "year" && <YearTab bikeId={bikeId} />}
         {activeTab === "lifetime" && <LifetimeTab bikeId={bikeId} />}
-        {activeTab === "trend" && <TrendTab bikeId={bikeId} />}
       </View>
     </View>
   );
@@ -290,22 +248,5 @@ const styles = StyleSheet.create({
   },
   tabContent: {
     flex: 1,
-  },
-  chartCard: {
-    backgroundColor: COLORS.card,
-    borderRadius: 6,
-    padding: 16,
-    marginBottom: 12,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  chartTitle: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: COLORS.text,
-    marginBottom: 12,
   },
 });

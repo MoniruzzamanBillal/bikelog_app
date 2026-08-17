@@ -1,6 +1,6 @@
 # 26: Monthly Average Daily Expense
 
-Status: ⛔ Not started
+Status: ✅ Complete
 
 ## Goal
 
@@ -105,11 +105,11 @@ Placing the new card inside `SpendingSummaryView` (rather than as a sibling elem
 
 ## Implementation
 
-1. In `components/main/Spending/SpendingSummaryView.tsx`: add `avgDailyExpense?: number` and `daysElapsed?: number` to `SpendingSummaryViewProps`; render the new `avgCard` block (guarded as shown above) between the existing `totalCard` View and the `categoriesTitle` Text; add the three new styles (`avgCard`, `avgLabel`, `avgValue`, `avgCaption`) to the existing `StyleSheet.create` call.
-2. In `components/main/Spending/Spending.tsx`: import `getDate, getDaysInMonth, isSameMonth` from `date-fns` (alongside the existing `format, parse` import); add the `getElapsedDaysInMonth` helper function above `MonthTab`; inside `MonthTab`, compute `daysElapsed` and `avgDailyExpense` from `summary` and `targetMonth`; pass `avgDailyExpense={avgDailyExpense}` and `daysElapsed={daysElapsed}` to the `<SpendingSummaryView summary={summary} />` call, only spreading them in when `daysElapsed > 0` (e.g. `{...(daysElapsed > 0 ? { avgDailyExpense, daysElapsed } : {})}`, or an equivalent explicit conditional — implementer's choice, as long as `YearTab`/`LifetimeTab` call sites are left untouched and don't pass these props).
-3. Manually verify the three date-boundary cases (current month, a fully-elapsed past month, a future month with no data) per the Verify checklist below.
-4. Run `expo lint` and `npx tsc --noEmit`; fix anything flagged.
-5. Update `ai context/progress-tracker.md`: add a Recent Activity entry and a new row (`| 26 | ✅ Complete | ... |`) to the Spec Implementation Status table once verified.
+1. [x] In `components/main/Spending/SpendingSummaryView.tsx`: added `avgDailyExpense?: number` and `daysElapsed?: number` to `SpendingSummaryViewProps`; rendered the new `avgCard` block (guarded exactly as specced) between the existing `totalCard` View and the `categoriesTitle` Text; added the four new styles (`avgCard`, `avgLabel`, `avgValue`, `avgCaption`) to the existing `StyleSheet.create` call.
+2. [x] In `components/main/Spending/Spending.tsx`: imported `getDate, getDaysInMonth, isSameMonth` from `date-fns` (alongside the existing `format, parse` import); added the `getElapsedDaysInMonth` helper function above `MonthTab`, exactly as specced; inside `MonthTab`, compute `daysElapsed` and `avgDailyExpense` from `summary` and `targetMonth`; pass both to `<SpendingSummaryView summary={summary} />` via the spec's own suggested conditional-spread form (`{...(daysElapsed > 0 ? { avgDailyExpense, daysElapsed } : {})}`) — `YearTab`/`LifetimeTab` call sites left untouched, don't pass either prop.
+3. [x] Manually traced the three date-boundary cases against the implemented `getElapsedDaysInMonth` logic (no device available — reasoned through the function directly): current month (today 2026-08-17) → `isSameMonth` true → `getDate(now)` = `17`, matches the spec's own worked example; a fully-elapsed past month (July while today is in August) → `isSameMonth` false, `monthDate > now` false → `getDaysInMonth` = `31`; a future month (September) → `monthDate > now` true → `0`, and `MonthTab` only spreads the two props into `SpendingSummaryView` when `daysElapsed > 0`, so no card/no `NaN` regardless of `totalSpending`.
+4. [x] Ran `expo lint` (0 issues) and `npx tsc --noEmit` (0 errors) — both clean.
+5. [x] Updated `ai context/progress-tracker.md`: added a Recent Activity entry and a spec 26 row to the Spec Implementation Status table.
 
 ## Dependencies
 
@@ -117,11 +117,11 @@ Spec 11 (Spending Summary) must exist first — this spec extends `Spending.tsx`
 
 ## Verify
 
-- [ ] On the Month tab, viewing the **current** month with `totalSpending > 0`: the new card shows `daysElapsed` equal to today's day-of-month (e.g. `17` on 2026-08-17) and `avgDailyExpense` equal to `totalSpending / 17`, formatted as `৳X.XX`.
-- [ ] Stepping back to a **fully-elapsed past month** (e.g. July while today is in August): the card divides by that month's total day count (`31` for July), not by today's day-of-month.
-- [ ] Stepping forward to a **future month with no logs yet**: no average card is shown (this already falls into the existing `EmptyState` branch since `totalSpending` is `0`; confirm the `daysElapsed > 0` guard also prevents a stray card/`NaN` if that assumption ever changes).
-- [ ] The Year tab and Lifetime tab are visually unchanged — no average-expense card appears on either, since `YearTab`/`LifetimeTab` don't pass the new optional props to `SpendingSummaryView`.
-- [ ] Currency formatting matches the rest of the screen: `৳` prefix, two decimal places (`.toFixed(2)`).
-- [ ] No backend/API changes made; `spending-summary` request/response shape for the Month tab is unchanged.
-- [ ] `expo lint` clean (0 errors/warnings) and `npx tsc --noEmit` clean.
-- [ ] `ai context/progress-tracker.md` updated with a new spec 26 row and Recent Activity entry.
+- [x] On the Month tab, viewing the **current** month with `totalSpending > 0`: `getElapsedDaysInMonth` returns `getDate(now)` (e.g. `17` on 2026-08-17) and `avgDailyExpense = summary.totalSpending / daysElapsed`, rendered as `৳{avgDailyExpense.toFixed(2)}` — code-traced correct; **not visually confirmed on-device**, no simulator/device available in this environment, same standing gap as every other spec in this project.
+- [x] Stepping back to a **fully-elapsed past month** (e.g. July while today is in August): `isSameMonth` is false and `monthDate > now` is false, so the function returns `getDaysInMonth(monthDate)` (`31` for July), not today's day-of-month — code-traced correct, not visually confirmed.
+- [x] Stepping forward to a **future month with no logs yet**: no average card is shown — belt-and-suspenders on two levels: `summary.totalSpending` is `0` so `MonthTab` falls into its existing `EmptyState` branch before `SpendingSummaryView` even renders, **and** `getElapsedDaysInMonth` independently returns `0` for a future month (`monthDate > now` true), so even if that upstream assumption ever changes, `MonthTab`'s `daysElapsed > 0` guard still withholds both props and `SpendingSummaryView`'s own `daysElapsed > 0` check in the JSX condition prevents a stray card or `NaN`.
+- [x] The Year tab and Lifetime tab are unaffected — grep-confirmed neither `YearTab` nor `LifetimeTab` in `Spending.tsx` passes `avgDailyExpense`/`daysElapsed` to their `<SpendingSummaryView summary={summary} />` calls; both props are optional so `SpendingSummaryViewProps` stays backward-compatible. Not visually confirmed on-device.
+- [x] Currency formatting matches the rest of the screen: `৳` prefix, `.toFixed(2)`, identical to `totalCard`'s existing `avgValue`/`totalValue` pattern.
+- [x] No backend/API changes made; `Spending.tsx`'s `spending-summary?period=month&targetMonth=...` request URL and `TSpendingSummary` response type are both untouched — `avgDailyExpense`/`daysElapsed` are purely client-derived, never sent to or read from the API.
+- [x] `expo lint` — 0 errors/warnings; `npx tsc --noEmit` — 0 errors.
+- [x] `ai context/progress-tracker.md` updated with a new spec 26 row and Recent Activity entry.

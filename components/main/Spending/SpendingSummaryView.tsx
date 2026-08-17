@@ -4,9 +4,15 @@ import { TSpendingSummary } from "@/types/spending.types";
 
 interface SpendingSummaryViewProps {
   summary: TSpendingSummary;
+  avgDailyExpense?: number;
+  daysElapsed?: number;
 }
 
-export function SpendingSummaryView({ summary }: SpendingSummaryViewProps) {
+export function SpendingSummaryView({
+  summary,
+  avgDailyExpense,
+  daysElapsed,
+}: SpendingSummaryViewProps) {
   const total = summary.totalSpending || 0;
   const categories = summary.categoryBreakdown || [];
 
@@ -16,6 +22,16 @@ export function SpendingSummaryView({ summary }: SpendingSummaryViewProps) {
         <Text style={styles.totalLabel}>Total Spending</Text>
         <Text style={styles.totalValue}>৳{total.toFixed(2)}</Text>
       </View>
+
+      {avgDailyExpense !== undefined && daysElapsed !== undefined && daysElapsed > 0 && (
+        <View style={styles.avgCard}>
+          <Text style={styles.avgLabel}>Avg Daily Expense</Text>
+          <Text style={styles.avgValue}>৳{avgDailyExpense.toFixed(2)}</Text>
+          <Text style={styles.avgCaption}>
+            over {daysElapsed} day{daysElapsed === 1 ? "" : "s"} this month
+          </Text>
+        </View>
+      )}
 
       <Text style={styles.categoriesTitle}>By Category</Text>
       {categories.length === 0 ? (
@@ -61,6 +77,34 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: COLORS.text,
     marginTop: 4,
+  },
+  avgCard: {
+    backgroundColor: COLORS.card,
+    borderRadius: 6,
+    padding: 16,
+    alignItems: "center",
+    marginBottom: 20,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  avgLabel: {
+    fontSize: 13,
+    color: COLORS.textLight,
+    fontWeight: "500",
+  },
+  avgValue: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: COLORS.text,
+    marginTop: 4,
+  },
+  avgCaption: {
+    fontSize: 12,
+    color: COLORS.textLight,
+    marginTop: 2,
   },
   categoriesTitle: {
     fontSize: 16,

@@ -61,7 +61,7 @@ Same as the web app: `bikelog_server` has `user`/`admin` in its schema/JWT paylo
 **Deferred, not abandoned:**
 - Admin panel / any `admin`-role functionality — same stance as the web app.
 - Push notifications — `bikelog_server`'s original plan (`bikelog_server/context/specs/bike-log-plan.md`) mentions Expo push as a Phase-2 idea for exactly this app; not building it in v1. The in-app reminders banner is the only mechanism for now.
-- ~~Charts of any kind — plain totals/cards only~~ — reversed for v2's spec 18 (Spending/Mileage trend tabs), mirroring the web app's own spec 13. Every other v1-scoped screen still uses plain totals/cards; charts are additive on top of those, not a replacement.
+- Charts of any kind — plain totals/cards only. (Spec 18 briefly added Spending/Mileage trend charts for v2; spec 25 removed them per direct user instruction, restoring this stance. Web keeps and widens its own charts — this is a mobile-only exclusion.)
 
 **Not relevant to Bike Log at all:**
 - `expenseTrackerReactNative`'s `smart-add` (AI prompt-to-transaction) screen and its backing endpoint — a feature specific to that app's domain, with no `bikelog_server` equivalent. See `../PLAN.md` §8 for the full "don't copy" list, including a real bug in that project's axios interceptor this app must not inherit.
