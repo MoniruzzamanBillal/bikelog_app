@@ -5,9 +5,13 @@ import {
   YearStepper,
 } from "@/components/main/shared";
 import { useFetchData } from "@/hooks/useApi";
-import { TSpendingDetails, TSpendingSummary } from "@/types/spending.types";
+import {
+  TSpendingDetails,
+  TSpendingSummary,
+  TSpendingTrend,
+} from "@/types/spending.types";
 import { apiGet } from "@/utils/api";
-import { COLORS } from "@/utils/colors";
+import { CHART_COLORS, COLORS } from "@/utils/colors";
 import { generateSpendingPdf } from "@/utils/generateSpendingPdf";
 import { format, getDate, getDaysInMonth, isSameMonth, parse } from "date-fns";
 import { useLocalSearchParams } from "expo-router";
@@ -19,13 +23,14 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { BarChart, PieChart } from "react-native-gifted-charts";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { Button, Text } from "react-native-paper";
 import Toast from "react-native-toast-message";
 import { AiSpendingInsightCard } from "./AiSpendingInsightCard";
 import { SpendingSummaryView } from "./SpendingSummaryView";
 
-type TPeriod = "month" | "year" | "lifetime";
+type TPeriod = "month" | "year" | "lifetime" | "trend";
 
 async function exportSpendingPdf(
   bikeId: string,
@@ -62,6 +67,7 @@ const TABS: { key: TPeriod; label: string }[] = [
   { key: "month", label: "Month" },
   { key: "year", label: "Year" },
   { key: "lifetime", label: "Lifetime" },
+  { key: "trend", label: "Trend" },
 ];
 
 function getElapsedDaysInMonth(targetMonth: string): number {
@@ -245,6 +251,96 @@ function LifetimeTab({ bikeId }: { bikeId: string }) {
   );
 }
 
+function TrendTab({ bikeId }: { bikeId: string }) {
+  const { data, isLoading } = useFetchData<TSpendingTrend>(
+    ["spending", "trend", bikeId],
+    `/bikes/${bikeId}/spending-summary/trend?months=3`,
+  );
+
+  const trend = data?.data;
+  const monthlySummary = trend?.monthlySummary ?? [];
+  const latest = monthlySummary[monthlySummary.length - 1];
+  const latestBreakdown = latest?.categoryBreakdown ?? [];
+  const breakdownTotal = latestBreakdown.reduce((sum, c) => sum + c.total, 0);
+
+  const barData = monthlySummary.map((m) => ({
+    value: m.totalSpending,
+    label: format(parse(m.targetMonth, "yyyy-MM", new Date()), "MMM"),
+    frontColor: COLORS.primary,
+  }));
+
+  const pieData = latestBreakdown.map((c, i) => ({
+    value: c.total,
+    text: c.category,
+    color: CHART_COLORS[i % CHART_COLORS.length],
+  }));
+
+  if (isLoading) {
+    return <SectionLoading count={2} />;
+  }
+
+  return (
+    <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
+      <View style={styles.chartCard}>
+        <Text style={styles.chartTitle}>Spending, last 3 months</Text>
+        <BarChart
+          data={barData}
+          barWidth={28}
+          spacing={24}
+          roundedTop
+          yAxisThickness={0}
+          xAxisThickness={0}
+        />
+      </View>
+
+      {pieData.length > 0 ? (
+        <View style={styles.chartCard}>
+          <Text style={styles.chartTitle}>
+            By category (
+            {latest
+              ? format(
+                  parse(latest.targetMonth, "yyyy-MM", new Date()),
+                  "MMM yyyy",
+                )
+              : ""}
+            )
+          </Text>
+          <PieChart data={pieData} donut radius={90} innerRadius={60} />
+
+          <View style={styles.legend}>
+            {latestBreakdown.map((c, i) => {
+              const percentage =
+                breakdownTotal > 0
+                  ? ((c.total / breakdownTotal) * 100).toFixed(1)
+                  : "0.0";
+              return (
+                <View key={c.category} style={styles.legendItem}>
+                  <View
+                    style={[
+                      styles.legendSwatch,
+                      {
+                        backgroundColor: CHART_COLORS[i % CHART_COLORS.length],
+                      },
+                    ]}
+                  />
+                  <Text style={styles.legendLabel} numberOfLines={1}>
+                    {c.category}
+                  </Text>
+                  <Text style={styles.legendValue}>
+                    ৳{c.total.toFixed(2)} ({percentage}%)
+                  </Text>
+                </View>
+              );
+            })}
+          </View>
+        </View>
+      ) : (
+        <EmptyState label="No spending data for this month" />
+      )}
+    </ScrollView>
+  );
+}
+
 export function Spending() {
   const { bikeId } = useLocalSearchParams<{ bikeId: string }>();
   const [activeTab, setActiveTab] = useState<TPeriod>("month");
@@ -283,6 +379,7 @@ export function Spending() {
         {activeTab === "month" && <MonthTab bikeId={bikeId} />}
         {activeTab === "year" && <YearTab bikeId={bikeId} />}
         {activeTab === "lifetime" && <LifetimeTab bikeId={bikeId} />}
+        {activeTab === "trend" && <TrendTab bikeId={bikeId} />}
       </View>
     </View>
   );
@@ -335,5 +432,41 @@ const styles = StyleSheet.create({
   exportButton: {
     marginBottom: 16,
     alignSelf: "flex-start",
+  },
+  chartCard: {
+    backgroundColor: COLORS.card,
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+  },
+  chartTitle: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: COLORS.text,
+    marginBottom: 8,
+  },
+  legend: {
+    marginTop: 12,
+    gap: 8,
+  },
+  legendItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  legendSwatch: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+  },
+  legendLabel: {
+    flex: 1,
+    fontSize: 13,
+    color: COLORS.text,
+  },
+  legendValue: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: COLORS.textLight,
   },
 });

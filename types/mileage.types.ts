@@ -54,3 +54,8 @@ export type TMileageInsight = {
   generated: boolean;
   cached: boolean;
 };
+
+export type TMileageTrend = {
+  months: number;
+  monthlySummary: TMonthlySummary[];
+};
