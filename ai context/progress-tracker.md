@@ -38,6 +38,7 @@ Update this file after every spec — status table, Recent Activity log, and Kno
 | 26   | ✅ Complete    | Monthly avg daily expense card on Spending's Month tab — see `context/specs/26-monthly-avg-daily-expense.md`.                                                              |
 | 27   | ✅ Complete    | Spending PDF export (expo-print + expo-sharing) — see `context/specs/27-spending-pdf-export.md`.                                                                           |
 | 28   | ✅ Complete    | Restore Spending/Mileage trend charts (reverses spec 25), donut gains a legend this time — see `context/specs/28-restore-trend-charts-with-legend.md`.                     |
+| 29   | 🔄 In progress | Bug fix — auth-token/context desync on 401 (image picker badge position investigated, confirmed correct on-device, no change needed) — see `context/specs/29-bug-fix-auth-token-desync.md`.  |
 
 ## Completed (already implemented)
 
