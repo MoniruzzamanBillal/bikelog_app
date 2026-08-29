@@ -24,18 +24,14 @@ const LIMIT = 10;
 export function BikeIssue() {
   const { bikeId } = useLocalSearchParams<{ bikeId: string }>();
   const [page, setPage] = useState(1);
-  const [statusFilter, setStatusFilter] = useState<TBikeIssueStatus | null>(
-    null,
-  );
+  const [statusFilter, setStatusFilter] = useState<TBikeIssueStatus>("open");
   const [modalOpen, setModalOpen] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const openSwipeableRef = useRef<SwipeableMethods | null>(null);
 
-  const filterParam = statusFilter ? `&status=${statusFilter}` : "";
-
   const { data, isLoading, refetch } = useFetchData<TBikeIssuesApiResponse>(
-    ["issues", bikeId, page.toString(), statusFilter ?? "all"],
-    `/bikes/${bikeId}/issues?page=${page}&limit=${LIMIT}&sort=-dateReported${filterParam}`,
+    ["issues", bikeId, page.toString(), statusFilter],
+    `/bikes/${bikeId}/issues?page=${page}&limit=${LIMIT}&sort=-dateReported&status=${statusFilter}`,
     { enabled: !!bikeId },
   );
 
@@ -48,7 +44,7 @@ export function BikeIssue() {
     setRefreshing(false);
   };
 
-  const handleFilterChange = (filter: TBikeIssueStatus | null) => {
+  const handleFilterChange = (filter: TBikeIssueStatus) => {
     setStatusFilter(filter);
     setPage(1);
   };
@@ -63,27 +59,25 @@ export function BikeIssue() {
       </View>
 
       <View style={styles.filterRow}>
-        {([null, "open", "resolved"] as (TBikeIssueStatus | null)[]).map(
-          (f) => (
-            <TouchableOpacity
-              key={f ?? "all"}
+        {(["open", "resolved"] as TBikeIssueStatus[]).map((f) => (
+          <TouchableOpacity
+            key={f}
+            style={[
+              styles.filterBtn,
+              statusFilter === f && styles.filterBtnActive,
+            ]}
+            onPress={() => handleFilterChange(f)}
+          >
+            <Text
               style={[
-                styles.filterBtn,
-                statusFilter === f && styles.filterBtnActive,
+                styles.filterBtnText,
+                statusFilter === f && styles.filterBtnTextActive,
               ]}
-              onPress={() => handleFilterChange(f)}
             >
-              <Text
-                style={[
-                  styles.filterBtnText,
-                  statusFilter === f && styles.filterBtnTextActive,
-                ]}
-              >
-                {f === null ? "All" : f === "open" ? "Open" : "Resolved"}
-              </Text>
-            </TouchableOpacity>
-          ),
-        )}
+              {f === "open" ? "Open" : "Resolved"}
+            </Text>
+          </TouchableOpacity>
+        ))}
       </View>
 
       {isLoading ? (

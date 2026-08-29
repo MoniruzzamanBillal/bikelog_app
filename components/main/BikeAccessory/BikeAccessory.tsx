@@ -23,8 +23,7 @@ const URGENCIES: { key: TAccessoryUrgency | null; label: string }[] = [
   { key: "low", label: "Low" },
 ];
 
-const STATUSES: { key: TAccessoryStatus | null; label: string }[] = [
-  { key: null, label: "All" },
+const STATUSES: { key: TAccessoryStatus; label: string }[] = [
   { key: "pending", label: "Pending" },
   { key: "purchased", label: "Purchased" },
   { key: "cancelled", label: "Cancelled" },
@@ -34,7 +33,7 @@ export function BikeAccessory() {
   const { bikeId } = useLocalSearchParams<{ bikeId: string }>();
   const [page, setPage] = useState(1);
   const [urgencyFilter, setUrgencyFilter] = useState<TAccessoryUrgency | null>(null);
-  const [statusFilter, setStatusFilter] = useState<TAccessoryStatus | null>(null);
+  const [statusFilter, setStatusFilter] = useState<TAccessoryStatus>("pending");
   const [modalOpen, setModalOpen] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const openSwipeableRef = useRef<SwipeableMethods | null>(null);
@@ -43,11 +42,11 @@ export function BikeAccessory() {
   filterParams.set("page", page.toString());
   filterParams.set("limit", LIMIT.toString());
   if (urgencyFilter) filterParams.set("urgency", urgencyFilter);
-  if (statusFilter) filterParams.set("status", statusFilter);
+  filterParams.set("status", statusFilter);
   const queryString = filterParams.toString();
 
   const { data, isLoading, refetch } = useFetchData<TBikeAccessoriesApiResponse>(
-    ["accessories", bikeId, page.toString(), urgencyFilter ?? "all", statusFilter ?? "all"],
+    ["accessories", bikeId, page.toString(), urgencyFilter ?? "all", statusFilter],
     `/bikes/${bikeId}/accessories?${queryString}`,
     { enabled: !!bikeId },
   );
@@ -66,7 +65,7 @@ export function BikeAccessory() {
     setPage(1);
   };
 
-  const handleStatusChange = (s: TAccessoryStatus | null) => {
+  const handleStatusChange = (s: TAccessoryStatus) => {
     setStatusFilter(s);
     setPage(1);
   };
