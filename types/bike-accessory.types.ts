@@ -10,6 +10,8 @@ export type TBikeAccessory = {
   urgency: TAccessoryUrgency;
   status: TAccessoryStatus;
   price?: number;
+  // ! server-computed only — stamped the instant status transitions into "purchased", never client-sent
+  purchaseDate?: string;
   productImage?: TCloudinaryImage;
   isDeleted: boolean;
   createdAt: string;

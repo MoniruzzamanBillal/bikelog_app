@@ -9,6 +9,7 @@ import { confirmDelete } from "@/components/main/shared/ConfirmDelete";
 import { useDelete, usePut } from "@/hooks/useApi";
 import { TBikeAccessory } from "@/types/bike-accessory.types";
 import { COLORS } from "@/utils/colors";
+import { format } from "date-fns";
 import { useRef, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { TouchableOpacity } from "react-native-gesture-handler";
@@ -147,6 +148,11 @@ export function BikeAccessoryCard({
                   ৳{accessory.price.toFixed(2)}
                 </Text>
               )}
+              {accessory.status === "purchased" && accessory.purchaseDate && (
+                <Text style={styles.purchaseDate}>
+                  Purchased {format(new Date(accessory.purchaseDate), "d MMM yyyy")}
+                </Text>
+              )}
               <View style={styles.badgesRow}>
                 <StatusBadge
                   label={accessory.urgency}
@@ -203,6 +209,11 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "600",
     color: COLORS.text,
+    marginBottom: 8,
+  },
+  purchaseDate: {
+    fontSize: 12,
+    color: COLORS.textLight,
     marginBottom: 8,
   },
   badgesRow: {

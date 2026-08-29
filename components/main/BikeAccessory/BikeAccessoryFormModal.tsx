@@ -49,6 +49,9 @@ export function BikeAccessoryFormModal({
   const updateMutation = usePatch([["accessories", bikeId]]);
 
   const isPending = createMutation.isPending || updateMutation.isPending;
+  // ! once purchased, status is a permanent, server-enforced lock (bikelog_server spec 25) —
+  // ! disable it client-side too so the user isn't surprised by a rejected update
+  const isStatusLocked = !!initialAccessory && initialAccessory.status === "purchased";
 
   useEffect(() => {
     if (!open) return;
@@ -82,6 +85,14 @@ export function BikeAccessoryFormModal({
       Toast.show({
         type: "error",
         text1: "Enter a valid price greater than 0",
+        position: "top",
+      });
+      return;
+    }
+    if (status === "purchased" && !price.trim()) {
+      Toast.show({
+        type: "error",
+        text1: "Price is required when marking an accessory as purchased",
         position: "top",
       });
       return;
@@ -151,11 +162,19 @@ export function BikeAccessoryFormModal({
             onChange={(val) => setStatus(val as TAccessoryStatus)}
             options={STATUS_OPTIONS}
             required
+            disabled={isStatusLocked}
           />
+          {isStatusLocked && (
+            <Text style={styles.lockedHint}>
+              Status is locked once purchased.
+            </Text>
+          )}
 
           <View style={styles.field}>
             <TextInput
-              placeholder="Price (optional)"
+              placeholder={
+                status === "purchased" ? "Price (required)" : "Price (optional)"
+              }
               value={price}
               onChangeText={setPrice}
               keyboardType="decimal-pad"
@@ -201,6 +220,12 @@ const styles = StyleSheet.create({
   field: {
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border,
+    marginBottom: 16,
+  },
+  lockedHint: {
+    fontSize: 12,
+    color: COLORS.textLight,
+    marginTop: -10,
     marginBottom: 16,
   },
   input: {
