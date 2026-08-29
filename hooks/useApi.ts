@@ -40,7 +40,7 @@ export const usePost = (invalidateQueriesKeys?: string[][]) => {
     }) => {
       return apiPost(params.url, params.payload);
     },
-    onSuccess: (data) => {
+    onSuccess: () => {
       if (invalidateQueriesKeys) {
         invalidateQueriesKeys.forEach((key) => {
           queryClient.invalidateQueries({ queryKey: key });
