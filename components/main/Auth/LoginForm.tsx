@@ -1,15 +1,15 @@
-import { useState } from "react";
-import { Keyboard, StyleSheet, TouchableOpacity, View } from "react-native";
+import { useUserContext } from "@/context/user.context";
+import { usePost } from "@/hooks/useApi";
+import { TLoginPayload, TUserToken } from "@/types/global.types";
+import { COLORS } from "@/utils/colors";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { jwtDecode } from "jwt-decode";
-import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { useState } from "react";
+import { Keyboard, StyleSheet, TouchableOpacity, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { Button, Text, TextInput } from "react-native-paper";
 import Toast from "react-native-toast-message";
-import { useUserContext } from "@/context/user.context";
-import { usePost } from "@/hooks/useApi";
-import { COLORS } from "@/utils/colors";
-import { TLoginPayload, TUserToken } from "@/types/global.types";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -33,7 +33,11 @@ export function LoginForm() {
     const trimmedEmail = email.trim();
 
     if (!trimmedEmail) {
-      Toast.show({ type: "error", text1: "Email is required", position: "top" });
+      Toast.show({
+        type: "error",
+        text1: "Email is required",
+        position: "top",
+      });
       return;
     }
     if (!EMAIL_REGEX.test(trimmedEmail)) {
@@ -45,7 +49,11 @@ export function LoginForm() {
       return;
     }
     if (!password.trim()) {
-      Toast.show({ type: "error", text1: "Password is required", position: "top" });
+      Toast.show({
+        type: "error",
+        text1: "Password is required",
+        position: "top",
+      });
       return;
     }
 
@@ -57,6 +65,8 @@ export function LoginForm() {
         url: "/auth/login",
         payload,
       })) as TLoginResponse;
+
+      // console.log("result = ", result);
 
       if (result?.token) {
         const decoded = jwtDecode<TUserToken>(result.token);

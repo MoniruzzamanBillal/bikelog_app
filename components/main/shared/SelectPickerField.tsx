@@ -9,6 +9,7 @@ interface SelectPickerFieldProps {
   onChange: (value: string) => void;
   options: { label: string; value: string }[];
   required?: boolean;
+  disabled?: boolean;
 }
 
 export function SelectPickerField({
@@ -17,6 +18,7 @@ export function SelectPickerField({
   onChange,
   options,
   required,
+  disabled,
 }: SelectPickerFieldProps) {
   const [menuVisible, setMenuVisible] = useState(false);
   const selectedLabel = options.find((opt) => opt.value === value)?.label;
@@ -33,7 +35,8 @@ export function SelectPickerField({
         anchor={
           <TouchableRipple
             onPress={() => setMenuVisible(true)}
-            style={styles.touchable}
+            disabled={disabled}
+            style={[styles.touchable, disabled && styles.touchableDisabled]}
           >
             <Text
               style={selectedLabel ? styles.valueText : styles.placeholderText}
@@ -71,6 +74,9 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border,
     paddingVertical: 12,
+  },
+  touchableDisabled: {
+    opacity: 0.5,
   },
   valueText: { fontSize: 16, color: COLORS.text },
   placeholderText: { fontSize: 16, color: COLORS.textLight },

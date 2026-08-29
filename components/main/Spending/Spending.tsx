@@ -254,7 +254,7 @@ function LifetimeTab({ bikeId }: { bikeId: string }) {
 function TrendTab({ bikeId }: { bikeId: string }) {
   const { data, isLoading } = useFetchData<TSpendingTrend>(
     ["spending", "trend", bikeId],
-    `/bikes/${bikeId}/spending-summary/trend?months=3`,
+    `/bikes/${bikeId}/spending-summary/trend?months=6`,
   );
 
   const trend = data?.data;
@@ -282,7 +282,7 @@ function TrendTab({ bikeId }: { bikeId: string }) {
   return (
     <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
       <View style={styles.chartCard}>
-        <Text style={styles.chartTitle}>Spending, last 3 months</Text>
+        <Text style={styles.chartTitle}>Spending, last 6 months</Text>
         <BarChart
           data={barData}
           barWidth={28}

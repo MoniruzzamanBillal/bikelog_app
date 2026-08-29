@@ -14,7 +14,7 @@ interface MileageTrendTabProps {
 export function MileageTrendTab({ bikeId }: MileageTrendTabProps) {
   const { data, isLoading } = useFetchData<TMileageTrend>(
     ["mileage", "trend", bikeId],
-    `/bikes/${bikeId}/mileage/trend?months=3`,
+    `/bikes/${bikeId}/mileage/trend?months=6`,
   );
 
   const trend = data?.data;
@@ -33,7 +33,7 @@ export function MileageTrendTab({ bikeId }: MileageTrendTabProps) {
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       <View style={styles.chartCard}>
-        <Text style={styles.chartTitle}>Distance, last 3 months</Text>
+        <Text style={styles.chartTitle}>Distance, last 6 months</Text>
         <BarChart
           data={barData}
           barWidth={28}
