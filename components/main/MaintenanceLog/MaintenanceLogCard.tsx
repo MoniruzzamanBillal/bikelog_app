@@ -165,17 +165,25 @@ export function MaintenanceLogCard({
               <Text style={styles.odometer}>
                 Odometer: {log.odometerReading.toLocaleString()} km
               </Text>
-              <View style={styles.detailRow}>
+              {log.intervalKmUsed !== undefined ? (
+                <>
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detail}>
+                      Cost: ৳{log.cost.toLocaleString()}
+                    </Text>
+                    <Text style={styles.detail}>
+                      Interval: {log.intervalKmUsed.toLocaleString()} km
+                    </Text>
+                  </View>
+                  <Text style={styles.detail}>
+                    Next due: {log.nextDueOdometer!.toLocaleString()} km
+                  </Text>
+                </>
+              ) : (
                 <Text style={styles.detail}>
                   Cost: ৳{log.cost.toLocaleString()}
                 </Text>
-                <Text style={styles.detail}>
-                  Interval: {log.intervalKmUsed.toLocaleString()} km
-                </Text>
-              </View>
-              <Text style={styles.detail}>
-                Next due: {log.nextDueOdometer.toLocaleString()} km
-              </Text>
+              )}
               {log.serviceCenter && (
                 <Text style={styles.detail}>At: {log.serviceCenter}</Text>
               )}

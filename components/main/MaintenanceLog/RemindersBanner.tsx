@@ -58,17 +58,26 @@ export function RemindersBanner({ bikeId, maintenanceTypes }: RemindersBannerPro
                 </Text>
               </View>
               <Text style={styles.reminderText}>
-                {isOverdue
-                  ? `Overdue by ${Math.abs(reminder.kmRemaining).toLocaleString()} km`
-                  : `Due in ${reminder.kmRemaining.toLocaleString()} km`}
+                {reminder.kmRemaining !== undefined
+                  ? isOverdue
+                    ? `Overdue by ${Math.abs(reminder.kmRemaining).toLocaleString()} km`
+                    : `Due in ${reminder.kmRemaining.toLocaleString()} km`
+                  : reminder.daysRemaining !== undefined
+                    ? isOverdue
+                      ? `Overdue by ${Math.abs(reminder.daysRemaining)} days`
+                      : `Due in ${reminder.daysRemaining} days`
+                    : isOverdue
+                      ? "Overdue"
+                      : "Upcoming"}
               </Text>
-              {reminder.daysRemaining !== undefined && (
-                <Text style={styles.reminderSubtext}>
-                  {isOverdue
-                    ? `${Math.abs(reminder.daysRemaining)} days overdue`
-                    : `${reminder.daysRemaining} days remaining`}
-                </Text>
-              )}
+              {reminder.kmRemaining !== undefined &&
+                reminder.daysRemaining !== undefined && (
+                  <Text style={styles.reminderSubtext}>
+                    {isOverdue
+                      ? `${Math.abs(reminder.daysRemaining)} days overdue`
+                      : `${reminder.daysRemaining} days remaining`}
+                  </Text>
+                )}
             </View>
           );
         })}

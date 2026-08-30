@@ -100,7 +100,7 @@ export function MaintenanceLogFormModal({
           ? log.oilType
           : "";
       setOilType(oilId || null);
-      setIntervalKmUsed(log.intervalKmUsed.toString());
+      setIntervalKmUsed(log.intervalKmUsed?.toString() ?? "");
       setCost(log.cost.toString());
       setServiceDate(log.serviceDate ? log.serviceDate.split("T")[0] : "");
       setNextDueDate(log.nextDueDate ? log.nextDueDate.split("T")[0] : "");
@@ -130,7 +130,7 @@ export function MaintenanceLogFormModal({
       Toast.show({ type: "error", text1: "Enter a valid odometer reading", position: "top" });
       return;
     }
-    if (!intervalKmUsed.trim() || !DECIMAL_REGEX.test(intervalKmUsed.trim())) {
+    if (intervalKmUsed.trim() && !DECIMAL_REGEX.test(intervalKmUsed.trim())) {
       Toast.show({ type: "error", text1: "Enter a valid service interval", position: "top" });
       return;
     }
@@ -147,7 +147,7 @@ export function MaintenanceLogFormModal({
     const payload: TCreateMaintenanceLogPayload = {
       maintenanceType,
       odometerReading: parseFloat(odometerReading),
-      intervalKmUsed: parseFloat(intervalKmUsed),
+      intervalKmUsed: intervalKmUsed.trim() ? parseFloat(intervalKmUsed.trim()) : undefined,
       cost: parseFloat(cost),
       oilType: oilType || undefined,
       serviceDate: serviceDate || format(new Date(), "yyyy-MM-dd"),
@@ -228,7 +228,7 @@ export function MaintenanceLogFormModal({
 
           <View style={styles.field}>
             <TextInput
-              placeholder="Service Interval (km)"
+              placeholder="Service Interval (km) (optional)"
               value={intervalKmUsed}
               onChangeText={setIntervalKmUsed}
               keyboardType="decimal-pad"
