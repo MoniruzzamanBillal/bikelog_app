@@ -6,8 +6,8 @@ export type TMaintenanceLog = {
   maintenanceType: { _id: string; name: string } | string;
   odometerReading: number;
   oilType?: { _id: string; name: string; suggestedIntervalKm: number } | string;
-  intervalKmUsed: number;
-  nextDueOdometer: number;
+  intervalKmUsed?: number;
+  nextDueOdometer?: number;
   nextDueDate?: string;
   cost: number;
   serviceDate: string;
@@ -24,7 +24,7 @@ export type TCreateMaintenanceLogPayload = {
   maintenanceType: string;
   odometerReading: number;
   oilType?: string;
-  intervalKmUsed: number;
+  intervalKmUsed?: number;
   nextDueDate?: string;
   cost: number;
   serviceDate?: string;
@@ -50,10 +50,10 @@ export type TReminder = {
   maintenanceType: string;
   lastServiceDate: string;
   lastOdometerReading: number;
-  nextDueOdometer: number;
+  nextDueOdometer?: number;
   nextDueDate?: string;
   status: "overdue" | "upcoming";
-  kmRemaining: number;
+  kmRemaining?: number;
   daysRemaining?: number;
 };
 
