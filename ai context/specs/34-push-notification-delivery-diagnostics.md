@@ -1,6 +1,6 @@
 # 34: Diagnose Why Weekly Push Notifications Never Arrive on Device
 
-Status: ⛔ Not started
+Status: 🔄 In progress (diagnostic logging shipped and code-verified; `eas credentials`, on-device run, and the paired backend spec 29 trigger all require the user — see Implementation)
 
 ## Goal
 
@@ -39,12 +39,12 @@ These are pure `console.log` additions matching the file's existing best-effort/
 
 ## Implementation
 
-1. ⬜ `eas credentials -p android` — check/provision FCM V1 credentials for this EAS project (external action, not a code change).
-2. ⬜ `utils/registerPushToken.ts` — add the four diagnostic `console.log` points described above.
-3. ⬜ Rebuild/reinstall the dev client only if native config changed (FCM credential provisioning doesn't require a rebuild by itself; a JS-only logging change needs just a Metro reload).
-4. ⬜ Launch the app on the real device, log in, watch Metro logs for: `Device.isDevice: true` → permission granted → `projectId` resolved → token obtained → POST succeeded.
-5. ⬜ Cross-check the backend (paired `bikelog_server` spec 29): confirm `expoPushToken` is now populated on this user's DB record, then use spec 29's manual trigger step to send a real notification and confirm it actually appears on the device (backgrounded banner, foreground display, and tap-to-deep-link into the bike hub — completing spec 24's originally unchecked Verify items).
-6. ⬜ `ai context/progress-tracker.md` — flip this row Not Started → Complete once a real notification is confirmed delivered end-to-end, and note the actual root cause found (also update spec 24's own Verify checkboxes if this resolves them).
+1. ⬜ `eas credentials -p android` — check/provision FCM V1 credentials for this EAS project (external action, not a code change). **Blocked on the user**: this environment's `eas` CLI (`eas-cli/23.0.0`, confirmed installed) is not logged in (`eas whoami` → `Not logged in`) — provisioning FCM V1 credentials is an account-affecting action against the real EAS project (owner `moniruzzaman3018`) that requires the developer's own Expo login, so it wasn't attempted here. The user needs to run `eas login` then `eas credentials -p android` themselves and report back what it shows.
+2. ✅ `utils/registerPushToken.ts` — added the four diagnostic `console.log` points described above (`[push] Device.isDevice:`, `[push] permission not granted, status:`, `[push] missing EAS projectId, aborting`, `[push] obtained token:`). Pure logging, no behavior change. `expo lint` and `npx tsc --noEmit` both pass clean.
+3. ⬜ Rebuild/reinstall the dev client only if native config changed (FCM credential provisioning doesn't require a rebuild by itself; a JS-only logging change needs just a Metro reload). Depends on step 1's outcome.
+4. ⬜ Launch the app on the real device, log in, watch Metro logs for: `Device.isDevice: true` → permission granted → `projectId` resolved → token obtained → POST succeeded. Requires the real device + Metro session — needs the user.
+5. ⬜ Cross-check the backend (paired `bikelog_server` spec 29): confirm `expoPushToken` is now populated on this user's DB record, then use spec 29's manual trigger step to send a real notification and confirm it actually appears on the device (backgrounded banner, foreground display, and tap-to-deep-link into the bike hub — completing spec 24's originally unchecked Verify items). Paired-project step, out of this spec's own scope to execute — see Dependencies.
+6. ⬜ `ai context/progress-tracker.md` — flip this row Not Started → Complete once a real notification is confirmed delivered end-to-end, and note the actual root cause found (also update spec 24's own Verify checkboxes if this resolves them). Deferred until steps 1/3/4/5 are confirmed by the user.
 
 ## Dependencies
 
