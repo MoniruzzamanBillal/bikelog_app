@@ -1,12 +1,13 @@
 import { BikeFormModal } from "@/components/main/Bike/BikeFormModal";
-import { EmptyState, SectionLoading } from "@/components/main/shared";
+import { EmptyState, ErrorState, SectionLoading } from "@/components/main/shared";
 import { useFetchData } from "@/hooks/useApi";
 import { TBike } from "@/types/bike.types";
 import { COLORS } from "@/utils/colors";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRef, useState } from "react";
-import { RefreshControl, ScrollView, StyleSheet, View } from "react-native";
+import { RefreshControl, ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
 import { SwipeableMethods } from "react-native-gesture-handler/ReanimatedSwipeable";
-import { Button, Text } from "react-native-paper";
+import { Text } from "react-native-paper";
 import { BikeCard } from "./BikeCard";
 
 export function Dashboard() {
@@ -14,7 +15,7 @@ export function Dashboard() {
   const [refreshing, setRefreshing] = useState(false);
   const openSwipeableRef = useRef<SwipeableMethods | null>(null);
 
-  const { data, isLoading, refetch } = useFetchData<TBike[]>(
+  const { data, isLoading, isError, refetch } = useFetchData<TBike[]>(
     ["bikes"],
     "/bikes",
   );
@@ -28,21 +29,34 @@ export function Dashboard() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>My Bikes</Text>
-        <Button mode="contained" onPress={() => setModalOpen(true)}>
-          Add Bike
-        </Button>
+      <View style={styles.navBar}>
+        <Text style={styles.navTitle}>My Bikes</Text>
+        <TouchableOpacity
+          onPress={() => setModalOpen(true)}
+          style={styles.navBtn}
+          hitSlop={8}
+        >
+          <MaterialCommunityIcons name="plus" size={22} color={COLORS.accent} />
+        </TouchableOpacity>
       </View>
 
       {isLoading ? (
-        <SectionLoading count={3} />
+        <View style={styles.pad}>
+          <SectionLoading count={3} />
+        </View>
+      ) : isError ? (
+        <ErrorState onRetry={refetch} />
       ) : bikes.length === 0 ? (
-        <EmptyState label="No bikes yet. Add one to get started." />
+        <EmptyState label="No bikes yet. Tap + to add one." />
       ) : (
         <ScrollView
+          contentContainerStyle={styles.pad}
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={handleRefresh}
+              tintColor={COLORS.accent}
+            />
           }
           showsVerticalScrollIndicator={false}
         >
@@ -65,17 +79,28 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.background,
-    padding: 16,
   },
-  header: {
+  navBar: {
+    height: 52,
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 16,
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.borderSubtle,
   },
-  headerTitle: {
-    fontSize: 22,
-    fontWeight: "700",
+  navTitle: {
+    flex: 1,
+    fontSize: 17,
+    fontWeight: "600",
     color: COLORS.text,
+  },
+  navBtn: {
+    width: 32,
+    height: 32,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  pad: {
+    padding: 16,
   },
 });

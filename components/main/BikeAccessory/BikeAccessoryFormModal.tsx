@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
-import { StyleSheet, View } from "react-native";
+import { StyleSheet } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
-import { Button, Modal, Portal, Text, TextInput } from "react-native-paper";
+import { Modal, Portal, Text } from "react-native-paper";
 import Toast from "react-native-toast-message";
-import { SelectPickerField } from "@/components/main/shared";
+import { FormField, PrimaryButton, SelectPickerField } from "@/components/main/shared";
 import { usePatch, usePost } from "@/hooks/useApi";
 import { COLORS } from "@/utils/colors";
 import {
@@ -137,16 +137,13 @@ export function BikeAccessoryFormModal({
             {initialAccessory ? "Edit Accessory" : "Add to Wishlist"}
           </Text>
 
-          <View style={styles.field}>
-            <TextInput
-              placeholder="Item Name"
-              value={name}
-              onChangeText={setName}
-              editable={!isPending}
-              textColor={COLORS.text}
-              style={styles.input}
-            />
-          </View>
+          <FormField
+            label="Item Name"
+            placeholder="Tail Tidy"
+            value={name}
+            onChangeText={setName}
+            editable={!isPending}
+          />
 
           <SelectPickerField
             label="Urgency"
@@ -170,33 +167,22 @@ export function BikeAccessoryFormModal({
             </Text>
           )}
 
-          <View style={styles.field}>
-            <TextInput
-              placeholder={
-                status === "purchased" ? "Price (required)" : "Price (optional)"
-              }
-              value={price}
-              onChangeText={setPrice}
-              keyboardType="decimal-pad"
-              editable={!isPending}
-              textColor={COLORS.text}
-              style={styles.input}
-            />
-          </View>
+          <FormField
+            label={status === "purchased" ? "Price (required)" : "Price (optional)"}
+            placeholder="1290"
+            value={price}
+            onChangeText={setPrice}
+            keyboardType="decimal-pad"
+            editable={!isPending}
+          />
 
-          <Button
-            mode="contained"
-            onPress={handleSubmit}
-            loading={isPending}
-            disabled={isPending}
-            style={styles.button}
-          >
-            {initialAccessory ? "Update" : "Add"}
-          </Button>
+          <PrimaryButton onPress={handleSubmit} loading={isPending} style={styles.button}>
+            {initialAccessory ? "Save Changes" : "Add to Wishlist"}
+          </PrimaryButton>
 
-          <Button onPress={onClose} disabled={isPending} style={styles.cancelButton}>
+          <PrimaryButton onPress={onClose} disabled={isPending} style={styles.cancelButton}>
             Cancel
-          </Button>
+          </PrimaryButton>
         </KeyboardAwareScrollView>
       </Modal>
     </Portal>
@@ -206,37 +192,30 @@ export function BikeAccessoryFormModal({
 const styles = StyleSheet.create({
   modal: {
     backgroundColor: COLORS.background,
+    borderWidth: 1,
+    borderColor: COLORS.borderSubtle,
     marginHorizontal: 20,
     padding: 20,
-    borderRadius: 8,
+    borderRadius: 12,
     maxHeight: "85%",
   },
   title: {
-    fontSize: 20,
-    fontWeight: "700",
+    fontSize: 18,
+    fontWeight: "600",
     color: COLORS.text,
-    marginBottom: 16,
-  },
-  field: {
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
-    marginBottom: 16,
+    marginBottom: 18,
   },
   lockedHint: {
     fontSize: 12,
-    color: COLORS.textLight,
-    marginTop: -10,
-    marginBottom: 16,
-  },
-  input: {
-    borderWidth: 0,
-    backgroundColor: "transparent",
-    padding: 0,
+    color: COLORS.textMuted,
+    marginTop: -8,
+    marginBottom: 14,
   },
   button: {
-    marginTop: 8,
+    marginTop: 10,
   },
   cancelButton: {
-    marginTop: 8,
+    marginTop: 10,
+    borderColor: COLORS.borderSubtle,
   },
 });

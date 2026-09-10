@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { StyleSheet, View } from "react-native";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { Menu, Text, TouchableRipple } from "react-native-paper";
 import { COLORS } from "@/utils/colors";
 
@@ -10,6 +11,7 @@ interface SelectPickerFieldProps {
   options: { label: string; value: string }[];
   required?: boolean;
   disabled?: boolean;
+  style?: object;
 }
 
 export function SelectPickerField({
@@ -19,15 +21,16 @@ export function SelectPickerField({
   options,
   required,
   disabled,
+  style,
 }: SelectPickerFieldProps) {
   const [menuVisible, setMenuVisible] = useState(false);
   const selectedLabel = options.find((opt) => opt.value === value)?.label;
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.field, style]}>
       <Text style={styles.label}>
         {label}
-        {required && <Text style={styles.required}>*</Text>}
+        {required && <Text style={styles.required}> *</Text>}
       </Text>
       <Menu
         visible={menuVisible}
@@ -36,20 +39,29 @@ export function SelectPickerField({
           <TouchableRipple
             onPress={() => setMenuVisible(true)}
             disabled={disabled}
-            style={[styles.touchable, disabled && styles.touchableDisabled]}
+            style={[styles.box, disabled && styles.boxDisabled]}
           >
-            <Text
-              style={selectedLabel ? styles.valueText : styles.placeholderText}
-            >
-              {selectedLabel ?? "Select..."}
-            </Text>
+            <View style={styles.boxContent}>
+              <Text
+                style={selectedLabel ? styles.valueText : styles.placeholderText}
+              >
+                {selectedLabel ?? "Select…"}
+              </Text>
+              <MaterialCommunityIcons
+                name="chevron-down"
+                size={16}
+                color={COLORS.textMuted}
+              />
+            </View>
           </TouchableRipple>
         }
+        contentStyle={styles.menuContent}
       >
         {options.map((opt) => (
           <Menu.Item
             key={opt.value}
             title={opt.label}
+            titleStyle={styles.menuItemTitle}
             onPress={() => {
               onChange(opt.value);
               setMenuVisible(false);
@@ -62,22 +74,44 @@ export function SelectPickerField({
 }
 
 const styles = StyleSheet.create({
-  container: { marginBottom: 16 },
+  field: {
+    marginBottom: 14,
+  },
   label: {
-    fontSize: 14,
-    fontWeight: "600",
-    marginBottom: 6,
-    color: COLORS.text,
+    fontSize: 11,
+    fontWeight: "500",
+    color: COLORS.textLight,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+    marginBottom: 5,
   },
-  required: { color: COLORS.danger },
-  touchable: {
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
-    paddingVertical: 12,
+  required: {
+    color: COLORS.danger,
+    textTransform: "none",
   },
-  touchableDisabled: {
+  box: {
+    backgroundColor: COLORS.surface,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 8,
+    paddingHorizontal: 14,
+    height: 44,
+    justifyContent: "center",
+  },
+  boxDisabled: {
     opacity: 0.5,
   },
-  valueText: { fontSize: 16, color: COLORS.text },
-  placeholderText: { fontSize: 16, color: COLORS.textLight },
+  boxContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  valueText: { fontSize: 15, color: COLORS.text },
+  placeholderText: { fontSize: 15, color: COLORS.placeholder },
+  menuContent: {
+    backgroundColor: COLORS.surface2,
+  },
+  menuItemTitle: {
+    color: COLORS.text,
+  },
 });

@@ -1,27 +1,40 @@
-const bikelog = {
-  primary: "#2196F3",
-  background: "#FFFFFF",
-  text: "#212121",
-  border: "#BDBDBD",
-  white: "#FFFFFF",
-  textLight: "#757575",
-  card: "#F5F5F5",
+// "Nocturne" — Bikelog's dark-mode-only v1 palette (see Bikelog Design.dc.html, Section 0)
+const nocturne = {
+  primary: "#9184d9",
+  accent: "#9184d9",
+
+  background: "#161826",
+  surface: "#1e2030",
+  surface2: "#252840",
+  surface3: "#2e3150",
+  card: "#1e2030",
+
+  text: "#e9e9ed",
+  textLight: "#a0a3b8",
+  textMuted: "#6b6f8a",
+  placeholder: "#4a4e6a",
+
+  border: "rgba(255,255,255,0.1)",
+  borderSubtle: "rgba(255,255,255,0.06)",
+
+  success: "#4ade80",
+  warning: "#fbbf24",
+  danger: "#f87171",
+
+  white: "#ffffff",
   shadow: "#000000",
-  success: "#4CAF50",
-  danger: "#F44336",
-  warning: "#FF9800",
 };
 
 export const THEMES = {
-  bikelog,
+  nocturne,
 };
 
-export const COLORS = THEMES.bikelog;
+export const COLORS = THEMES.nocturne;
 
 export const CHART_COLORS = [
-  "#2196F3", // COLORS.primary
-  "#4CAF50", // COLORS.success
-  "#FF9800", // COLORS.warning
-  "#9C27B0",
-  "#F44336", // COLORS.danger
+  "#9184d9", // COLORS.accent
+  "#4ade80", // COLORS.success
+  "#fbbf24", // COLORS.warning
+  "#60a5fa",
+  "#f87171", // COLORS.danger
 ];

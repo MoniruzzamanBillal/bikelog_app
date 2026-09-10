@@ -1,5 +1,12 @@
-import { EmptyState, SectionLoading } from "@/components/main/shared";
+import {
+  EmptyState,
+  ErrorState,
+  PrimaryButton,
+  ScreenHeader,
+  SectionLoading,
+} from "@/components/main/shared";
 import { useFetchData } from "@/hooks/useApi";
+import { TBike } from "@/types/bike.types";
 import {
   TBikeIssueStatus,
   TBikeIssuesApiResponse,
@@ -7,19 +14,18 @@ import {
 import { COLORS } from "@/utils/colors";
 import { useLocalSearchParams } from "expo-router";
 import { useRef, useState } from "react";
-import {
-  RefreshControl,
-  ScrollView,
-  StyleSheet,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { RefreshControl, ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
 import { SwipeableMethods } from "react-native-gesture-handler/ReanimatedSwipeable";
-import { Button, Text } from "react-native-paper";
+import { Text } from "react-native-paper";
 import { BikeIssueCard } from "./BikeIssueCard";
 import { BikeIssueFormModal } from "./BikeIssueFormModal";
 
 const LIMIT = 10;
+
+const TABS: { key: TBikeIssueStatus; label: string }[] = [
+  { key: "open", label: "Open" },
+  { key: "resolved", label: "Resolved" },
+];
 
 export function BikeIssue() {
   const { bikeId } = useLocalSearchParams<{ bikeId: string }>();
@@ -29,14 +35,22 @@ export function BikeIssue() {
   const [refreshing, setRefreshing] = useState(false);
   const openSwipeableRef = useRef<SwipeableMethods | null>(null);
 
-  const { data, isLoading, refetch } = useFetchData<TBikeIssuesApiResponse>(
+  const { data: bikeData } = useFetchData<TBike>(
+    ["bikes", bikeId],
+    `/bikes/${bikeId}`,
+    { enabled: !!bikeId },
+  );
+  const bike = bikeData?.data;
+
+  const { data, isLoading, isError, refetch } = useFetchData<TBikeIssuesApiResponse>(
     ["issues", bikeId, page.toString(), statusFilter],
     `/bikes/${bikeId}/issues?page=${page}&limit=${LIMIT}&sort=-dateReported&status=${statusFilter}`,
     { enabled: !!bikeId },
   );
 
   const issues = data?.data?.result ?? [];
-  const totalPages = Math.ceil((data?.data?.meta ?? 0) / LIMIT) || 1;
+  const totalCount = data?.data?.meta ?? 0;
+  const totalPages = Math.ceil(totalCount / LIMIT) || 1;
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -50,47 +64,48 @@ export function BikeIssue() {
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Issues</Text>
-        <Button mode="contained" onPress={() => setModalOpen(true)}>
-          Report
-        </Button>
-      </View>
+    <View style={styles.screen}>
+      <ScreenHeader
+        title="Issues"
+        backLabel={bike?.nickname ?? "Back"}
+        rightIcon="plus"
+        onRightPress={() => setModalOpen(true)}
+      />
 
-      <View style={styles.filterRow}>
-        {(["open", "resolved"] as TBikeIssueStatus[]).map((f) => (
+      <View style={styles.tabRow}>
+        {TABS.map(({ key, label }) => (
           <TouchableOpacity
-            key={f}
-            style={[
-              styles.filterBtn,
-              statusFilter === f && styles.filterBtnActive,
-            ]}
-            onPress={() => handleFilterChange(f)}
+            key={key}
+            style={[styles.tab, statusFilter === key && styles.tabActive]}
+            onPress={() => handleFilterChange(key)}
           >
             <Text
-              style={[
-                styles.filterBtnText,
-                statusFilter === f && styles.filterBtnTextActive,
-              ]}
+              style={[styles.tabText, statusFilter === key && styles.tabTextActive]}
             >
-              {f === "open" ? "Open" : "Resolved"}
+              {label}
+              {key === statusFilter ? ` (${totalCount})` : ""}
             </Text>
           </TouchableOpacity>
         ))}
       </View>
 
       {isLoading ? (
-        <SectionLoading count={5} />
+        <View style={styles.pad}>
+          <SectionLoading count={5} />
+        </View>
+      ) : isError ? (
+        <ErrorState onRetry={refetch} />
       ) : issues.length === 0 ? (
         <EmptyState label="No issues reported yet." />
       ) : (
         <>
           <ScrollView
+            contentContainerStyle={styles.pad}
             refreshControl={
               <RefreshControl
                 refreshing={refreshing}
                 onRefresh={handleRefresh}
+                tintColor={COLORS.accent}
               />
             }
             showsVerticalScrollIndicator={false}
@@ -111,22 +126,20 @@ export function BikeIssue() {
                 Page {page} of {totalPages}
               </Text>
               <View style={styles.pageButtons}>
-                <Button
-                  mode="outlined"
+                <PrimaryButton
                   disabled={page === 1}
                   onPress={() => setPage((p) => p - 1)}
-                  textColor={COLORS.text}
+                  style={styles.pageButton}
                 >
                   Previous
-                </Button>
-                <Button
-                  mode="outlined"
+                </PrimaryButton>
+                <PrimaryButton
                   disabled={page === totalPages}
                   onPress={() => setPage((p) => p + 1)}
-                  textColor={COLORS.text}
+                  style={styles.pageButton}
                 >
                   Next
-                </Button>
+                </PrimaryButton>
               </View>
             </View>
           )}
@@ -143,58 +156,56 @@ export function BikeIssue() {
 }
 
 const styles = StyleSheet.create({
-  container: {
+  screen: {
     flex: 1,
     backgroundColor: COLORS.background,
-    padding: 16,
   },
-  header: {
+  tabRow: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 16,
+    gap: 4,
+    paddingHorizontal: 14,
+    paddingTop: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.borderSubtle,
   },
-  headerTitle: {
-    fontSize: 22,
-    fontWeight: "700",
-    color: COLORS.text,
-  },
-  filterRow: {
-    flexDirection: "row",
-    gap: 8,
-    marginBottom: 16,
-  },
-  filterBtn: {
+  tab: {
     paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 9999,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    backgroundColor: COLORS.card,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+    borderBottomWidth: 2,
+    borderBottomColor: "transparent",
   },
-  filterBtnActive: {
-    backgroundColor: COLORS.primary,
-    borderColor: COLORS.primary,
+  tabActive: {
+    backgroundColor: "rgba(145,132,217,0.12)",
+    borderBottomColor: COLORS.accent,
   },
-  filterBtnText: {
-    fontSize: 13,
+  tabText: {
+    fontSize: 12,
+    fontWeight: "500",
+    color: COLORS.textMuted,
+  },
+  tabTextActive: {
     fontWeight: "600",
-    color: COLORS.text,
+    color: COLORS.accent,
   },
-  filterBtnTextActive: {
-    color: COLORS.white,
+  pad: {
+    padding: 14,
   },
   pagination: {
-    marginTop: 16,
+    padding: 16,
     alignItems: "center",
   },
   pageInfo: {
-    fontSize: 14,
+    fontSize: 13,
     color: COLORS.textLight,
     marginBottom: 8,
   },
   pageButtons: {
     flexDirection: "row",
     gap: 12,
+    width: "100%",
+  },
+  pageButton: {
+    flex: 1,
   },
 });

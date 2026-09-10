@@ -1,3 +1,4 @@
+import { FormField, PrimaryButton } from "@/components/main/shared";
 import { useUserContext } from "@/context/user.context";
 import { usePost } from "@/hooks/useApi";
 import { TLoginPayload, TUserToken } from "@/types/global.types";
@@ -8,7 +9,7 @@ import { jwtDecode } from "jwt-decode";
 import { useState } from "react";
 import { Keyboard, StyleSheet, TouchableOpacity, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
-import { Button, Text, TextInput } from "react-native-paper";
+import { Text } from "react-native-paper";
 import Toast from "react-native-toast-message";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -66,8 +67,6 @@ export function LoginForm() {
         payload,
       })) as TLoginResponse;
 
-      // console.log("result = ", result);
-
       if (result?.token) {
         const decoded = jwtDecode<TUserToken>(result.token);
 
@@ -92,64 +91,63 @@ export function LoginForm() {
 
   return (
     <KeyboardAwareScrollView
-      style={{ flex: 1 }}
-      contentContainerStyle={{ flexGrow: 1, justifyContent: "center" }}
+      style={styles.screen}
+      contentContainerStyle={styles.content}
       bottomOffset={30}
       extraKeyboardSpace={10}
       showsVerticalScrollIndicator={false}
     >
       <View style={styles.container}>
-        <Text style={styles.title}>BikeLog</Text>
-        <Text style={styles.subtitle}>Log In</Text>
-
-        <View style={styles.field}>
-          <TextInput
-            placeholder="Email"
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
-            autoCapitalize="none"
-            autoCorrect={false}
-            editable={!loginMutation.isPending}
-            textColor={COLORS.text}
-            style={styles.input}
-          />
+        <View style={styles.header}>
+          <Text style={styles.title}>bikeLog</Text>
+          <Text style={styles.subtitle}>
+            Track every ride, fill-up &amp; service.
+          </Text>
         </View>
 
-        <View style={[styles.field, styles.passwordField]}>
-          <TextInput
-            placeholder="Password"
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry={!showPassword}
-            editable={!loginMutation.isPending}
-            textColor={COLORS.text}
-            style={[styles.input, styles.passwordInput]}
-          />
-          <TouchableOpacity
-            onPress={() => setShowPassword((prev) => !prev)}
-            style={styles.eyeIcon}
-          >
-            <MaterialCommunityIcons
-              name={showPassword ? "eye-off" : "eye"}
-              size={20}
-              color={COLORS.textLight}
-            />
-          </TouchableOpacity>
-        </View>
+        <FormField
+          label="Email"
+          placeholder="rider@example.com"
+          value={email}
+          onChangeText={setEmail}
+          keyboardType="email-address"
+          autoCapitalize="none"
+          autoCorrect={false}
+          editable={!loginMutation.isPending}
+        />
 
-        <Button
-          mode="contained"
+        <FormField
+          label="Password"
+          placeholder="••••••••"
+          value={password}
+          onChangeText={setPassword}
+          secureTextEntry={!showPassword}
+          editable={!loginMutation.isPending}
+          style={styles.passwordField}
+          rightElement={
+            <TouchableOpacity
+              onPress={() => setShowPassword((prev) => !prev)}
+              hitSlop={8}
+            >
+              <MaterialCommunityIcons
+                name={showPassword ? "eye-off" : "eye"}
+                size={20}
+                color={COLORS.textMuted}
+              />
+            </TouchableOpacity>
+          }
+        />
+
+        <PrimaryButton
           onPress={handleSubmit}
           loading={loginMutation.isPending}
-          disabled={loginMutation.isPending}
           style={styles.button}
         >
-          {loginMutation.isPending ? "Logging in..." : "Log In"}
-        </Button>
+          Sign In
+        </PrimaryButton>
 
         <View style={styles.footer}>
-          <Text style={styles.footerText}>{"Don't have an account? "}</Text>
+          <Text style={styles.footerText}>No account? </Text>
           <TouchableOpacity onPress={() => router.push("/register")}>
             <Text style={styles.link}>Register</Text>
           </TouchableOpacity>
@@ -160,64 +158,49 @@ export function LoginForm() {
 }
 
 const styles = StyleSheet.create({
-  container: {
+  screen: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 24,
     backgroundColor: COLORS.background,
   },
+  content: {
+    flexGrow: 1,
+    justifyContent: "center",
+  },
+  container: {
+    paddingHorizontal: 28,
+    paddingVertical: 24,
+  },
+  header: {
+    marginBottom: 40,
+  },
   title: {
-    fontSize: 32,
-    fontWeight: "bold",
-    color: COLORS.primary,
-    marginBottom: 8,
+    fontSize: 28,
+    fontWeight: "700",
+    color: COLORS.text,
+    marginBottom: 6,
   },
   subtitle: {
-    fontSize: 20,
-    color: COLORS.text,
-    marginBottom: 32,
-  },
-  field: {
-    width: "100%",
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
-    marginBottom: 16,
+    fontSize: 14,
+    color: COLORS.textMuted,
   },
   passwordField: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  input: {
-    flex: 1,
-    borderWidth: 0,
-    backgroundColor: "transparent",
-    padding: 0,
-  },
-  passwordInput: {
-    paddingRight: 8,
-  },
-  eyeIcon: {
-    paddingHorizontal: 4,
+    marginBottom: 24,
   },
   button: {
-    width: "100%",
-    paddingVertical: 4,
-    marginTop: 8,
+    marginBottom: 14,
   },
   footer: {
-    marginTop: 32,
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
   },
   footerText: {
     fontSize: 14,
-    color: COLORS.textLight,
+    color: COLORS.textMuted,
   },
   link: {
     fontSize: 14,
-    color: COLORS.primary,
+    color: COLORS.accent,
     fontWeight: "600",
   },
 });

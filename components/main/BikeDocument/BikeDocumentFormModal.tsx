@@ -1,4 +1,4 @@
-import { DatePickerField } from "@/components/main/shared";
+import { DatePickerField, FormField, PrimaryButton } from "@/components/main/shared";
 import { usePatch, usePost } from "@/hooks/useApi";
 import {
   IBikeDocument,
@@ -6,9 +6,9 @@ import {
 } from "@/types/bike-document.types";
 import { COLORS } from "@/utils/colors";
 import { useEffect, useState } from "react";
-import { StyleSheet, View } from "react-native";
+import { StyleSheet } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
-import { Button, Modal, Portal, Text, TextInput } from "react-native-paper";
+import { Modal, Portal, Text } from "react-native-paper";
 import Toast from "react-native-toast-message";
 
 interface BikeDocumentFormModalProps {
@@ -107,29 +107,23 @@ export function BikeDocumentFormModal({
             {initialDocument ? "Edit Document" : "Add Document"}
           </Text>
 
-          <View style={styles.field}>
-            <TextInput
-              placeholder="Title (e.g. Registration Paper)"
-              value={title}
-              onChangeText={setTitle}
-              editable={!isPending}
-              textColor={COLORS.text}
-              style={styles.input}
-            />
-          </View>
+          <FormField
+            label="Title"
+            placeholder="Bike Registration Paper"
+            value={title}
+            onChangeText={setTitle}
+            editable={!isPending}
+          />
 
-          <View style={styles.field}>
-            <TextInput
-              placeholder="Description (optional)"
-              value={description}
-              onChangeText={setDescription}
-              multiline
-              numberOfLines={3}
-              editable={!isPending}
-              textColor={COLORS.text}
-              style={styles.input}
-            />
-          </View>
+          <FormField
+            label="Description (optional)"
+            placeholder="Front and back scans"
+            value={description}
+            onChangeText={setDescription}
+            multiline
+            numberOfLines={3}
+            editable={!isPending}
+          />
 
           <DatePickerField
             label="Expiry Date (optional)"
@@ -138,23 +132,13 @@ export function BikeDocumentFormModal({
             disabled={isPending}
           />
 
-          <Button
-            mode="contained"
-            onPress={handleSubmit}
-            loading={isPending}
-            disabled={isPending}
-            style={styles.button}
-          >
-            {initialDocument ? "Update" : "Add"}
-          </Button>
+          <PrimaryButton onPress={handleSubmit} loading={isPending} style={styles.button}>
+            {initialDocument ? "Save Changes" : "Add Document"}
+          </PrimaryButton>
 
-          <Button
-            onPress={onClose}
-            disabled={isPending}
-            style={styles.cancelButton}
-          >
+          <PrimaryButton onPress={onClose} disabled={isPending} style={styles.cancelButton}>
             Cancel
-          </Button>
+          </PrimaryButton>
         </KeyboardAwareScrollView>
       </Modal>
     </Portal>
@@ -164,31 +148,24 @@ export function BikeDocumentFormModal({
 const styles = StyleSheet.create({
   modal: {
     backgroundColor: COLORS.background,
+    borderWidth: 1,
+    borderColor: COLORS.borderSubtle,
     marginHorizontal: 20,
     padding: 20,
-    borderRadius: 8,
+    borderRadius: 12,
     maxHeight: "85%",
   },
   title: {
-    fontSize: 20,
-    fontWeight: "700",
+    fontSize: 18,
+    fontWeight: "600",
     color: COLORS.text,
-    marginBottom: 16,
-  },
-  field: {
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
-    marginBottom: 16,
-  },
-  input: {
-    borderWidth: 0,
-    backgroundColor: "transparent",
-    padding: 0,
+    marginBottom: 18,
   },
   button: {
-    marginTop: 8,
+    marginTop: 10,
   },
   cancelButton: {
-    marginTop: 8,
+    marginTop: 10,
+    borderColor: COLORS.borderSubtle,
   },
 });

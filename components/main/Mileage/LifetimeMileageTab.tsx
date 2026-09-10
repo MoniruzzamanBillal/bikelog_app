@@ -1,6 +1,6 @@
 import { StyleSheet, Text, View } from "react-native";
 import { ScrollView } from "react-native-gesture-handler";
-import { SectionLoading } from "@/components/main/shared";
+import { ErrorState, SectionLoading } from "@/components/main/shared";
 import { useFetchData } from "@/hooks/useApi";
 import { COLORS } from "@/utils/colors";
 import { TLifetimeMileage } from "@/types/mileage.types";
@@ -10,7 +10,7 @@ interface LifetimeMileageTabProps {
 }
 
 export function LifetimeMileageTab({ bikeId }: LifetimeMileageTabProps) {
-  const { data, isLoading } = useFetchData<TLifetimeMileage>(
+  const { data, isLoading, isError, refetch } = useFetchData<TLifetimeMileage>(
     ["mileage", "lifetime", bikeId],
     `/bikes/${bikeId}/mileage/lifetime`,
     { enabled: !!bikeId },
@@ -20,6 +20,10 @@ export function LifetimeMileageTab({ bikeId }: LifetimeMileageTabProps) {
 
   if (isLoading) {
     return <SectionLoading count={3} />;
+  }
+
+  if (isError) {
+    return <ErrorState onRetry={refetch} />;
   }
 
   if (!lifetime || lifetime.fuelLogCount === 0) {
@@ -34,30 +38,32 @@ export function LifetimeMileageTab({ bikeId }: LifetimeMileageTabProps) {
 
   const avg =
     lifetime.totalLitersConsumed > 0
-      ? (lifetime.totalDistanceKm / lifetime.totalLitersConsumed).toFixed(2)
+      ? (lifetime.totalDistanceKm / lifetime.totalLitersConsumed).toFixed(1)
       : "—";
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       <View style={styles.mainCard}>
         <Text style={styles.mainLabel}>Lifetime Average</Text>
-        <Text style={styles.mainValue}>{avg} km/L</Text>
-      </View>
-      <View style={styles.summaryCard}>
-        <Text style={styles.summaryLabel}>Total Distance</Text>
-        <Text style={styles.summaryValue}>
-          {lifetime.totalDistanceKm.toLocaleString()} km
+        <Text style={styles.mainValue}>
+          {avg} <Text style={styles.mainUnit}>km/L</Text>
         </Text>
       </View>
-      <View style={styles.summaryCard}>
-        <Text style={styles.summaryLabel}>Total Fuel</Text>
-        <Text style={styles.summaryValue}>
-          {lifetime.totalLitersConsumed.toFixed(2)} L
-        </Text>
+      <View style={styles.statsRow}>
+        <View style={styles.summaryCard}>
+          <Text style={styles.summaryLabel}>Total Distance</Text>
+          <Text style={styles.summaryValue}>
+            {lifetime.totalDistanceKm.toLocaleString()} km
+          </Text>
+        </View>
+        <View style={styles.summaryCard}>
+          <Text style={styles.summaryLabel}>Total Fuel</Text>
+          <Text style={styles.summaryValue}>
+            {lifetime.totalLitersConsumed.toFixed(1)} L
+          </Text>
+        </View>
       </View>
-      <Text style={styles.logCount}>
-        Fuel Logs: {lifetime.fuelLogCount}
-      </Text>
+      <Text style={styles.logCount}>Fuel Logs: {lifetime.fuelLogCount}</Text>
     </ScrollView>
   );
 }
@@ -67,56 +73,64 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   mainCard: {
-    backgroundColor: COLORS.card,
-    borderRadius: 6,
+    backgroundColor: COLORS.surface,
+    borderWidth: 1,
+    borderColor: COLORS.borderSubtle,
+    borderRadius: 10,
     padding: 20,
     marginBottom: 12,
     alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
   },
   mainLabel: {
-    fontSize: 16,
-    color: COLORS.textLight,
+    fontSize: 11,
+    color: COLORS.textMuted,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
   },
   mainValue: {
     fontSize: 32,
     fontWeight: "700",
-    color: COLORS.primary,
-    marginTop: 4,
+    color: COLORS.text,
+    fontFamily: "monospace",
+    marginTop: 6,
+  },
+  mainUnit: {
+    fontSize: 14,
+    fontWeight: "400",
+    color: COLORS.textLight,
+    fontFamily: "System",
+  },
+  statsRow: {
+    flexDirection: "row",
+    gap: 8,
+    marginBottom: 12,
   },
   summaryCard: {
-    backgroundColor: COLORS.card,
-    borderRadius: 6,
-    padding: 16,
-    marginBottom: 10,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 1,
+    flex: 1,
+    backgroundColor: COLORS.surface,
+    borderWidth: 1,
+    borderColor: COLORS.borderSubtle,
+    borderRadius: 10,
+    padding: 14,
   },
   summaryLabel: {
-    fontSize: 14,
-    color: COLORS.textLight,
+    fontSize: 11,
+    color: COLORS.textMuted,
   },
   summaryValue: {
-    fontSize: 20,
-    fontWeight: "600",
+    fontSize: 16,
+    fontWeight: "700",
     color: COLORS.text,
+    fontFamily: "monospace",
     marginTop: 4,
   },
   logCount: {
-    fontSize: 14,
-    color: COLORS.textLight,
+    fontSize: 12,
+    color: COLORS.textMuted,
     textAlign: "center",
-    marginTop: 8,
   },
   emptyText: {
-    fontSize: 14,
+    fontSize: 13,
     color: COLORS.textLight,
     textAlign: "center",
     marginTop: 40,

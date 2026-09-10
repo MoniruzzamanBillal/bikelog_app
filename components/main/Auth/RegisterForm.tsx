@@ -2,8 +2,9 @@ import { useState } from "react";
 import { Keyboard, StyleSheet, TouchableOpacity, View } from "react-native";
 import { useRouter } from "expo-router";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
-import { Button, Text, TextInput } from "react-native-paper";
+import { Text } from "react-native-paper";
 import Toast from "react-native-toast-message";
+import { FormField, PrimaryButton } from "@/components/main/shared";
 import { usePost } from "@/hooks/useApi";
 import { COLORS } from "@/utils/colors";
 import { TRegisterPayload } from "@/types/global.types";
@@ -77,123 +78,99 @@ export function RegisterForm() {
 
   return (
     <KeyboardAwareScrollView
-      style={{ flex: 1 }}
-      contentContainerStyle={{ flexGrow: 1, justifyContent: "center" }}
+      style={styles.screen}
+      contentContainerStyle={styles.content}
       bottomOffset={30}
       extraKeyboardSpace={10}
       showsVerticalScrollIndicator={false}
     >
       <View style={styles.container}>
-        <Text style={styles.title}>BikeLog</Text>
-        <Text style={styles.subtitle}>Create Account</Text>
-
-        <View style={styles.field}>
-          <TextInput
-            placeholder="Full Name"
-            value={name}
-            onChangeText={setName}
-            autoCorrect={false}
-            editable={!registerMutation.isPending}
-            textColor={COLORS.text}
-            style={styles.input}
-          />
+        <View style={styles.header}>
+          <Text style={styles.title}>Create account</Text>
+          <View style={styles.headerRow}>
+            <Text style={styles.subtitle}>Already have one? </Text>
+            <TouchableOpacity onPress={() => router.push("/auth")}>
+              <Text style={styles.link}>Sign in</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
-        <View style={styles.field}>
-          <TextInput
-            placeholder="Email"
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
-            autoCapitalize="none"
-            autoCorrect={false}
-            editable={!registerMutation.isPending}
-            textColor={COLORS.text}
-            style={styles.input}
-          />
-        </View>
+        <FormField
+          label="Name"
+          placeholder="Test Rider"
+          value={name}
+          onChangeText={setName}
+          autoCorrect={false}
+          editable={!registerMutation.isPending}
+        />
 
-        <View style={styles.field}>
-          <TextInput
-            placeholder="Password (min 6 characters)"
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry
-            editable={!registerMutation.isPending}
-            textColor={COLORS.text}
-            style={styles.input}
-          />
-        </View>
+        <FormField
+          label="Email"
+          placeholder="rider@example.com"
+          value={email}
+          onChangeText={setEmail}
+          keyboardType="email-address"
+          autoCapitalize="none"
+          autoCorrect={false}
+          editable={!registerMutation.isPending}
+        />
 
-        <Button
-          mode="contained"
+        <FormField
+          label="Password (min 6 chars)"
+          placeholder="••••••••"
+          value={password}
+          onChangeText={setPassword}
+          secureTextEntry
+          editable={!registerMutation.isPending}
+          style={styles.passwordField}
+        />
+
+        <PrimaryButton
           onPress={handleSubmit}
           loading={registerMutation.isPending}
-          disabled={registerMutation.isPending}
-          style={styles.button}
         >
-          {registerMutation.isPending ? "Registering..." : "Register"}
-        </Button>
-
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>Already have an account? </Text>
-          <TouchableOpacity onPress={() => router.push("/auth")}>
-            <Text style={styles.link}>Log In</Text>
-          </TouchableOpacity>
-        </View>
+          Create account
+        </PrimaryButton>
       </View>
     </KeyboardAwareScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  screen: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 24,
     backgroundColor: COLORS.background,
   },
-  title: {
-    fontSize: 32,
-    fontWeight: "bold",
-    color: COLORS.primary,
-    marginBottom: 8,
+  content: {
+    flexGrow: 1,
+    justifyContent: "center",
   },
-  subtitle: {
-    fontSize: 20,
-    color: COLORS.text,
+  container: {
+    paddingHorizontal: 28,
+    paddingVertical: 24,
+  },
+  header: {
     marginBottom: 32,
   },
-  field: {
-    width: "100%",
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
-    marginBottom: 16,
+  title: {
+    fontSize: 24,
+    fontWeight: "700",
+    color: COLORS.text,
+    marginBottom: 4,
   },
-  input: {
-    borderWidth: 0,
-    backgroundColor: "transparent",
-    padding: 0,
-  },
-  button: {
-    width: "100%",
-    paddingVertical: 4,
-    marginTop: 8,
-  },
-  footer: {
-    marginTop: 32,
+  headerRow: {
     flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
   },
-  footerText: {
-    fontSize: 14,
-    color: COLORS.textLight,
+  subtitle: {
+    fontSize: 13,
+    color: COLORS.textMuted,
   },
   link: {
-    fontSize: 14,
-    color: COLORS.primary,
+    fontSize: 13,
+    color: COLORS.accent,
     fontWeight: "600",
+  },
+  passwordField: {
+    marginBottom: 24,
   },
 });

@@ -9,16 +9,25 @@ export default function TabsLayout() {
       <Tabs
         screenOptions={{
           headerShown: false,
-          tabBarActiveTintColor: COLORS.primary,
-          tabBarInactiveTintColor: COLORS.textLight,
+          tabBarActiveTintColor: COLORS.accent,
+          tabBarInactiveTintColor: COLORS.textMuted,
+          tabBarStyle: {
+            backgroundColor: COLORS.background,
+            borderTopColor: COLORS.borderSubtle,
+            height: 64,
+          },
+          tabBarLabelStyle: {
+            fontSize: 10,
+            fontWeight: "500",
+          },
         }}
       >
         <Tabs.Screen
           name="index"
           options={{
-            title: "Dashboard",
+            title: "Garage",
             tabBarIcon: ({ color, size }) => (
-              <MaterialCommunityIcons name="motorbike" size={size} color={color} />
+              <MaterialCommunityIcons name="home-variant-outline" size={size} color={color} />
             ),
           }}
         />
@@ -27,7 +36,7 @@ export default function TabsLayout() {
           options={{
             title: "Settings",
             tabBarIcon: ({ color, size }) => (
-              <MaterialCommunityIcons name="cog" size={size} color={color} />
+              <MaterialCommunityIcons name="cog-outline" size={size} color={color} />
             ),
           }}
         />

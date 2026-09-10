@@ -1,3 +1,6 @@
+import { ScreenHeader } from "@/components/main/shared";
+import { useFetchData } from "@/hooks/useApi";
+import { TBike } from "@/types/bike.types";
 import { COLORS } from "@/utils/colors";
 import { useLocalSearchParams } from "expo-router";
 import { useState } from "react";
@@ -24,87 +27,86 @@ export function Mileage() {
   const { bikeId } = useLocalSearchParams<{ bikeId: string }>();
   const [activeTab, setActiveTab] = useState<TTab>("history");
 
+  const { data: bikeData } = useFetchData<TBike>(
+    ["bikes", bikeId],
+    `/bikes/${bikeId}`,
+    { enabled: !!bikeId },
+  );
+  const bike = bikeData?.data;
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Mileage</Text>
+    <View style={styles.screen}>
+      <ScreenHeader title="Mileage" backLabel={bike?.nickname ?? "Back"} />
 
-      <AiMileageInsightCard bikeId={bikeId} />
-
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={styles.tabBarScroll}
-        contentContainerStyle={styles.tabBar}
-      >
-        {TABS.map(({ key, label }) => (
-          <TouchableOpacity
-            key={key}
-            style={[styles.tab, activeTab === key && styles.tabActive]}
-            onPress={() => setActiveTab(key)}
-          >
-            <Text
-              style={[
-                styles.tabText,
-                activeTab === key && styles.tabTextActive,
-              ]}
+      <View style={styles.body}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.tabBarScroll}
+          contentContainerStyle={styles.tabBar}
+        >
+          {TABS.map(({ key, label }) => (
+            <TouchableOpacity
+              key={key}
+              style={[styles.tab, activeTab === key && styles.tabActive]}
+              onPress={() => setActiveTab(key)}
             >
-              {label}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
+              <Text
+                style={[styles.tabText, activeTab === key && styles.tabTextActive]}
+              >
+                {label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
 
-      <View style={styles.tabContent}>
-        {activeTab === "history" && <MileageHistoryTab bikeId={bikeId} />}
-        {activeTab === "monthly" && <MonthlyMileageTab bikeId={bikeId} />}
-        {activeTab === "yearly" && <YearlyMileageTab bikeId={bikeId} />}
-        {activeTab === "lifetime" && <LifetimeMileageTab bikeId={bikeId} />}
-        {activeTab === "trends" && <MileageTrendTab bikeId={bikeId} />}
+        <View style={styles.tabContent}>
+          <AiMileageInsightCard bikeId={bikeId} />
+          {activeTab === "history" && <MileageHistoryTab bikeId={bikeId} />}
+          {activeTab === "monthly" && <MonthlyMileageTab bikeId={bikeId} />}
+          {activeTab === "yearly" && <YearlyMileageTab bikeId={bikeId} />}
+          {activeTab === "lifetime" && <LifetimeMileageTab bikeId={bikeId} />}
+          {activeTab === "trends" && <MileageTrendTab bikeId={bikeId} />}
+        </View>
       </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  screen: {
     flex: 1,
     backgroundColor: COLORS.background,
-    padding: 16,
   },
-  title: {
-    fontSize: 22,
-    fontWeight: "700",
-    color: COLORS.text,
-    marginBottom: 16,
+  body: {
+    flex: 1,
+    padding: 14,
   },
   tabBarScroll: {
     flexGrow: 0,
   },
   tabBar: {
     flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    marginBottom: 16,
+    gap: 6,
+    marginBottom: 14,
   },
   tab: {
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 9999,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    backgroundColor: COLORS.card,
+    paddingVertical: 7,
+    paddingHorizontal: 16,
+    borderRadius: 6,
+    backgroundColor: "transparent",
   },
   tabActive: {
-    backgroundColor: COLORS.primary,
-    borderColor: COLORS.primary,
+    backgroundColor: "rgba(145,132,217,0.12)",
   },
   tabText: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: COLORS.text,
+    fontSize: 12,
+    fontWeight: "500",
+    color: COLORS.textMuted,
   },
   tabTextActive: {
-    color: COLORS.white,
+    fontWeight: "600",
+    color: COLORS.accent,
   },
   tabContent: {
     flex: 1,

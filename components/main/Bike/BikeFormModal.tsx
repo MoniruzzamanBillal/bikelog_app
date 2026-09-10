@@ -1,9 +1,13 @@
 import { useEffect, useState } from "react";
 import { StyleSheet, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
-import { Button, Modal, Portal, Text, TextInput } from "react-native-paper";
+import { Modal, Portal, Text } from "react-native-paper";
 import Toast from "react-native-toast-message";
-import { DatePickerField } from "@/components/main/shared";
+import {
+  DatePickerField,
+  FormField,
+  PrimaryButton,
+} from "@/components/main/shared";
 import { usePatch, usePost } from "@/hooks/useApi";
 import { COLORS } from "@/utils/colors";
 import { TBike, TCreateBikePayload, TUpdateBikePayload } from "@/types/bike.types";
@@ -127,49 +131,40 @@ export function BikeFormModal({ open, onClose, initialBike }: BikeFormModalProps
         <KeyboardAwareScrollView showsVerticalScrollIndicator={false}>
           <Text style={styles.title}>{initialBike ? "Edit Bike" : "Add Bike"}</Text>
 
-          <View style={styles.field}>
-            <TextInput
-              placeholder="Nickname"
-              value={nickname}
-              onChangeText={setNickname}
-              editable={!isPending}
-              textColor={COLORS.text}
-              style={styles.input}
-            />
-          </View>
+          <FormField
+            label="Nickname"
+            placeholder="Red Beast"
+            value={nickname}
+            onChangeText={setNickname}
+            editable={!isPending}
+          />
 
-          <View style={styles.field}>
-            <TextInput
-              placeholder="Brand"
+          <View style={styles.row}>
+            <FormField
+              label="Brand"
+              placeholder="Yamaha"
               value={brand}
               onChangeText={setBrand}
               editable={!isPending}
-              textColor={COLORS.text}
-              style={styles.input}
+              style={styles.rowField}
             />
-          </View>
-
-          <View style={styles.field}>
-            <TextInput
-              placeholder="Model"
+            <FormField
+              label="Model"
+              placeholder="FZS V3"
               value={model}
               onChangeText={setModel}
               editable={!isPending}
-              textColor={COLORS.text}
-              style={styles.input}
+              style={styles.rowField}
             />
           </View>
 
-          <View style={styles.field}>
-            <TextInput
-              placeholder="Registration Number"
-              value={registrationNumber}
-              onChangeText={setRegistrationNumber}
-              editable={!isPending}
-              textColor={COLORS.text}
-              style={styles.input}
-            />
-          </View>
+          <FormField
+            label="Registration No."
+            placeholder="DHAKA-METRO-GA-11-2233"
+            value={registrationNumber}
+            onChangeText={setRegistrationNumber}
+            editable={!isPending}
+          />
 
           <DatePickerField
             label="Purchase Date"
@@ -179,45 +174,50 @@ export function BikeFormModal({ open, onClose, initialBike }: BikeFormModalProps
             disabled={isPending}
           />
 
-          <View style={styles.field}>
-            <TextInput
-              placeholder="Fuel Tank Capacity (Liters)"
+          {initialBike ? (
+            <FormField
+              label="Tank Capacity (L)"
+              placeholder="12"
               value={fuelTankCapacityLiters}
               onChangeText={setFuelTankCapacityLiters}
               keyboardType="decimal-pad"
               editable={!isPending}
-              textColor={COLORS.text}
-              style={styles.input}
+              style={styles.lastField}
             />
-          </View>
-
-          {!initialBike && (
-            <View style={styles.field}>
-              <TextInput
-                placeholder="Current Odometer (km)"
+          ) : (
+            <View style={styles.row}>
+              <FormField
+                label="Tank (L)"
+                placeholder="12"
+                value={fuelTankCapacityLiters}
+                onChangeText={setFuelTankCapacityLiters}
+                keyboardType="decimal-pad"
+                editable={!isPending}
+                style={styles.rowField}
+              />
+              <FormField
+                label="Odometer (km)"
+                placeholder="1500"
                 value={currentOdometer}
                 onChangeText={setCurrentOdometer}
                 keyboardType="decimal-pad"
                 editable={!isPending}
-                textColor={COLORS.text}
-                style={styles.input}
+                style={[styles.rowField, styles.lastField]}
               />
             </View>
           )}
 
-          <Button
-            mode="contained"
-            onPress={handleSubmit}
-            loading={isPending}
-            disabled={isPending}
-            style={styles.button}
-          >
-            {initialBike ? "Update" : "Add"}
-          </Button>
+          <PrimaryButton onPress={handleSubmit} loading={isPending} style={styles.button}>
+            {initialBike ? "Save Changes" : "Save Bike"}
+          </PrimaryButton>
 
-          <Button onPress={onClose} disabled={isPending} style={styles.cancelButton}>
+          <PrimaryButton
+            onPress={onClose}
+            disabled={isPending}
+            style={styles.cancelButton}
+          >
             Cancel
-          </Button>
+          </PrimaryButton>
         </KeyboardAwareScrollView>
       </Modal>
     </Portal>
@@ -227,31 +227,34 @@ export function BikeFormModal({ open, onClose, initialBike }: BikeFormModalProps
 const styles = StyleSheet.create({
   modal: {
     backgroundColor: COLORS.background,
+    borderWidth: 1,
+    borderColor: COLORS.borderSubtle,
     marginHorizontal: 20,
     padding: 20,
-    borderRadius: 8,
+    borderRadius: 12,
     maxHeight: "85%",
   },
   title: {
-    fontSize: 20,
-    fontWeight: "700",
+    fontSize: 18,
+    fontWeight: "600",
     color: COLORS.text,
-    marginBottom: 16,
+    marginBottom: 18,
   },
-  field: {
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
-    marginBottom: 16,
+  row: {
+    flexDirection: "row",
+    gap: 10,
   },
-  input: {
-    borderWidth: 0,
-    backgroundColor: "transparent",
-    padding: 0,
+  rowField: {
+    flex: 1,
+  },
+  lastField: {
+    marginBottom: 24,
   },
   button: {
     marginTop: 8,
   },
   cancelButton: {
-    marginTop: 8,
+    marginTop: 10,
+    borderColor: COLORS.borderSubtle,
   },
 });

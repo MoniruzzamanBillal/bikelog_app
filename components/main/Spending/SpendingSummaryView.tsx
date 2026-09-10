@@ -18,128 +18,116 @@ export function SpendingSummaryView({
 
   return (
     <View>
-      <View style={styles.totalCard}>
+      <View style={styles.totalWrap}>
         <Text style={styles.totalLabel}>Total Spending</Text>
-        <Text style={styles.totalValue}>৳{total.toFixed(2)}</Text>
+        <Text style={styles.totalValue}>৳{total.toFixed(0)}</Text>
+        {avgDailyExpense !== undefined &&
+          daysElapsed !== undefined &&
+          daysElapsed > 0 && (
+            <Text style={styles.avgCaption}>
+              Avg daily: ৳{avgDailyExpense.toFixed(0)} · {daysElapsed} day
+              {daysElapsed === 1 ? "" : "s"}
+            </Text>
+          )}
       </View>
 
-      {avgDailyExpense !== undefined && daysElapsed !== undefined && daysElapsed > 0 && (
-        <View style={styles.avgCard}>
-          <Text style={styles.avgLabel}>Avg Daily Expense</Text>
-          <Text style={styles.avgValue}>৳{avgDailyExpense.toFixed(2)}</Text>
-          <Text style={styles.avgCaption}>
-            over {daysElapsed} day{daysElapsed === 1 ? "" : "s"} this month
-          </Text>
-        </View>
-      )}
-
-      <Text style={styles.categoriesTitle}>By Category</Text>
+      <Text style={styles.categoriesTitle}>Category Breakdown</Text>
       {categories.length === 0 ? (
         <Text style={styles.noData}>No category breakdown available</Text>
       ) : (
-        categories.map((cat, i) => {
-          const percentage = total > 0 ? ((cat.total / total) * 100).toFixed(1) : "0.0";
-          return (
-            <View key={i} style={styles.categoryRow}>
-              <View style={styles.categoryInfo}>
+        <View style={styles.listCard}>
+          {categories.map((cat, i) => {
+            const percentage = total > 0 ? ((cat.total / total) * 100).toFixed(1) : "0.0";
+            return (
+              <View
+                key={cat.category}
+                style={[
+                  styles.categoryRow,
+                  i === categories.length - 1 && styles.categoryRowLast,
+                ]}
+              >
                 <Text style={styles.categoryName}>{cat.category}</Text>
-                <Text style={styles.categoryAmount}>৳{cat.total.toFixed(2)}</Text>
+                <View style={styles.categoryRight}>
+                  <Text style={styles.categoryAmount}>৳{cat.total.toFixed(0)}</Text>
+                  <Text style={styles.categoryPercent}>{percentage}%</Text>
+                </View>
               </View>
-              <Text style={styles.categoryPercent}>{percentage}%</Text>
-            </View>
-          );
-        })
+            );
+          })}
+        </View>
       )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  totalCard: {
-    backgroundColor: COLORS.card,
-    borderRadius: 6,
-    padding: 20,
+  totalWrap: {
     alignItems: "center",
     marginBottom: 20,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
   },
   totalLabel: {
-    fontSize: 14,
-    color: COLORS.textLight,
-    fontWeight: "500",
+    fontSize: 11,
+    fontWeight: "300",
+    color: COLORS.textMuted,
+    textTransform: "uppercase",
+    letterSpacing: 0.6,
+    marginBottom: 4,
   },
   totalValue: {
-    fontSize: 28,
+    fontSize: 36,
+    lineHeight: 40,
     fontWeight: "700",
     color: COLORS.text,
-    marginTop: 4,
-  },
-  avgCard: {
-    backgroundColor: COLORS.card,
-    borderRadius: 6,
-    padding: 16,
-    alignItems: "center",
-    marginBottom: 20,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  avgLabel: {
-    fontSize: 13,
-    color: COLORS.textLight,
-    fontWeight: "500",
-  },
-  avgValue: {
-    fontSize: 20,
-    fontWeight: "700",
-    color: COLORS.text,
-    marginTop: 4,
+    fontFamily: "monospace",
   },
   avgCaption: {
     fontSize: 12,
-    color: COLORS.textLight,
-    marginTop: 2,
+    color: COLORS.textMuted,
+    marginTop: 4,
   },
   categoriesTitle: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: COLORS.text,
-    marginBottom: 12,
+    fontSize: 11,
+    fontWeight: "500",
+    color: COLORS.textMuted,
+    textTransform: "uppercase",
+    letterSpacing: 0.6,
+    marginBottom: 8,
+  },
+  listCard: {
+    backgroundColor: COLORS.surface,
+    borderWidth: 1,
+    borderColor: COLORS.borderSubtle,
+    borderRadius: 10,
   },
   categoryRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    backgroundColor: COLORS.card,
-    borderRadius: 6,
-    padding: 14,
-    marginBottom: 8,
+    padding: 13,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.borderSubtle,
   },
-  categoryInfo: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
+  categoryRowLast: {
+    borderBottomWidth: 0,
   },
   categoryName: {
     fontSize: 14,
     fontWeight: "600",
     color: COLORS.text,
   },
+  categoryRight: {
+    alignItems: "flex-end",
+  },
   categoryAmount: {
     fontSize: 14,
     fontWeight: "600",
     color: COLORS.text,
+    fontFamily: "monospace",
   },
   categoryPercent: {
-    fontSize: 13,
-    color: COLORS.textLight,
-    fontWeight: "500",
+    fontSize: 11,
+    color: COLORS.textMuted,
+    marginTop: 1,
   },
   noData: {
     fontSize: 14,

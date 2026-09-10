@@ -1,7 +1,9 @@
 import UserProvider from "@/context/user.context";
+import { COLORS } from "@/utils/colors";
 import { paperTheme } from "@/utils/theme";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Slot, useRouter } from "expo-router";
+import { StatusBar } from "expo-status-bar";
 import * as Notifications from "expo-notifications";
 import { useEffect } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
@@ -58,7 +60,11 @@ export default function RootLayout() {
           <GestureHandlerRootView style={{ flex: 1 }}>
             <PaperProvider theme={paperTheme}>
               <UserProvider>
-                <SafeAreaView style={{ flex: 1 }} edges={["top", "left", "right"]}>
+                <StatusBar style="light" />
+                <SafeAreaView
+                  style={{ flex: 1, backgroundColor: COLORS.background }}
+                  edges={["top", "left", "right"]}
+                >
                   <Slot />
                 </SafeAreaView>
                 <Toast />
