@@ -14,13 +14,28 @@ import {
 import { useFetchData } from "@/hooks/useApi";
 import { COLORS } from "@/utils/colors";
 import { TBike } from "@/types/bike.types";
-import { TFuelLogsApiResponse } from "@/types/fuel-log.types";
-import { TLifetimeMileage } from "@/types/mileage.types";
+import { TFuelLog, TFuelLogsApiResponse } from "@/types/fuel-log.types";
+import {
+  TLifetimeMileage,
+  TMileageHistoryResponse,
+  TMileageRecord,
+} from "@/types/mileage.types";
 import { isSameMonth, parseISO } from "date-fns";
 import { FuelLogCard } from "./FuelLogCard";
 import { FuelLogFormModal } from "./FuelLogFormModal";
 
 const LIMIT = 10;
+
+// ! only full-tank logs close a mileage period, so match on endOdometer (the log that
+// ! closed the period) rather than trusting fuelLogIds array order/membership
+function findMileageForLog(
+  log: TFuelLog,
+  records: TMileageRecord[],
+): number | undefined {
+  if (!log.isFullTank) return undefined;
+  return records.find((r) => r.endOdometer === log.odometerReading)
+    ?.mileageKmPerLiter;
+}
 
 export function FuelLog() {
   const insets = useSafeAreaInsets();
@@ -53,6 +68,13 @@ export function FuelLog() {
     lifetime && lifetime.totalLitersConsumed > 0
       ? (lifetime.totalDistanceKm / lifetime.totalLitersConsumed).toFixed(1)
       : "—";
+
+  const { data: mileageHistoryData } = useFetchData<TMileageHistoryResponse>(
+    ["mileage", "history", bikeId],
+    `/bikes/${bikeId}/mileage`,
+    { enabled: !!bikeId },
+  );
+  const mileageRecords = mileageHistoryData?.data?.exactRecords ?? [];
 
   const fuelLogs = data?.data?.result ?? [];
   const totalCount = data?.data?.meta ?? 0;
@@ -127,6 +149,7 @@ export function FuelLog() {
                   bikeId={bikeId}
                   openSwipeableRef={openSwipeableRef}
                   isLast={i === fuelLogs.length - 1}
+                  mileageKmPerLiter={findMileageForLog(log, mileageRecords)}
                 />
               ))}
             </View>

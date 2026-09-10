@@ -18,6 +18,7 @@ interface FuelLogCardProps {
   bikeId: string;
   openSwipeableRef: React.MutableRefObject<SwipeableMethods | null>;
   isLast?: boolean;
+  mileageKmPerLiter?: number;
 }
 
 export function FuelLogCard({
@@ -25,6 +26,7 @@ export function FuelLogCard({
   bikeId,
   openSwipeableRef,
   isLast,
+  mileageKmPerLiter,
 }: FuelLogCardProps) {
   const [editOpen, setEditOpen] = useState(false);
   const swipeableRef = useRef<SwipeableMethods>(null);
@@ -148,9 +150,20 @@ export function FuelLogCard({
             {fuelLog.fuelStation && (
               <Text style={styles.station}>{fuelLog.fuelStation}</Text>
             )}
-            {fuelLog.isFullTank && (
-              <View style={styles.badge}>
-                <Text style={styles.badgeText}>Full Tank</Text>
+            {(fuelLog.isFullTank || mileageKmPerLiter !== undefined) && (
+              <View style={styles.badgeRow}>
+                {fuelLog.isFullTank && (
+                  <View style={styles.badge}>
+                    <Text style={styles.badgeText}>Full Tank</Text>
+                  </View>
+                )}
+                {mileageKmPerLiter !== undefined && (
+                  <View style={[styles.badge, styles.mileageBadge]}>
+                    <Text style={[styles.badgeText, styles.mileageBadgeText]}>
+                      {mileageKmPerLiter.toFixed(1)} km/L
+                    </Text>
+                  </View>
+                )}
               </View>
             )}
           </View>
@@ -205,9 +218,13 @@ const styles = StyleSheet.create({
     color: COLORS.textMuted,
     marginTop: 2,
   },
+  badgeRow: {
+    flexDirection: "row",
+    gap: 6,
+    marginTop: 5,
+  },
   badge: {
     alignSelf: "flex-start",
-    marginTop: 5,
     paddingVertical: 2,
     paddingHorizontal: 8,
     borderRadius: 20,
@@ -217,6 +234,12 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: "500",
     color: COLORS.accent,
+  },
+  mileageBadge: {
+    backgroundColor: "rgba(74,222,128,0.1)",
+  },
+  mileageBadgeText: {
+    color: COLORS.success,
   },
   cost: {
     fontSize: 14,
