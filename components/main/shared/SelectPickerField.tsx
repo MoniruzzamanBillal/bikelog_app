@@ -24,7 +24,19 @@ export function SelectPickerField({
   style,
 }: SelectPickerFieldProps) {
   const [menuVisible, setMenuVisible] = useState(false);
+  // ! react-native-paper's Menu tracks its own show/hide animation state in a ref
+  // ! (`prevRendered`) that only settles ~250ms after `visible` flips, via an animation
+  // ! completion callback. Reopening the menu (tap → select → tap again) before that
+  // ! callback fires desyncs `visible` from the ref, and Menu silently skips its `show()`
+  // ! call — the options never (re)appear. Bumping this key remounts Menu on every close,
+  // ! giving it fresh internal state so the next open always runs `show()` properly.
+  const [menuKey, setMenuKey] = useState(0);
   const selectedLabel = options.find((opt) => opt.value === value)?.label;
+
+  const closeMenu = () => {
+    setMenuVisible(false);
+    setMenuKey((k) => k + 1);
+  };
 
   return (
     <View style={[styles.field, style]}>
@@ -33,8 +45,9 @@ export function SelectPickerField({
         {required && <Text style={styles.required}> *</Text>}
       </Text>
       <Menu
+        key={menuKey}
         visible={menuVisible}
-        onDismiss={() => setMenuVisible(false)}
+        onDismiss={closeMenu}
         anchor={
           <TouchableRipple
             onPress={() => setMenuVisible(true)}
@@ -64,7 +77,7 @@ export function SelectPickerField({
             titleStyle={styles.menuItemTitle}
             onPress={() => {
               onChange(opt.value);
-              setMenuVisible(false);
+              closeMenu();
             }}
           />
         ))}
