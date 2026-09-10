@@ -1,9 +1,12 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import AuthGuard from "@/utils/AuthGuard";
 import { COLORS } from "@/utils/colors";
 
 export default function TabsLayout() {
+  const insets = useSafeAreaInsets();
+
   return (
     <AuthGuard>
       <Tabs
@@ -14,7 +17,9 @@ export default function TabsLayout() {
           tabBarStyle: {
             backgroundColor: COLORS.background,
             borderTopColor: COLORS.borderSubtle,
-            height: 64,
+            height: 64 + insets.bottom,
+            paddingBottom: insets.bottom,
+            paddingTop: 8,
           },
           tabBarLabelStyle: {
             fontSize: 10,

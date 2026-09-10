@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import { ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useLocalSearchParams } from "expo-router";
 import { KeyboardStickyView } from "react-native-keyboard-controller";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
@@ -13,6 +14,7 @@ import { TBike } from "@/types/bike.types";
 import { TBikeChatResponse, TChatMessage } from "@/types/ai-assistant.types";
 
 export function AiAssistant() {
+  const insets = useSafeAreaInsets();
   const { bikeId } = useLocalSearchParams<{ bikeId: string }>();
   const [messages, setMessages] = useState<TChatMessage[]>([]);
   const [prevBikeId, setPrevBikeId] = useState(bikeId);
@@ -117,7 +119,10 @@ export function AiAssistant() {
         )}
       </ScrollView>
 
-      <KeyboardStickyView style={styles.inputRow}>
+      <KeyboardStickyView
+        style={styles.inputRow}
+        offset={{ closed: -insets.bottom, opened: 0 }}
+      >
         <TextInput
           value={input}
           onChangeText={setInput}
@@ -127,6 +132,8 @@ export function AiAssistant() {
           numberOfLines={2}
           editable={!chatMutation.isPending}
           textColor={COLORS.text}
+          cursorColor={COLORS.accent}
+          selectionColor={COLORS.accent}
           underlineColor="transparent"
           activeUnderlineColor="transparent"
           style={styles.input}
@@ -280,7 +287,7 @@ const styles = StyleSheet.create({
   },
   inputRow: {
     flexDirection: "row",
-    alignItems: "flex-end",
+    alignItems: "center",
     gap: 8,
     padding: 10,
     borderTopWidth: 1,

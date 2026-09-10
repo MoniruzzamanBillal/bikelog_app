@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import { ReactNode, useState } from "react";
 import { StyleSheet, View } from "react-native";
 import { Text, TextInput } from "react-native-paper";
 import { COLORS } from "@/utils/colors";
@@ -14,20 +14,34 @@ export function FormField({
   label,
   rightElement,
   style,
+  onFocus,
+  onBlur,
   ...inputProps
 }: FormFieldProps) {
+  const [focused, setFocused] = useState(false);
+
   return (
     <View style={[styles.field, style]}>
       <Text style={styles.label}>{label}</Text>
-      <View style={styles.box}>
+      <View style={[styles.box, focused && styles.boxFocused]}>
         <TextInput
           {...inputProps}
           placeholderTextColor={COLORS.placeholder}
           textColor={COLORS.text}
+          cursorColor={COLORS.accent}
+          selectionColor={COLORS.accent}
           underlineColor="transparent"
           activeUnderlineColor="transparent"
           underlineStyle={{ display: "none" }}
           style={styles.input}
+          onFocus={(e) => {
+            setFocused(true);
+            onFocus?.(e);
+          }}
+          onBlur={(e) => {
+            setFocused(false);
+            onBlur?.(e);
+          }}
         />
         {rightElement}
       </View>
@@ -56,6 +70,9 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingHorizontal: 14,
     paddingVertical: 2,
+  },
+  boxFocused: {
+    borderColor: COLORS.accent,
   },
   input: {
     flex: 1,

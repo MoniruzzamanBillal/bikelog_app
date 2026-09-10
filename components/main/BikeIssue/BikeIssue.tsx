@@ -15,6 +15,7 @@ import { COLORS } from "@/utils/colors";
 import { useLocalSearchParams } from "expo-router";
 import { useRef, useState } from "react";
 import { RefreshControl, ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { SwipeableMethods } from "react-native-gesture-handler/ReanimatedSwipeable";
 import { Text } from "react-native-paper";
 import { BikeIssueCard } from "./BikeIssueCard";
@@ -28,6 +29,7 @@ const TABS: { key: TBikeIssueStatus; label: string }[] = [
 ];
 
 export function BikeIssue() {
+  const insets = useSafeAreaInsets();
   const { bikeId } = useLocalSearchParams<{ bikeId: string }>();
   const [page, setPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState<TBikeIssueStatus>("open");
@@ -121,7 +123,7 @@ export function BikeIssue() {
           </ScrollView>
 
           {totalPages > 1 && (
-            <View style={styles.pagination}>
+            <View style={[styles.pagination, { paddingBottom: 16 + insets.bottom }]}>
               <Text style={styles.pageInfo}>
                 Page {page} of {totalPages}
               </Text>

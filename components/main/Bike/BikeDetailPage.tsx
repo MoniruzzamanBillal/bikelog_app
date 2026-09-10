@@ -59,15 +59,32 @@ export function BikeDetailPage() {
   };
 
   if (isLoading) {
-    return <SectionLoading count={1} />;
+    return (
+      <View style={styles.screen}>
+        <ScreenHeader title="Loading..." backLabel="Garage" />
+        <View style={styles.pad}>
+          <SectionLoading count={4} />
+        </View>
+      </View>
+    );
   }
 
   if (isError) {
-    return <ErrorState onRetry={refetch} />;
+    return (
+      <View style={styles.screen}>
+        <ScreenHeader title="Bike" backLabel="Garage" />
+        <ErrorState onRetry={refetch} />
+      </View>
+    );
   }
 
   if (!bike) {
-    return <EmptyState label="Bike not found." />;
+    return (
+      <View style={styles.screen}>
+        <ScreenHeader title="Bike" backLabel="Garage" />
+        <EmptyState label="Bike not found." />
+      </View>
+    );
   }
 
   return (
@@ -157,6 +174,9 @@ const styles = StyleSheet.create({
   },
   scroll: {
     flex: 1,
+  },
+  pad: {
+    padding: 16,
   },
   statsStrip: {
     flexDirection: "row",

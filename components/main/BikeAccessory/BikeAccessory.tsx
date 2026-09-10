@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import { RefreshControl, ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Text } from "react-native-paper";
 import { useLocalSearchParams } from "expo-router";
 import { SwipeableMethods } from "react-native-gesture-handler/ReanimatedSwipeable";
@@ -37,6 +38,7 @@ const STATUSES: { key: TAccessoryStatus; label: string; sectionLabel: string }[]
 ];
 
 export function BikeAccessory() {
+  const insets = useSafeAreaInsets();
   const { bikeId } = useLocalSearchParams<{ bikeId: string }>();
   const [page, setPage] = useState(1);
   const [urgencyFilter, setUrgencyFilter] = useState<TAccessoryUrgency | null>(null);
@@ -163,7 +165,7 @@ export function BikeAccessory() {
           </ScrollView>
 
           {totalPages > 1 && (
-            <View style={styles.pagination}>
+            <View style={[styles.pagination, { paddingBottom: 16 + insets.bottom }]}>
               <Text style={styles.pageInfo}>
                 Page {page} of {totalPages}
               </Text>

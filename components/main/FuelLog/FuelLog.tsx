@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import { RefreshControl, ScrollView, StyleSheet, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Text } from "react-native-paper";
 import { useLocalSearchParams } from "expo-router";
 import { SwipeableMethods } from "react-native-gesture-handler/ReanimatedSwipeable";
@@ -22,6 +23,7 @@ import { FuelLogFormModal } from "./FuelLogFormModal";
 const LIMIT = 10;
 
 export function FuelLog() {
+  const insets = useSafeAreaInsets();
   const { bikeId } = useLocalSearchParams<{ bikeId: string }>();
   const [page, setPage] = useState(1);
   const [modalOpen, setModalOpen] = useState(false);
@@ -134,7 +136,7 @@ export function FuelLog() {
           </ScrollView>
 
           {totalPages > 1 && (
-            <View style={styles.pagination}>
+            <View style={[styles.pagination, { paddingBottom: 16 + insets.bottom }]}>
               <Text style={styles.pageInfo}>
                 Page {page} of {totalPages}
               </Text>

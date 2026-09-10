@@ -12,6 +12,7 @@ import { COLORS } from "@/utils/colors";
 import { useLocalSearchParams } from "expo-router";
 import { useRef, useState } from "react";
 import { RefreshControl, ScrollView, StyleSheet, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { SwipeableMethods } from "react-native-gesture-handler/ReanimatedSwipeable";
 import { Text } from "react-native-paper";
 import { BikeDocumentCard } from "./BikeDocumentCard";
@@ -20,6 +21,7 @@ import { BikeDocumentFormModal } from "./BikeDocumentFormModal";
 const LIMIT = 10;
 
 export function BikeDocument() {
+  const insets = useSafeAreaInsets();
   const { bikeId } = useLocalSearchParams<{ bikeId: string }>();
   const [page, setPage] = useState(1);
   const [modalOpen, setModalOpen] = useState(false);
@@ -89,7 +91,7 @@ export function BikeDocument() {
           </ScrollView>
 
           {totalPages > 1 && (
-            <View style={styles.pagination}>
+            <View style={[styles.pagination, { paddingBottom: 16 + insets.bottom }]}>
               <Text style={styles.pageInfo}>
                 Page {page} of {totalPages}
               </Text>
