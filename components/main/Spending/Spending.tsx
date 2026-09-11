@@ -1,10 +1,14 @@
 import {
   EmptyState,
+  ErrorState,
   MonthStepper,
+  PrimaryButton,
+  ScreenHeader,
   SectionLoading,
   YearStepper,
 } from "@/components/main/shared";
 import { useFetchData } from "@/hooks/useApi";
+import { TBike } from "@/types/bike.types";
 import {
   TSpendingDetails,
   TSpendingSummary,
@@ -25,7 +29,7 @@ import {
 } from "react-native";
 import { BarChart, PieChart } from "react-native-gifted-charts";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
-import { Button, Text } from "react-native-paper";
+import { Text } from "react-native-paper";
 import Toast from "react-native-toast-message";
 import { AiSpendingInsightCard } from "./AiSpendingInsightCard";
 import { SpendingSummaryView } from "./SpendingSummaryView";
@@ -88,7 +92,7 @@ function MonthTab({ bikeId }: { bikeId: string }) {
   const [refreshing, setRefreshing] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
 
-  const { data, isLoading, refetch } = useFetchData<TSpendingSummary>(
+  const { data, isLoading, isError, refetch } = useFetchData<TSpendingSummary>(
     ["spending", bikeId, "month", targetMonth],
     `/bikes/${bikeId}/spending-summary?period=month&targetMonth=${targetMonth}`,
     { enabled: !!bikeId && !!targetMonth },
@@ -123,19 +127,19 @@ function MonthTab({ bikeId }: { bikeId: string }) {
     >
       <MonthStepper targetMonth={targetMonth} onChange={setTargetMonth} />
 
-      <Button
-        mode="outlined"
-        icon="tray-arrow-down"
+      <PrimaryButton
         loading={isExporting}
         disabled={isExporting}
         onPress={handleExportPdf}
         style={styles.exportButton}
       >
-        {isExporting ? "Exporting..." : "Export PDF"}
-      </Button>
+        {isExporting ? "Exporting…" : "Export PDF"}
+      </PrimaryButton>
 
       {isLoading ? (
         <SectionLoading count={3} />
+      ) : isError ? (
+        <ErrorState onRetry={refetch} />
       ) : summary && summary.totalSpending > 0 ? (
         <SpendingSummaryView
           summary={summary}
@@ -153,7 +157,7 @@ function YearTab({ bikeId }: { bikeId: string }) {
   const [refreshing, setRefreshing] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
 
-  const { data, isLoading, refetch } = useFetchData<TSpendingSummary>(
+  const { data, isLoading, isError, refetch } = useFetchData<TSpendingSummary>(
     ["spending", bikeId, "year", targetYear],
     `/bikes/${bikeId}/spending-summary?period=year&targetYear=${targetYear}`,
     { enabled: !!bikeId && !!targetYear },
@@ -179,19 +183,19 @@ function YearTab({ bikeId }: { bikeId: string }) {
     >
       <YearStepper year={targetYear} onChange={setTargetYear} />
 
-      <Button
-        mode="outlined"
-        icon="tray-arrow-down"
+      <PrimaryButton
         loading={isExporting}
         disabled={isExporting}
         onPress={handleExportPdf}
         style={styles.exportButton}
       >
-        {isExporting ? "Exporting..." : "Export PDF"}
-      </Button>
+        {isExporting ? "Exporting…" : "Export PDF"}
+      </PrimaryButton>
 
       {isLoading ? (
         <SectionLoading count={3} />
+      ) : isError ? (
+        <ErrorState onRetry={refetch} />
       ) : summary && summary.totalSpending > 0 ? (
         <SpendingSummaryView summary={summary} />
       ) : (
@@ -205,7 +209,7 @@ function LifetimeTab({ bikeId }: { bikeId: string }) {
   const [refreshing, setRefreshing] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
 
-  const { data, isLoading, refetch } = useFetchData<TSpendingSummary>(
+  const { data, isLoading, isError, refetch } = useFetchData<TSpendingSummary>(
     ["spending", bikeId, "lifetime"],
     `/bikes/${bikeId}/spending-summary?period=lifetime`,
     { enabled: !!bikeId },
@@ -229,19 +233,19 @@ function LifetimeTab({ bikeId }: { bikeId: string }) {
       }
       showsVerticalScrollIndicator={false}
     >
-      <Button
-        mode="outlined"
-        icon="tray-arrow-down"
+      <PrimaryButton
         loading={isExporting}
         disabled={isExporting}
         onPress={handleExportPdf}
         style={styles.exportButton}
       >
-        {isExporting ? "Exporting..." : "Export PDF"}
-      </Button>
+        {isExporting ? "Exporting…" : "Export PDF"}
+      </PrimaryButton>
 
       {isLoading ? (
         <SectionLoading count={3} />
+      ) : isError ? (
+        <ErrorState onRetry={refetch} />
       ) : summary && summary.totalSpending > 0 ? (
         <SpendingSummaryView summary={summary} />
       ) : (
@@ -252,7 +256,7 @@ function LifetimeTab({ bikeId }: { bikeId: string }) {
 }
 
 function TrendTab({ bikeId }: { bikeId: string }) {
-  const { data, isLoading } = useFetchData<TSpendingTrend>(
+  const { data, isLoading, isError, refetch } = useFetchData<TSpendingTrend>(
     ["spending", "trend", bikeId],
     `/bikes/${bikeId}/spending-summary/trend?months=6`,
   );
@@ -263,10 +267,11 @@ function TrendTab({ bikeId }: { bikeId: string }) {
   const latestBreakdown = latest?.categoryBreakdown ?? [];
   const breakdownTotal = latestBreakdown.reduce((sum, c) => sum + c.total, 0);
 
-  const barData = monthlySummary.map((m) => ({
+  const barData = monthlySummary.map((m, i) => ({
     value: m.totalSpending,
     label: format(parse(m.targetMonth, "yyyy-MM", new Date()), "MMM"),
-    frontColor: COLORS.primary,
+    frontColor:
+      i === monthlySummary.length - 1 ? COLORS.accent : "rgba(145,132,217,0.3)",
   }));
 
   const pieData = latestBreakdown.map((c, i) => ({
@@ -277,6 +282,10 @@ function TrendTab({ bikeId }: { bikeId: string }) {
 
   if (isLoading) {
     return <SectionLoading count={2} />;
+  }
+
+  if (isError) {
+    return <ErrorState onRetry={refetch} />;
   }
 
   return (
@@ -290,6 +299,10 @@ function TrendTab({ bikeId }: { bikeId: string }) {
           roundedTop
           yAxisThickness={0}
           xAxisThickness={0}
+          yAxisTextStyle={{ color: COLORS.textMuted, fontSize: 10 }}
+          xAxisLabelTextStyle={{ color: COLORS.textMuted, fontSize: 10 }}
+          rulesColor={COLORS.borderSubtle}
+          noOfSections={4}
         />
       </View>
 
@@ -305,7 +318,13 @@ function TrendTab({ bikeId }: { bikeId: string }) {
               : ""}
             )
           </Text>
-          <PieChart data={pieData} donut radius={90} innerRadius={60} />
+          <PieChart
+            data={pieData}
+            donut
+            radius={90}
+            innerRadius={60}
+            innerCircleColor={COLORS.surface}
+          />
 
           <View style={styles.legend}>
             {latestBreakdown.map((c, i) => {
@@ -345,41 +364,45 @@ export function Spending() {
   const { bikeId } = useLocalSearchParams<{ bikeId: string }>();
   const [activeTab, setActiveTab] = useState<TPeriod>("month");
 
+  const { data: bikeData } = useFetchData<TBike>(
+    ["bikes", bikeId],
+    `/bikes/${bikeId}`,
+    { enabled: !!bikeId },
+  );
+  const bike = bikeData?.data;
+
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Spending</Text>
+      <ScreenHeader title="Spending" backLabel={bike?.nickname ?? "Back"} />
 
-      <AiSpendingInsightCard bikeId={bikeId} />
+      <View style={styles.body}>
+        <AiSpendingInsightCard bikeId={bikeId} />
 
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={styles.tabBarScroll}
-        contentContainerStyle={styles.tabBar}
-      >
-        {TABS.map(({ key, label }) => (
-          <TouchableOpacity
-            key={key}
-            style={[styles.tab, activeTab === key && styles.tabActive]}
-            onPress={() => setActiveTab(key)}
-          >
-            <Text
-              style={[
-                styles.tabText,
-                activeTab === key && styles.tabTextActive,
-              ]}
+        <View style={styles.tabBar}>
+          {TABS.map(({ key, label }) => (
+            <TouchableOpacity
+              key={key}
+              style={[styles.tab, activeTab === key && styles.tabActive]}
+              onPress={() => setActiveTab(key)}
             >
-              {label}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
+              <Text
+                style={[
+                  styles.tabText,
+                  activeTab === key && styles.tabTextActive,
+                ]}
+              >
+                {label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
 
-      <View style={styles.tabContent}>
-        {activeTab === "month" && <MonthTab bikeId={bikeId} />}
-        {activeTab === "year" && <YearTab bikeId={bikeId} />}
-        {activeTab === "lifetime" && <LifetimeTab bikeId={bikeId} />}
-        {activeTab === "trend" && <TrendTab bikeId={bikeId} />}
+        <View style={styles.tabContent}>
+          {activeTab === "month" && <MonthTab bikeId={bikeId} />}
+          {activeTab === "year" && <YearTab bikeId={bikeId} />}
+          {activeTab === "lifetime" && <LifetimeTab bikeId={bikeId} />}
+          {activeTab === "trend" && <TrendTab bikeId={bikeId} />}
+        </View>
       </View>
     </View>
   );
@@ -389,39 +412,33 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.background,
+  },
+  body: {
+    flex: 1,
     padding: 16,
-  },
-  title: {
-    fontSize: 22,
-    fontWeight: "700",
-    color: COLORS.text,
-    marginBottom: 16,
-  },
-  tabBarScroll: {
-    flexGrow: 0,
   },
   tabBar: {
     flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
+    gap: 6,
     marginBottom: 16,
   },
   tab: {
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 9999,
+    flex: 1,
+    paddingVertical: 7,
+    borderRadius: 6,
     borderWidth: 1,
-    borderColor: COLORS.border,
-    backgroundColor: COLORS.card,
+    borderColor: COLORS.borderSubtle,
+    backgroundColor: COLORS.surface,
+    alignItems: "center",
   },
   tabActive: {
-    backgroundColor: COLORS.primary,
-    borderColor: COLORS.primary,
+    backgroundColor: COLORS.accent,
+    borderColor: COLORS.accent,
   },
   tabText: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: "600",
-    color: COLORS.text,
+    color: COLORS.textMuted,
   },
   tabTextActive: {
     color: COLORS.white,
@@ -432,18 +449,24 @@ const styles = StyleSheet.create({
   exportButton: {
     marginBottom: 16,
     alignSelf: "flex-start",
+    width: "auto",
+    paddingHorizontal: 20,
   },
   chartCard: {
-    backgroundColor: COLORS.card,
-    borderRadius: 12,
+    backgroundColor: COLORS.surface,
+    borderWidth: 1,
+    borderColor: COLORS.borderSubtle,
+    borderRadius: 10,
     padding: 16,
-    marginBottom: 16,
+    marginBottom: 12,
   },
   chartTitle: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: COLORS.text,
-    marginBottom: 8,
+    fontSize: 11,
+    fontWeight: "500",
+    color: COLORS.textMuted,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+    marginBottom: 10,
   },
   legend: {
     marginTop: 12,

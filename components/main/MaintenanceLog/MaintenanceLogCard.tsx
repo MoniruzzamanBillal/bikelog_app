@@ -1,7 +1,7 @@
 import { ImagePickerField, TPickedImageFile } from "@/components/main/shared";
 import { confirmDelete } from "@/components/main/shared/ConfirmDelete";
 import { useDelete, usePut } from "@/hooks/useApi";
-import { TMaintenanceType } from "@/types/catalog.types";
+import { TEngineOilType, TMaintenanceType } from "@/types/catalog.types";
 import { TMaintenanceLog } from "@/types/maintenance-log.types";
 import { COLORS } from "@/utils/colors";
 import { formatApiDate } from "@/utils/formatApiDate";
@@ -18,7 +18,9 @@ interface MaintenanceLogCardProps {
   log: TMaintenanceLog;
   bikeId: string;
   maintenanceTypes: TMaintenanceType[];
+  oilTypes: TEngineOilType[];
   openSwipeableRef: React.MutableRefObject<SwipeableMethods | null>;
+  isLast?: boolean;
 }
 
 function getTypeName(
@@ -33,11 +35,24 @@ function getTypeName(
   return maintenanceTypes.find((t) => t._id === typeId)?.name ?? "Maintenance";
 }
 
+function getOilTypeName(
+  log: TMaintenanceLog,
+  oilTypes: TEngineOilType[],
+): string | undefined {
+  if (typeof log.oilType === "object" && log.oilType?.name) {
+    return log.oilType.name;
+  }
+  const oilId = typeof log.oilType === "string" ? log.oilType : undefined;
+  return oilId ? oilTypes.find((o) => o._id === oilId)?.name : undefined;
+}
+
 export function MaintenanceLogCard({
   log,
   bikeId,
   maintenanceTypes,
+  oilTypes,
   openSwipeableRef,
+  isLast,
 }: MaintenanceLogCardProps) {
   const [editOpen, setEditOpen] = useState(false);
   const swipeableRef = useRef<SwipeableMethods>(null);
@@ -118,6 +133,10 @@ export function MaintenanceLogCard({
     setEditOpen(true);
   };
 
+  const oilTypeName = getOilTypeName(log, oilTypes);
+  const parts = log.partsReplaced?.filter(Boolean) ?? [];
+  const primaryDetail = oilTypeName ?? (parts.length > 0 ? parts.join(", ") : null);
+
   return (
     <>
       <Swipeable
@@ -141,60 +160,36 @@ export function MaintenanceLogCard({
         )}
       >
         <TouchableOpacity
-          // onPress={handleEdit}
-          style={styles.card}
+          style={[styles.row, isLast && styles.rowLast]}
           activeOpacity={0.7}
         >
-          <View style={styles.cardBody}>
-            <ImagePickerField
-              label="Service"
-              value={log.serviceImage}
-              onUpload={handleImageUpload}
-              onDelete={handleImageDelete}
-              uploading={isUploading || isDeletingImage}
-            />
-            <View style={styles.cardContent}>
-              <View style={styles.cardHeader}>
-                <Text style={styles.typeName}>
-                  {getTypeName(log, maintenanceTypes)}
-                </Text>
-                <Text style={styles.date}>
-                  {formatApiDate(log.serviceDate, "dd MMM yyyy")}
+          <ImagePickerField
+            label="Service"
+            value={log.serviceImage}
+            onUpload={handleImageUpload}
+            onDelete={handleImageDelete}
+            uploading={isUploading || isDeletingImage}
+          />
+
+          <View style={styles.left}>
+            <Text style={styles.typeName}>{getTypeName(log, maintenanceTypes)}</Text>
+            <Text style={styles.details}>
+              {primaryDetail ? `${primaryDetail} · ` : ""}৳{log.cost.toLocaleString()}
+            </Text>
+            <Text style={styles.meta}>
+              {log.serviceCenter ?? "—"} · {log.odometerReading.toLocaleString()} km
+            </Text>
+            {log.nextDueOdometer !== undefined && (
+              <View style={styles.badge}>
+                <Text style={styles.badgeText}>
+                  Next: {log.nextDueOdometer.toLocaleString()} km
                 </Text>
               </View>
-              <Text style={styles.odometer}>
-                Odometer: {log.odometerReading.toLocaleString()} km
-              </Text>
-              {log.intervalKmUsed !== undefined ? (
-                <>
-                  <View style={styles.detailRow}>
-                    <Text style={styles.detail}>
-                      Cost: ৳{log.cost.toLocaleString()}
-                    </Text>
-                    <Text style={styles.detail}>
-                      Interval: {log.intervalKmUsed.toLocaleString()} km
-                    </Text>
-                  </View>
-                  <Text style={styles.detail}>
-                    Next due: {log.nextDueOdometer!.toLocaleString()} km
-                  </Text>
-                </>
-              ) : (
-                <Text style={styles.detail}>
-                  Cost: ৳{log.cost.toLocaleString()}
-                </Text>
-              )}
-              {log.serviceCenter && (
-                <Text style={styles.detail}>At: {log.serviceCenter}</Text>
-              )}
-              {log.partsReplaced && log.partsReplaced.length > 0 && (
-                <Text style={styles.detail}>
-                  Parts: {log.partsReplaced.join(", ")}
-                </Text>
-              )}
-              {log.notes && <Text style={styles.notes}>{log.notes}</Text>}
-            </View>
+            )}
+            {log.notes && <Text style={styles.notes}>{log.notes}</Text>}
           </View>
+
+          <Text style={styles.date}>{formatApiDate(log.serviceDate, "dd MMM")}</Text>
         </TouchableOpacity>
       </Swipeable>
 
@@ -209,66 +204,63 @@ export function MaintenanceLogCard({
 }
 
 const styles = StyleSheet.create({
-  card: {
-    backgroundColor: COLORS.card,
-    borderRadius: 6,
-    padding: 16,
-    marginBottom: 12,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  cardBody: {
+  row: {
     flexDirection: "row",
     gap: 12,
+    padding: 13,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.borderSubtle,
   },
-  cardContent: {
+  rowLast: {
+    borderBottomWidth: 0,
+  },
+  left: {
     flex: 1,
   },
-  cardHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 6,
-  },
   typeName: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: "600",
     color: COLORS.text,
   },
-  date: {
-    fontSize: 13,
-    color: COLORS.textLight,
-  },
-  odometer: {
-    fontSize: 14,
-    color: COLORS.text,
-    marginBottom: 6,
-  },
-  detailRow: {
-    flexDirection: "row",
-    gap: 16,
-    marginBottom: 2,
-  },
-  detail: {
-    fontSize: 13,
+  details: {
+    fontSize: 12,
     color: COLORS.textLight,
     marginTop: 2,
   },
+  meta: {
+    fontSize: 11,
+    color: COLORS.textMuted,
+    marginTop: 2,
+  },
+  badge: {
+    alignSelf: "flex-start",
+    marginTop: 5,
+    paddingVertical: 2,
+    paddingHorizontal: 8,
+    borderRadius: 20,
+    backgroundColor: "rgba(251,191,36,0.1)",
+  },
+  badgeText: {
+    fontSize: 11,
+    fontWeight: "500",
+    color: COLORS.warning,
+  },
   notes: {
-    fontSize: 13,
-    color: COLORS.textLight,
+    fontSize: 12,
+    color: COLORS.textMuted,
     fontStyle: "italic",
-    marginTop: 6,
+    marginTop: 5,
+  },
+  date: {
+    fontSize: 11,
+    color: COLORS.textMuted,
+    flexShrink: 0,
   },
   action: {
     justifyContent: "center",
     alignItems: "center",
     width: 80,
-    borderRadius: 6,
-    height: "90%",
+    height: "100%",
   },
   editAction: {
     backgroundColor: COLORS.success,

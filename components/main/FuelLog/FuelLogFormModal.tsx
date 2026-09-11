@@ -1,12 +1,17 @@
-import { DatePickerField } from "@/components/main/shared";
+import {
+  DatePickerField,
+  FormField,
+  PrimaryButton,
+  SwitchField,
+} from "@/components/main/shared";
 import { usePatch, usePost } from "@/hooks/useApi";
 import { TCreateFuelLogPayload, TFuelLog } from "@/types/fuel-log.types";
 import { COLORS } from "@/utils/colors";
 import { format } from "date-fns";
 import { useEffect, useState } from "react";
-import { StyleSheet, TouchableOpacity, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
-import { Button, Modal, Portal, Text, TextInput } from "react-native-paper";
+import { Modal, Portal, Text } from "react-native-paper";
 import Toast from "react-native-toast-message";
 
 const DECIMAL_REGEX = /^\d+(\.\d{0,2})?$/;
@@ -58,6 +63,13 @@ export function FuelLogFormModal({
       setNotes("");
     }
   }, [initialFuelLog, open]);
+
+  const parsedLiters = parseFloat(liters);
+  const parsedPrice = parseFloat(pricePerLiter);
+  const computedTotal =
+    Number.isFinite(parsedLiters) && Number.isFinite(parsedPrice)
+      ? parsedLiters * parsedPrice
+      : null;
 
   const handleSubmit = async () => {
     if (!odometer.trim() || !liters.trim() || !pricePerLiter.trim()) {
@@ -159,120 +171,92 @@ export function FuelLogFormModal({
       >
         <KeyboardAwareScrollView showsVerticalScrollIndicator={false}>
           <Text style={styles.title}>
-            {initialFuelLog ? "Edit Fuel Log" : "Add Fuel Log"}
+            {initialFuelLog ? "Edit Fuel Log" : "Add Fill-up"}
           </Text>
 
-          <View style={styles.field}>
-            <TextInput
-              placeholder="Odometer (km)"
+          <View style={styles.row}>
+            <FormField
+              label="Odometer (km)"
+              placeholder="1550"
               value={odometer}
               onChangeText={setOdometer}
               keyboardType="decimal-pad"
               editable={!isPending}
-              textColor={COLORS.text}
-              style={styles.input}
+              style={styles.rowField}
             />
+            <View style={styles.rowField}>
+              <DatePickerField
+                label="Date"
+                value={date}
+                onChange={setDate}
+                maximumDate={new Date()}
+                disabled={isPending}
+                style={styles.noMarginBottom}
+              />
+            </View>
           </View>
 
-          <View style={styles.field}>
-            <TextInput
-              placeholder="Liters Added"
+          <View style={styles.row}>
+            <FormField
+              label="Liters Added"
+              placeholder="8.5"
               value={liters}
               onChangeText={setLiters}
               keyboardType="decimal-pad"
               editable={!isPending}
-              textColor={COLORS.text}
-              style={styles.input}
+              style={styles.rowField}
             />
-          </View>
-
-          <Text style={styles.label}>Full Tank?</Text>
-          <View style={styles.pillRow}>
-            <TouchableOpacity
-              style={[styles.pill, isFullTank && styles.pillActive]}
-              onPress={() => setIsFullTank(true)}
-              disabled={isPending}
-            >
-              <Text
-                style={[styles.pillText, isFullTank && styles.pillTextActive]}
-              >
-                Yes
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.pill, !isFullTank && styles.pillActive]}
-              onPress={() => setIsFullTank(false)}
-              disabled={isPending}
-            >
-              <Text
-                style={[styles.pillText, !isFullTank && styles.pillTextActive]}
-              >
-                No
-              </Text>
-            </TouchableOpacity>
-          </View>
-
-          <View style={styles.field}>
-            <TextInput
-              placeholder="Price per Liter"
+            <FormField
+              label="Price/L (৳)"
+              placeholder="125.5"
               value={pricePerLiter}
               onChangeText={setPricePerLiter}
               keyboardType="decimal-pad"
               editable={!isPending}
-              textColor={COLORS.text}
-              style={styles.input}
+              style={styles.rowField}
             />
           </View>
 
-          <View style={styles.field}>
-            <TextInput
-              placeholder="Fuel Station (optional)"
-              value={station}
-              onChangeText={setStation}
-              editable={!isPending}
-              textColor={COLORS.text}
-              style={styles.input}
-            />
-          </View>
+          {computedTotal !== null && (
+            <View style={styles.totalBox}>
+              <Text style={styles.totalLabel}>Total cost</Text>
+              <Text style={styles.totalValue}>৳{computedTotal.toFixed(2)}</Text>
+            </View>
+          )}
 
-          <DatePickerField
-            label="Date"
-            value={date}
-            onChange={setDate}
-            maximumDate={new Date()}
+          <FormField
+            label="Fuel Station"
+            placeholder="Padma Filling Station"
+            value={station}
+            onChangeText={setStation}
+            editable={!isPending}
+          />
+
+          <FormField
+            label="Notes (optional)"
+            placeholder="Full tank before highway trip"
+            value={notes}
+            onChangeText={setNotes}
+            multiline
+            numberOfLines={3}
+            editable={!isPending}
+          />
+
+          <SwitchField
+            label="Full Tank"
+            description="Triggers mileage calculation"
+            value={isFullTank}
+            onChange={setIsFullTank}
             disabled={isPending}
           />
 
-          <View style={styles.field}>
-            <TextInput
-              placeholder="Notes (optional)"
-              value={notes}
-              onChangeText={setNotes}
-              multiline
-              numberOfLines={3}
-              editable={!isPending}
-              textColor={COLORS.text}
-              style={styles.input}
-            />
-          </View>
+          <PrimaryButton onPress={handleSubmit} loading={isPending} style={styles.button}>
+            {initialFuelLog ? "Save Changes" : "Save Fill-up"}
+          </PrimaryButton>
 
-          <Button
-            mode="contained"
-            onPress={handleSubmit}
-            loading={isPending}
-            disabled={isPending}
-            style={styles.button}
-          >
-            {initialFuelLog ? "Update" : "Add"}
-          </Button>
-
-          <Button
-            onPress={onClose}
-            disabled={isPending}
-            style={styles.cancelButton}
-          >
+          <PrimaryButton onPress={onClose} disabled={isPending} style={styles.cancelButton}>
             Cancel
-          </Button>
+          </PrimaryButton>
         </KeyboardAwareScrollView>
       </Modal>
     </Portal>
@@ -282,61 +266,57 @@ export function FuelLogFormModal({
 const styles = StyleSheet.create({
   modal: {
     backgroundColor: COLORS.background,
+    borderWidth: 1,
+    borderColor: COLORS.borderSubtle,
     marginHorizontal: 20,
     padding: 20,
-    borderRadius: 8,
+    borderRadius: 12,
     maxHeight: "85%",
   },
   title: {
-    fontSize: 20,
+    fontSize: 18,
+    fontWeight: "600",
+    color: COLORS.text,
+    marginBottom: 18,
+  },
+  row: {
+    flexDirection: "row",
+    gap: 10,
+  },
+  rowField: {
+    flex: 1,
+  },
+  noMarginBottom: {
+    marginBottom: 14,
+  },
+  totalBox: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    backgroundColor: COLORS.surface,
+    borderWidth: 1,
+    borderColor: COLORS.borderSubtle,
+    borderRadius: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    marginBottom: 14,
+  },
+  totalLabel: {
+    fontSize: 13,
+    fontWeight: "500",
+    color: COLORS.textLight,
+  },
+  totalValue: {
+    fontSize: 16,
     fontWeight: "700",
     color: COLORS.text,
-    marginBottom: 16,
-  },
-  field: {
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
-    marginBottom: 16,
-  },
-  input: {
-    borderWidth: 0,
-    backgroundColor: "transparent",
-    padding: 0,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: COLORS.text,
-    marginBottom: 8,
-  },
-  pillRow: {
-    flexDirection: "row",
-    gap: 12,
-    marginBottom: 16,
-  },
-  pill: {
-    paddingVertical: 10,
-    paddingHorizontal: 24,
-    borderRadius: 9999,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-  },
-  pillActive: {
-    backgroundColor: COLORS.primary,
-    borderColor: COLORS.primary,
-  },
-  pillText: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: COLORS.text,
-  },
-  pillTextActive: {
-    color: COLORS.white,
+    fontFamily: "monospace",
   },
   button: {
-    marginTop: 8,
+    marginTop: 10,
   },
   cancelButton: {
-    marginTop: 8,
+    marginTop: 10,
+    borderColor: COLORS.borderSubtle,
   },
 });

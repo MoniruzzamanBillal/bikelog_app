@@ -12,6 +12,7 @@ interface DatePickerFieldProps {
   minimumDate?: Date;
   maximumDate?: Date;
   disabled?: boolean;
+  style?: object;
 }
 
 export function DatePickerField({
@@ -21,19 +22,21 @@ export function DatePickerField({
   minimumDate,
   maximumDate,
   disabled,
+  style,
 }: DatePickerFieldProps) {
   const [showPicker, setShowPicker] = useState(false);
   const dateValue = value ? parse(value, "yyyy-MM-dd", new Date()) : new Date();
 
   return (
-    <View style={styles.field}>
+    <View style={[styles.field, style]}>
+      <Text style={styles.label}>{label}</Text>
       <TouchableOpacity
         disabled={disabled}
         onPress={() => setShowPicker(true)}
-        style={styles.touchable}
+        style={styles.box}
       >
         <Text style={value ? styles.valueText : styles.placeholderText}>
-          {value ? format(dateValue, "dd MMM yyyy") : label}
+          {value ? format(dateValue, "dd MMM yyyy") : "Select date"}
         </Text>
       </TouchableOpacity>
 
@@ -58,11 +61,25 @@ export function DatePickerField({
 
 const styles = StyleSheet.create({
   field: {
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
-    marginBottom: 16,
+    marginBottom: 14,
   },
-  touchable: { paddingVertical: 12 },
-  valueText: { fontSize: 16, color: COLORS.text },
-  placeholderText: { fontSize: 16, color: COLORS.textLight },
+  label: {
+    fontSize: 11,
+    fontWeight: "500",
+    color: COLORS.textLight,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+    marginBottom: 5,
+  },
+  box: {
+    backgroundColor: COLORS.surface,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 8,
+    paddingHorizontal: 14,
+    height: 44,
+    justifyContent: "center",
+  },
+  valueText: { fontSize: 15, color: COLORS.text },
+  placeholderText: { fontSize: 15, color: COLORS.placeholder },
 });

@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { StyleSheet, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
-import { Button, Modal, Portal, Text, TextInput } from "react-native-paper";
+import { Modal, Portal, Text } from "react-native-paper";
 import Toast from "react-native-toast-message";
 import {
   DatePickerField,
+  FormField,
+  PrimaryButton,
   SectionLoading,
   SelectPickerField,
 } from "@/components/main/shared";
@@ -185,9 +187,7 @@ export function MaintenanceLogFormModal({
     <Portal>
       <Modal visible={open} onDismiss={onClose} contentContainerStyle={styles.modal}>
         <KeyboardAwareScrollView showsVerticalScrollIndicator={false}>
-          <Text style={styles.title}>
-            {log ? "Edit Maintenance" : "Add Maintenance"}
-          </Text>
+          <Text style={styles.title}>{log ? "Edit Service" : "Add Service"}</Text>
 
           {maintenanceTypes.length === 0 ? (
             <SectionLoading count={1} />
@@ -201,24 +201,12 @@ export function MaintenanceLogFormModal({
             />
           )}
 
-          <View style={styles.field}>
-            <TextInput
-              placeholder="Odometer (km)"
-              value={odometerReading}
-              onChangeText={setOdometerReading}
-              keyboardType="decimal-pad"
-              editable={!isPending}
-              textColor={COLORS.text}
-              style={styles.input}
-            />
-          </View>
-
           {isEngineOil && (
             oilTypes.length === 0 ? (
               <SectionLoading count={1} />
             ) : (
               <SelectPickerField
-                label="Engine Oil Type"
+                label="Oil Type (optional)"
                 value={oilType}
                 onChange={setOilType}
                 options={oilOptions}
@@ -226,37 +214,48 @@ export function MaintenanceLogFormModal({
             )
           )}
 
-          <View style={styles.field}>
-            <TextInput
-              placeholder="Service Interval (km) (optional)"
-              value={intervalKmUsed}
-              onChangeText={setIntervalKmUsed}
+          <View style={styles.row}>
+            <FormField
+              label="Odometer (km)"
+              placeholder="1800"
+              value={odometerReading}
+              onChangeText={setOdometerReading}
               keyboardType="decimal-pad"
               editable={!isPending}
-              textColor={COLORS.text}
-              style={styles.input}
+              style={styles.rowField}
             />
-          </View>
-
-          <View style={styles.field}>
-            <TextInput
-              placeholder="Cost (৳)"
+            <FormField
+              label="Cost (৳)"
+              placeholder="1500"
               value={cost}
               onChangeText={setCost}
               keyboardType="decimal-pad"
               editable={!isPending}
-              textColor={COLORS.text}
-              style={styles.input}
+              style={styles.rowField}
             />
           </View>
 
-          <DatePickerField
-            label="Service Date"
-            value={serviceDate}
-            onChange={setServiceDate}
-            maximumDate={new Date()}
-            disabled={isPending}
-          />
+          <View style={styles.row}>
+            <View style={styles.rowField}>
+              <DatePickerField
+                label="Service Date"
+                value={serviceDate}
+                onChange={setServiceDate}
+                maximumDate={new Date()}
+                disabled={isPending}
+                style={styles.noMarginBottom}
+              />
+            </View>
+            <FormField
+              label="Interval km (opt)"
+              placeholder="1200"
+              value={intervalKmUsed}
+              onChangeText={setIntervalKmUsed}
+              keyboardType="decimal-pad"
+              editable={!isPending}
+              style={styles.rowField}
+            />
+          </View>
 
           <DatePickerField
             label="Next Due Date (optional)"
@@ -265,54 +264,39 @@ export function MaintenanceLogFormModal({
             disabled={isPending}
           />
 
-          <View style={styles.field}>
-            <TextInput
-              placeholder="Service Center (optional)"
-              value={serviceCenter}
-              onChangeText={setServiceCenter}
-              editable={!isPending}
-              textColor={COLORS.text}
-              style={styles.input}
-            />
-          </View>
+          <FormField
+            label="Service Center"
+            placeholder="City Bike Care"
+            value={serviceCenter}
+            onChangeText={setServiceCenter}
+            editable={!isPending}
+          />
 
-          <View style={styles.field}>
-            <TextInput
-              placeholder="Parts Replaced (optional, comma-separated)"
-              value={partsReplaced}
-              onChangeText={setPartsReplaced}
-              editable={!isPending}
-              textColor={COLORS.text}
-              style={styles.input}
-            />
-          </View>
+          <FormField
+            label="Parts Replaced (optional)"
+            placeholder="Oil Filter, Spark Plug"
+            value={partsReplaced}
+            onChangeText={setPartsReplaced}
+            editable={!isPending}
+          />
 
-          <View style={styles.field}>
-            <TextInput
-              placeholder="Notes (optional)"
-              value={notes}
-              onChangeText={setNotes}
-              multiline
-              numberOfLines={3}
-              editable={!isPending}
-              textColor={COLORS.text}
-              style={styles.input}
-            />
-          </View>
+          <FormField
+            label="Notes"
+            placeholder="Routine service"
+            value={notes}
+            onChangeText={setNotes}
+            multiline
+            numberOfLines={3}
+            editable={!isPending}
+          />
 
-          <Button
-            mode="contained"
-            onPress={handleSubmit}
-            loading={isPending}
-            disabled={isPending}
-            style={styles.button}
-          >
-            {log ? "Update" : "Add"}
-          </Button>
+          <PrimaryButton onPress={handleSubmit} loading={isPending} style={styles.button}>
+            {log ? "Save Changes" : "Save Service"}
+          </PrimaryButton>
 
-          <Button onPress={onClose} disabled={isPending} style={styles.cancelButton}>
+          <PrimaryButton onPress={onClose} disabled={isPending} style={styles.cancelButton}>
             Cancel
-          </Button>
+          </PrimaryButton>
         </KeyboardAwareScrollView>
       </Modal>
     </Portal>
@@ -322,31 +306,34 @@ export function MaintenanceLogFormModal({
 const styles = StyleSheet.create({
   modal: {
     backgroundColor: COLORS.background,
+    borderWidth: 1,
+    borderColor: COLORS.borderSubtle,
     marginHorizontal: 20,
     padding: 20,
-    borderRadius: 8,
+    borderRadius: 12,
     maxHeight: "85%",
   },
   title: {
-    fontSize: 20,
-    fontWeight: "700",
+    fontSize: 18,
+    fontWeight: "600",
     color: COLORS.text,
-    marginBottom: 16,
+    marginBottom: 18,
   },
-  field: {
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
-    marginBottom: 16,
+  row: {
+    flexDirection: "row",
+    gap: 10,
   },
-  input: {
-    borderWidth: 0,
-    backgroundColor: "transparent",
-    padding: 0,
+  rowField: {
+    flex: 1,
+  },
+  noMarginBottom: {
+    marginBottom: 14,
   },
   button: {
-    marginTop: 8,
+    marginTop: 10,
   },
   cancelButton: {
-    marginTop: 8,
+    marginTop: 10,
+    borderColor: COLORS.borderSubtle,
   },
 });

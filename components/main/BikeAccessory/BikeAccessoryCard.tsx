@@ -1,12 +1,6 @@
-import {
-  accessoryStatusColors,
-  accessoryUrgencyColors,
-  ImagePickerField,
-  StatusBadge,
-  TPickedImageFile,
-} from "@/components/main/shared";
+import { ImagePickerField, TPickedImageFile } from "@/components/main/shared";
 import { confirmDelete } from "@/components/main/shared/ConfirmDelete";
-import { useDelete, usePut } from "@/hooks/useApi";
+import { useDelete, usePatch, usePut } from "@/hooks/useApi";
 import { TBikeAccessory } from "@/types/bike-accessory.types";
 import { COLORS } from "@/utils/colors";
 import { format } from "date-fns";
@@ -25,6 +19,18 @@ interface BikeAccessoryCardProps {
   openSwipeableRef: React.MutableRefObject<SwipeableMethods | null>;
 }
 
+const URGENCY_LABEL: Record<string, string> = {
+  immediate: "Immediate",
+  medium: "Medium",
+  low: "Low",
+};
+
+const STATUS_BADGE: Record<string, { bg: string; text: string; label: string }> = {
+  pending: { bg: "rgba(251,191,36,0.1)", text: COLORS.warning, label: "Pending" },
+  purchased: { bg: "rgba(74,222,128,0.1)", text: COLORS.success, label: "Purchased" },
+  cancelled: { bg: "rgba(255,255,255,0.07)", text: COLORS.textLight, label: "Cancelled" },
+};
+
 export function BikeAccessoryCard({
   accessory,
   bikeId,
@@ -34,6 +40,7 @@ export function BikeAccessoryCard({
   const swipeableRef = useRef<SwipeableMethods>(null);
 
   const deleteMutation = useDelete([["accessories", bikeId]]);
+  const markPurchasedMutation = usePatch([["accessories", bikeId]]);
   const { mutateAsync: uploadImage, isPending: isUploading } = usePut([
     ["accessories", bikeId],
   ]);
@@ -49,11 +56,7 @@ export function BikeAccessoryCard({
         url: `/bikes/${bikeId}/accessories/${accessory._id}/image`,
         payload: formData,
       });
-      Toast.show({
-        type: "success",
-        text1: "Product image uploaded",
-        position: "top",
-      });
+      Toast.show({ type: "success", text1: "Product image uploaded", position: "top" });
     } catch (error: any) {
       Toast.show({
         type: "error",
@@ -68,11 +71,7 @@ export function BikeAccessoryCard({
       await deleteImage({
         url: `/bikes/${bikeId}/accessories/${accessory._id}/image`,
       });
-      Toast.show({
-        type: "success",
-        text1: "Product image deleted",
-        position: "top",
-      });
+      Toast.show({ type: "success", text1: "Product image deleted", position: "top" });
     } catch (error: any) {
       Toast.show({
         type: "error",
@@ -106,6 +105,30 @@ export function BikeAccessoryCard({
     setEditOpen(true);
   };
 
+  const handleMarkPurchased = async () => {
+    // A price is required server-side to mark purchased — if none is set yet,
+    // send the user to the form instead of firing a request that will 400.
+    if (accessory.price === undefined) {
+      setEditOpen(true);
+      return;
+    }
+    try {
+      await markPurchasedMutation.mutateAsync({
+        url: `/bikes/${bikeId}/accessories/${accessory._id}`,
+        payload: { status: "purchased" },
+      });
+      Toast.show({ type: "success", text1: "Marked as purchased", position: "top" });
+    } catch (error: any) {
+      Toast.show({
+        type: "error",
+        text1: error?.message || "Failed to update",
+        position: "top",
+      });
+    }
+  };
+
+  const statusBadge = STATUS_BADGE[accessory.status];
+
   return (
     <>
       <Swipeable
@@ -128,11 +151,7 @@ export function BikeAccessoryCard({
           </TouchableOpacity>
         )}
       >
-        <TouchableOpacity
-          // onPress={handleEdit}
-          style={styles.card}
-          activeOpacity={0.7}
-        >
+        <View style={styles.card}>
           <View style={styles.cardBody}>
             <ImagePickerField
               label="Product"
@@ -142,32 +161,37 @@ export function BikeAccessoryCard({
               uploading={isUploading || isDeletingImage}
             />
             <View style={styles.cardContent}>
-              <Text style={styles.name}>{accessory.name}</Text>
-              {accessory.price !== undefined && (
-                <Text style={styles.price}>
-                  ৳{accessory.price.toFixed(2)}
-                </Text>
-              )}
-              {accessory.status === "purchased" && accessory.purchaseDate && (
-                <Text style={styles.purchaseDate}>
-                  Purchased {format(new Date(accessory.purchaseDate), "d MMM yyyy")}
-                </Text>
-              )}
-              <View style={styles.badgesRow}>
-                <StatusBadge
-                  label={accessory.urgency}
-                  colorKey={accessory.urgency}
-                  colors={accessoryUrgencyColors}
-                />
-                <StatusBadge
-                  label={accessory.status}
-                  colorKey={accessory.status}
-                  colors={accessoryStatusColors}
-                />
+              <View style={styles.titleRow}>
+                <Text style={styles.name}>{accessory.name}</Text>
+                <View style={[styles.badge, { backgroundColor: statusBadge.bg }]}>
+                  <Text style={[styles.badgeText, { color: statusBadge.text }]}>
+                    {statusBadge.label}
+                  </Text>
+                </View>
               </View>
+
+              {accessory.status === "purchased" && accessory.purchaseDate ? (
+                <Text style={styles.meta}>
+                  Purchased {format(new Date(accessory.purchaseDate), "dd MMM yyyy")}
+                </Text>
+              ) : (
+                <Text style={styles.meta}>
+                  Urgency: {URGENCY_LABEL[accessory.urgency]}
+                </Text>
+              )}
+
+              {accessory.price !== undefined && (
+                <Text style={styles.price}>৳{accessory.price.toLocaleString()}</Text>
+              )}
+
+              {accessory.status === "pending" && (
+                <TouchableOpacity onPress={handleMarkPurchased} style={styles.markButton}>
+                  <Text style={styles.markButtonText}>Mark Purchased</Text>
+                </TouchableOpacity>
+              )}
             </View>
           </View>
-        </TouchableOpacity>
+        </View>
       </Swipeable>
 
       <BikeAccessoryFormModal
@@ -182,15 +206,12 @@ export function BikeAccessoryCard({
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: COLORS.card,
-    borderRadius: 6,
-    padding: 16,
-    marginBottom: 12,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
+    backgroundColor: COLORS.surface,
+    borderWidth: 1,
+    borderColor: COLORS.borderSubtle,
+    borderRadius: 10,
+    padding: 14,
+    marginBottom: 10,
   },
   cardBody: {
     flexDirection: "row",
@@ -199,32 +220,59 @@ const styles = StyleSheet.create({
   cardContent: {
     flex: 1,
   },
-  name: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: COLORS.text,
-    marginBottom: 8,
+  titleRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    gap: 8,
   },
-  price: {
+  name: {
     fontSize: 14,
     fontWeight: "600",
     color: COLORS.text,
-    marginBottom: 8,
+    flex: 1,
   },
-  purchaseDate: {
+  badge: {
+    paddingVertical: 2,
+    paddingHorizontal: 8,
+    borderRadius: 20,
+    flexShrink: 0,
+  },
+  badgeText: {
+    fontSize: 11,
+    fontWeight: "500",
+  },
+  meta: {
     fontSize: 12,
     color: COLORS.textLight,
-    marginBottom: 8,
+    marginTop: 3,
   },
-  badgesRow: {
-    flexDirection: "row",
-    gap: 8,
+  price: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: COLORS.text,
+    fontFamily: "monospace",
+    marginTop: 8,
+  },
+  markButton: {
+    alignSelf: "flex-start",
+    marginTop: 10,
+    borderWidth: 1,
+    borderColor: COLORS.accent,
+    borderRadius: 8,
+    paddingVertical: 7,
+    paddingHorizontal: 14,
+  },
+  markButtonText: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: COLORS.accent,
   },
   action: {
     justifyContent: "center",
     alignItems: "center",
     width: 80,
-    borderRadius: 6,
+    borderRadius: 10,
     height: "90%",
   },
   editAction: {

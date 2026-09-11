@@ -1,11 +1,17 @@
 import { useState } from "react";
 import { Alert, StyleSheet, TouchableOpacity, View } from "react-native";
 import { ScrollView } from "react-native-gesture-handler";
-import { Button, Text, TextInput } from "react-native-paper";
+import { Text } from "react-native-paper";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import Toast from "react-native-toast-message";
-import { EmptyState, SectionLoading } from "@/components/main/shared";
+import {
+  EmptyState,
+  FormField,
+  PrimaryButton,
+  ScreenHeader,
+  SectionLoading,
+} from "@/components/main/shared";
 import { useFetchData, usePost } from "@/hooks/useApi";
 import { useUserContext } from "@/context/user.context";
 import { COLORS } from "@/utils/colors";
@@ -115,270 +121,255 @@ export function SettingsCatalog() {
   };
 
   return (
-    <ScrollView
-      style={styles.container}
-      showsVerticalScrollIndicator={false}
-    >
-      <Text style={styles.pageTitle}>Maintenance Catalog</Text>
+    <View style={styles.screen}>
+      <ScreenHeader title="Settings" />
 
-      {/* Maintenance Types Section */}
-      <Text style={styles.sectionTitle}>Maintenance Types</Text>
+      <ScrollView style={styles.body} showsVerticalScrollIndicator={false}>
+        <Text style={styles.sectionHeading}>Maintenance Types</Text>
+        {maintLoading ? (
+          <SectionLoading count={3} />
+        ) : maintTypes.length === 0 ? (
+          <EmptyState label="No maintenance types yet." />
+        ) : (
+          <View style={styles.listCard}>
+            {maintTypes.map((type, i) => (
+              <View
+                key={type._id}
+                style={[styles.row, i === maintTypes.length - 1 && styles.rowLast]}
+              >
+                <Text style={styles.typeName}>{type.name}</Text>
+                <Text style={styles.typeDetail}>
+                  {type.defaultIntervalKm
+                    ? `Every ${type.defaultIntervalKm.toLocaleString()} km`
+                    : type.defaultIntervalDays
+                      ? `Every ${type.defaultIntervalDays} days`
+                      : "No default interval"}
+                </Text>
+              </View>
+            ))}
+          </View>
+        )}
 
-      <TouchableOpacity
-        style={styles.addButton}
-        onPress={() => setExpandMaint(!expandMaint)}
-      >
-        <MaterialCommunityIcons
-          name={expandMaint ? "chevron-up" : "plus-circle-outline"}
-          size={20}
-          color={COLORS.primary}
-        />
-        <Text style={styles.addButtonText}>
-          {expandMaint ? "Collapse" : "Add Maintenance Type"}
-        </Text>
-      </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.expandToggle}
+          onPress={() => setExpandMaint(!expandMaint)}
+        >
+          <MaterialCommunityIcons
+            name={expandMaint ? "chevron-up" : "plus"}
+            size={16}
+            color={COLORS.accent}
+          />
+          <Text style={styles.expandToggleText}>
+            {expandMaint ? "Collapse" : "Add Type"}
+          </Text>
+        </TouchableOpacity>
 
-      {expandMaint && (
-        <View style={styles.formContainer}>
-          <View style={styles.field}>
-            <TextInput
-              placeholder="Type Name"
+        {expandMaint && (
+          <View style={styles.formCard}>
+            <FormField
+              label="Type Name"
+              placeholder="Insurance"
               value={newMaintName}
               onChangeText={setNewMaintName}
               editable={!createMaintType.isPending}
-              textColor={COLORS.text}
-              style={styles.input}
             />
-          </View>
-          <View style={styles.field}>
-            <TextInput
-              placeholder="Default Interval (km, optional)"
-              value={newMaintIntervalKm}
-              onChangeText={setNewMaintIntervalKm}
-              keyboardType="number-pad"
-              editable={!createMaintType.isPending}
-              textColor={COLORS.text}
-              style={styles.input}
-            />
-          </View>
-          <View style={styles.field}>
-            <TextInput
-              placeholder="Default Interval (days, optional)"
-              value={newMaintIntervalDays}
-              onChangeText={setNewMaintIntervalDays}
-              keyboardType="number-pad"
-              editable={!createMaintType.isPending}
-              textColor={COLORS.text}
-              style={styles.input}
-            />
-          </View>
-          <Button
-            mode="contained"
-            onPress={handleCreateMaint}
-            loading={createMaintType.isPending}
-            disabled={createMaintType.isPending}
-            style={styles.formButton}
-          >
-            Add Type
-          </Button>
-        </View>
-      )}
-
-      {maintLoading ? (
-        <SectionLoading count={3} />
-      ) : maintTypes.length === 0 ? (
-        <EmptyState label="No maintenance types yet." />
-      ) : (
-        maintTypes.map((type) => (
-          <View key={type._id} style={styles.typeCard}>
-            <Text style={styles.typeName}>{type.name}</Text>
-            <View style={styles.typeDetails}>
-              {type.defaultIntervalKm && (
-                <Text style={styles.typeDetail}>Every {type.defaultIntervalKm} km</Text>
-              )}
-              {type.defaultIntervalDays && (
-                <Text style={styles.typeDetail}>Every {type.defaultIntervalDays} days</Text>
-              )}
+            <View style={styles.row2}>
+              <FormField
+                label="Interval (km)"
+                placeholder="optional"
+                value={newMaintIntervalKm}
+                onChangeText={setNewMaintIntervalKm}
+                keyboardType="number-pad"
+                editable={!createMaintType.isPending}
+                style={styles.rowField}
+              />
+              <FormField
+                label="Interval (days)"
+                placeholder="optional"
+                value={newMaintIntervalDays}
+                onChangeText={setNewMaintIntervalDays}
+                keyboardType="number-pad"
+                editable={!createMaintType.isPending}
+                style={styles.rowField}
+              />
             </View>
+            <PrimaryButton
+              onPress={handleCreateMaint}
+              loading={createMaintType.isPending}
+            >
+              Add Type
+            </PrimaryButton>
           </View>
-        ))
-      )}
+        )}
 
-      {/* Engine Oil Types Section */}
-      <Text style={[styles.sectionTitle, { marginTop: 32 }]}>Engine Oil Types</Text>
-
-      <TouchableOpacity
-        style={styles.addButton}
-        onPress={() => setExpandOil(!expandOil)}
-      >
-        <MaterialCommunityIcons
-          name={expandOil ? "chevron-up" : "plus-circle-outline"}
-          size={20}
-          color={COLORS.primary}
-        />
-        <Text style={styles.addButtonText}>
-          {expandOil ? "Collapse" : "Add Oil Type"}
+        <Text style={[styles.sectionHeading, styles.sectionSpacing]}>
+          Engine Oil Types
         </Text>
-      </TouchableOpacity>
+        {oilLoading ? (
+          <SectionLoading count={3} />
+        ) : oilTypes.length === 0 ? (
+          <EmptyState label="No oil types yet." />
+        ) : (
+          <View style={styles.listCard}>
+            {oilTypes.map((oil, i) => (
+              <View
+                key={oil._id}
+                style={[styles.row, i === oilTypes.length - 1 && styles.rowLast]}
+              >
+                <Text style={styles.typeName}>{oil.name}</Text>
+                <Text style={styles.typeDetail}>
+                  Change every {oil.suggestedIntervalKm.toLocaleString()} km
+                </Text>
+              </View>
+            ))}
+          </View>
+        )}
 
-      {expandOil && (
-        <View style={styles.formContainer}>
-          <View style={styles.field}>
-            <TextInput
-              placeholder="Oil Type Name"
+        <TouchableOpacity
+          style={styles.expandToggle}
+          onPress={() => setExpandOil(!expandOil)}
+        >
+          <MaterialCommunityIcons
+            name={expandOil ? "chevron-up" : "plus"}
+            size={16}
+            color={COLORS.accent}
+          />
+          <Text style={styles.expandToggleText}>
+            {expandOil ? "Collapse" : "Add Oil Type"}
+          </Text>
+        </TouchableOpacity>
+
+        {expandOil && (
+          <View style={styles.formCard}>
+            <FormField
+              label="Oil Type Name"
+              placeholder="Synthetic"
               value={newOilName}
               onChangeText={setNewOilName}
               editable={!createOilType.isPending}
-              textColor={COLORS.text}
-              style={styles.input}
             />
-          </View>
-          <View style={styles.field}>
-            <TextInput
-              placeholder="Suggested Interval (km)"
+            <FormField
+              label="Suggested Interval (km)"
+              placeholder="1250"
               value={newOilIntervalKm}
               onChangeText={setNewOilIntervalKm}
               keyboardType="number-pad"
               editable={!createOilType.isPending}
-              textColor={COLORS.text}
-              style={styles.input}
             />
+            <PrimaryButton onPress={handleCreateOil} loading={createOilType.isPending}>
+              Add Oil Type
+            </PrimaryButton>
           </View>
-          <Button
-            mode="contained"
-            onPress={handleCreateOil}
-            loading={createOilType.isPending}
-            disabled={createOilType.isPending}
-            style={styles.formButton}
-          >
-            Add Oil Type
-          </Button>
+        )}
+
+        <Text style={[styles.sectionHeading, styles.sectionSpacing]}>Account</Text>
+        <View style={styles.accountCard}>
+          {user?.email && <Text style={styles.accountEmail}>{user.email}</Text>}
+          <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
+            <Text style={styles.logoutButtonText}>Log Out</Text>
+          </TouchableOpacity>
         </View>
-      )}
-
-      {oilLoading ? (
-        <SectionLoading count={3} />
-      ) : oilTypes.length === 0 ? (
-        <EmptyState label="No oil types yet." />
-      ) : (
-        oilTypes.map((oil) => (
-          <View key={oil._id} style={styles.typeCard}>
-            <Text style={styles.typeName}>{oil.name}</Text>
-            <Text style={styles.typeDetail}>Every {oil.suggestedIntervalKm} km</Text>
-          </View>
-        ))
-      )}
-
-      {/* Account Section */}
-      <Text style={[styles.sectionTitle, { marginTop: 32 }]}>Account</Text>
-
-      <View style={styles.accountCard}>
-        {user?.email && <Text style={styles.accountEmail}>{user.email}</Text>}
-
-        <Button
-          mode="outlined"
-          onPress={handleLogout}
-          textColor={COLORS.danger}
-          style={[styles.formButton, { borderColor: COLORS.danger }]}
-        >
-          Log Out
-        </Button>
-      </View>
-    </ScrollView>
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  screen: {
     flex: 1,
     backgroundColor: COLORS.background,
+  },
+  body: {
+    flex: 1,
     padding: 16,
   },
-  pageTitle: {
-    fontSize: 22,
-    fontWeight: "700",
-    color: COLORS.text,
-    marginBottom: 20,
+  sectionHeading: {
+    fontSize: 11,
+    fontWeight: "500",
+    color: COLORS.textMuted,
+    textTransform: "uppercase",
+    letterSpacing: 0.6,
+    marginBottom: 8,
   },
-  sectionTitle: {
-    fontSize: 17,
+  sectionSpacing: {
+    marginTop: 24,
+  },
+  listCard: {
+    backgroundColor: COLORS.surface,
+    borderWidth: 1,
+    borderColor: COLORS.borderSubtle,
+    borderRadius: 10,
+  },
+  row: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: 13,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.borderSubtle,
+  },
+  rowLast: {
+    borderBottomWidth: 0,
+  },
+  typeName: {
+    fontSize: 13,
     fontWeight: "600",
     color: COLORS.text,
-    marginBottom: 12,
   },
-  addButton: {
+  typeDetail: {
+    fontSize: 11,
+    color: COLORS.textMuted,
+  },
+  expandToggle: {
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-    marginBottom: 12,
+    paddingVertical: 10,
   },
-  addButtonText: {
-    fontSize: 14,
+  expandToggleText: {
+    fontSize: 13,
     fontWeight: "600",
-    color: COLORS.primary,
+    color: COLORS.accent,
   },
-  accountCard: {
-    backgroundColor: COLORS.card,
-    borderRadius: 6,
-    padding: 16,
-    marginBottom: 32,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  accountEmail: {
-    fontSize: 15,
-    color: COLORS.text,
-    marginBottom: 14,
-  },
-  formContainer: {
-    backgroundColor: COLORS.card,
-    borderRadius: 6,
-    padding: 16,
-    marginBottom: 16,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  field: {
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
-    marginBottom: 14,
-  },
-  input: {
-    borderWidth: 0,
-    backgroundColor: "transparent",
-    padding: 0,
-  },
-  formButton: {
-    marginTop: 4,
-  },
-  typeCard: {
-    backgroundColor: COLORS.card,
-    borderRadius: 6,
+  formCard: {
+    backgroundColor: COLORS.surface,
+    borderWidth: 1,
+    borderColor: COLORS.borderSubtle,
+    borderRadius: 10,
     padding: 14,
     marginBottom: 8,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 1,
   },
-  typeName: {
-    fontSize: 15,
-    fontWeight: "600",
+  row2: {
+    flexDirection: "row",
+    gap: 10,
+  },
+  rowField: {
+    flex: 1,
+  },
+  accountCard: {
+    backgroundColor: COLORS.surface,
+    borderWidth: 1,
+    borderColor: COLORS.borderSubtle,
+    borderRadius: 10,
+    padding: 16,
+    marginBottom: 32,
+  },
+  accountEmail: {
+    fontSize: 14,
     color: COLORS.text,
+    marginBottom: 14,
   },
-  typeDetails: {
-    marginTop: 4,
+  logoutButton: {
+    backgroundColor: "rgba(248,113,113,0.1)",
+    borderWidth: 1,
+    borderColor: "rgba(248,113,113,0.3)",
+    borderRadius: 8,
+    paddingVertical: 10,
+    alignItems: "center",
   },
-  typeDetail: {
+  logoutButtonText: {
+    color: COLORS.danger,
     fontSize: 13,
-    color: COLORS.textLight,
-    marginTop: 2,
+    fontWeight: "600",
   },
 });

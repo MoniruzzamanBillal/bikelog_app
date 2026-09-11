@@ -1,11 +1,19 @@
 import { useRef, useState } from "react";
 import { RefreshControl, ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
-import { Button, Text } from "react-native-paper";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Text } from "react-native-paper";
 import { useLocalSearchParams } from "expo-router";
 import { SwipeableMethods } from "react-native-gesture-handler/ReanimatedSwipeable";
-import { EmptyState, SectionLoading } from "@/components/main/shared";
+import {
+  EmptyState,
+  ErrorState,
+  PrimaryButton,
+  ScreenHeader,
+  SectionLoading,
+} from "@/components/main/shared";
 import { useFetchData } from "@/hooks/useApi";
 import { COLORS } from "@/utils/colors";
+import { TBike } from "@/types/bike.types";
 import {
   TAccessoryStatus,
   TAccessoryUrgency,
@@ -23,13 +31,14 @@ const URGENCIES: { key: TAccessoryUrgency | null; label: string }[] = [
   { key: "low", label: "Low" },
 ];
 
-const STATUSES: { key: TAccessoryStatus; label: string }[] = [
-  { key: "pending", label: "Pending" },
-  { key: "purchased", label: "Purchased" },
-  { key: "cancelled", label: "Cancelled" },
+const STATUSES: { key: TAccessoryStatus; label: string; sectionLabel: string }[] = [
+  { key: "pending", label: "Pending", sectionLabel: "Pending / Wishlist" },
+  { key: "purchased", label: "Purchased", sectionLabel: "Purchased" },
+  { key: "cancelled", label: "Cancelled", sectionLabel: "Cancelled" },
 ];
 
 export function BikeAccessory() {
+  const insets = useSafeAreaInsets();
   const { bikeId } = useLocalSearchParams<{ bikeId: string }>();
   const [page, setPage] = useState(1);
   const [urgencyFilter, setUrgencyFilter] = useState<TAccessoryUrgency | null>(null);
@@ -38,6 +47,13 @@ export function BikeAccessory() {
   const [refreshing, setRefreshing] = useState(false);
   const openSwipeableRef = useRef<SwipeableMethods | null>(null);
 
+  const { data: bikeData } = useFetchData<TBike>(
+    ["bikes", bikeId],
+    `/bikes/${bikeId}`,
+    { enabled: !!bikeId },
+  );
+  const bike = bikeData?.data;
+
   const filterParams = new URLSearchParams();
   filterParams.set("page", page.toString());
   filterParams.set("limit", LIMIT.toString());
@@ -45,7 +61,7 @@ export function BikeAccessory() {
   filterParams.set("status", statusFilter);
   const queryString = filterParams.toString();
 
-  const { data, isLoading, refetch } = useFetchData<TBikeAccessoriesApiResponse>(
+  const { data, isLoading, isError, refetch } = useFetchData<TBikeAccessoriesApiResponse>(
     ["accessories", bikeId, page.toString(), urgencyFilter ?? "all", statusFilter],
     `/bikes/${bikeId}/accessories?${queryString}`,
     { enabled: !!bikeId },
@@ -53,6 +69,7 @@ export function BikeAccessory() {
 
   const accessories = data?.data?.result ?? [];
   const totalPages = Math.ceil((data?.data?.meta ?? 0) / LIMIT) || 1;
+  const sectionLabel = STATUSES.find((s) => s.key === statusFilter)?.sectionLabel ?? "";
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -71,63 +88,72 @@ export function BikeAccessory() {
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Accessories</Text>
-        <Button
-          mode="contained"
-          onPress={() => setModalOpen(true)}
+    <View style={styles.screen}>
+      <ScreenHeader
+        title="Accessories"
+        backLabel={bike?.nickname ?? "Back"}
+        rightIcon="plus"
+        onRightPress={() => setModalOpen(true)}
+      />
+
+      <View style={styles.filtersWrap}>
+        <View style={styles.tabRow}>
+          {STATUSES.map(({ key, label }) => (
+            <TouchableOpacity
+              key={key}
+              style={[styles.tab, statusFilter === key && styles.tabActive]}
+              onPress={() => handleStatusChange(key)}
+            >
+              <Text
+                style={[styles.tabText, statusFilter === key && styles.tabTextActive]}
+              >
+                {label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.urgencyRow}
         >
-          Add
-        </Button>
-      </View>
-
-      <Text style={styles.filterLabel}>Urgency</Text>
-      <View style={styles.filterRow}>
-        {URGENCIES.map(({ key, label }) => (
-          <TouchableOpacity
-            key={label}
-            style={[styles.filterBtn, urgencyFilter === key && styles.filterBtnActive]}
-            onPress={() => handleUrgencyChange(key)}
-          >
-            <Text
-              style={[styles.filterBtnText, urgencyFilter === key && styles.filterBtnTextActive]}
+          {URGENCIES.map(({ key, label }) => (
+            <TouchableOpacity
+              key={label}
+              style={[styles.chip, urgencyFilter === key && styles.chipActive]}
+              onPress={() => handleUrgencyChange(key)}
             >
-              {label}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      <Text style={styles.filterLabel}>Status</Text>
-      <View style={styles.filterRow}>
-        {STATUSES.map(({ key, label }) => (
-          <TouchableOpacity
-            key={label}
-            style={[styles.filterBtn, statusFilter === key && styles.filterBtnActive]}
-            onPress={() => handleStatusChange(key)}
-          >
-            <Text
-              style={[styles.filterBtnText, statusFilter === key && styles.filterBtnTextActive]}
-            >
-              {label}
-            </Text>
-          </TouchableOpacity>
-        ))}
+              <Text style={[styles.chipText, urgencyFilter === key && styles.chipTextActive]}>
+                {label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
       </View>
 
       {isLoading ? (
-        <SectionLoading count={5} />
+        <View style={styles.pad}>
+          <SectionLoading count={5} />
+        </View>
+      ) : isError ? (
+        <ErrorState onRetry={refetch} />
       ) : accessories.length === 0 ? (
         <EmptyState label="No accessories on your wishlist yet." />
       ) : (
         <>
           <ScrollView
+            contentContainerStyle={styles.pad}
             refreshControl={
-              <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={handleRefresh}
+                tintColor={COLORS.accent}
+              />
             }
             showsVerticalScrollIndicator={false}
           >
+            <Text style={styles.sectionHeading}>{sectionLabel}</Text>
             {accessories.map((acc) => (
               <BikeAccessoryCard
                 key={acc._id}
@@ -139,27 +165,25 @@ export function BikeAccessory() {
           </ScrollView>
 
           {totalPages > 1 && (
-            <View style={styles.pagination}>
+            <View style={[styles.pagination, { paddingBottom: 16 + insets.bottom }]}>
               <Text style={styles.pageInfo}>
                 Page {page} of {totalPages}
               </Text>
               <View style={styles.pageButtons}>
-                <Button
-                  mode="outlined"
+                <PrimaryButton
                   disabled={page === 1}
                   onPress={() => setPage((p) => p - 1)}
-                  textColor={COLORS.text}
+                  style={styles.pageButton}
                 >
                   Previous
-                </Button>
-                <Button
-                  mode="outlined"
+                </PrimaryButton>
+                <PrimaryButton
                   disabled={page === totalPages}
                   onPress={() => setPage((p) => p + 1)}
-                  textColor={COLORS.text}
+                  style={styles.pageButton}
                 >
                   Next
-                </Button>
+                </PrimaryButton>
               </View>
             </View>
           )}
@@ -176,65 +200,93 @@ export function BikeAccessory() {
 }
 
 const styles = StyleSheet.create({
-  container: {
+  screen: {
     flex: 1,
     backgroundColor: COLORS.background,
-    padding: 16,
   },
-  header: {
+  filtersWrap: {
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.borderSubtle,
+    paddingBottom: 8,
+  },
+  tabRow: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 16,
-  },
-  headerTitle: {
-    fontSize: 22,
-    fontWeight: "700",
-    color: COLORS.text,
-  },
-  filterLabel: {
-    fontSize: 13,
-    fontWeight: "600",
-    color: COLORS.textLight,
-    marginBottom: 6,
-  },
-  filterRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
     gap: 6,
-    marginBottom: 12,
+    padding: 12,
+    paddingBottom: 8,
   },
-  filterBtn: {
-    paddingVertical: 6,
-    paddingHorizontal: 14,
-    borderRadius: 9999,
+  tab: {
+    flex: 1,
+    paddingVertical: 7,
+    borderRadius: 6,
     borderWidth: 1,
-    borderColor: COLORS.border,
-    backgroundColor: COLORS.card,
+    borderColor: COLORS.borderSubtle,
+    backgroundColor: COLORS.surface,
+    alignItems: "center",
   },
-  filterBtnActive: {
-    backgroundColor: COLORS.primary,
-    borderColor: COLORS.primary,
+  tabActive: {
+    backgroundColor: COLORS.accent,
+    borderColor: COLORS.accent,
   },
-  filterBtnText: {
+  tabText: {
     fontSize: 12,
     fontWeight: "600",
-    color: COLORS.text,
+    color: COLORS.textMuted,
   },
-  filterBtnTextActive: {
+  tabTextActive: {
     color: COLORS.white,
   },
+  urgencyRow: {
+    flexDirection: "row",
+    gap: 6,
+    paddingHorizontal: 12,
+  },
+  chip: {
+    paddingVertical: 5,
+    paddingHorizontal: 12,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: COLORS.borderSubtle,
+    backgroundColor: "transparent",
+  },
+  chipActive: {
+    backgroundColor: "rgba(145,132,217,0.15)",
+    borderColor: COLORS.accent,
+  },
+  chipText: {
+    fontSize: 11,
+    fontWeight: "500",
+    color: COLORS.textMuted,
+  },
+  chipTextActive: {
+    color: COLORS.accent,
+  },
+  pad: {
+    padding: 14,
+  },
+  sectionHeading: {
+    fontSize: 11,
+    fontWeight: "500",
+    color: COLORS.textMuted,
+    textTransform: "uppercase",
+    letterSpacing: 0.6,
+    marginBottom: 8,
+  },
   pagination: {
-    marginTop: 16,
+    padding: 16,
     alignItems: "center",
   },
   pageInfo: {
-    fontSize: 14,
+    fontSize: 13,
     color: COLORS.textLight,
     marginBottom: 8,
   },
   pageButtons: {
     flexDirection: "row",
     gap: 12,
+    width: "100%",
+  },
+  pageButton: {
+    flex: 1,
   },
 });

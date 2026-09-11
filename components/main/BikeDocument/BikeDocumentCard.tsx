@@ -21,28 +21,24 @@ interface BikeDocumentCardProps {
   openSwipeableRef: React.MutableRefObject<SwipeableMethods | null>;
 }
 
-type TExpiryBadge = { label: string; bg: string; text: string } | null;
+type TExpiryBadge = { label: string; bg: string; text: string };
 
-function getExpiryBadge(expiryDate?: string): TExpiryBadge {
+function getExpiryBadge(expiryDate?: string): TExpiryBadge | null {
   if (!expiryDate) return null;
 
   const daysUntil = differenceInCalendarDays(parseApiDate(expiryDate), new Date());
 
   if (daysUntil < 0) {
-    return { label: "Expired", bg: COLORS.danger, text: COLORS.white };
+    return { label: "Expired", bg: "rgba(248,113,113,0.1)", text: COLORS.danger };
   }
   if (daysUntil <= 30) {
     return {
       label: `Expires in ${daysUntil} day${daysUntil === 1 ? "" : "s"}`,
-      bg: COLORS.warning,
-      text: COLORS.white,
+      bg: "rgba(251,191,36,0.1)",
+      text: COLORS.warning,
     };
   }
-  return {
-    label: formatApiDate(expiryDate, "dd MMM yyyy"),
-    bg: COLORS.border,
-    text: COLORS.text,
-  };
+  return { label: "Valid", bg: "rgba(74,222,128,0.1)", text: COLORS.success };
 }
 
 export function BikeDocumentCard({
@@ -62,6 +58,7 @@ export function BikeDocumentCard({
   ]);
 
   const expiryBadge = getExpiryBadge(document.expiryDate);
+  const fileCount = document.files?.length ?? 0;
 
   const handleAddFiles = async (pickedFiles: TPickedFile[]) => {
     try {
@@ -144,7 +141,15 @@ export function BikeDocumentCard({
       >
         <View style={styles.card}>
           <View style={styles.titleRow}>
-            <Text style={styles.title}>{document.title}</Text>
+            <View style={styles.titleCol}>
+              <Text style={styles.title}>{document.title}</Text>
+              <Text style={styles.meta}>
+                {fileCount} file{fileCount === 1 ? "" : "s"}
+                {document.expiryDate
+                  ? ` · ${expiryBadge?.label === "Expired" ? "Expired" : "Expires"} ${formatApiDate(document.expiryDate, "dd MMM yyyy")}`
+                  : ""}
+              </Text>
+            </View>
             {expiryBadge && (
               <View style={[styles.badge, { backgroundColor: expiryBadge.bg }]}>
                 <Text style={[styles.badgeText, { color: expiryBadge.text }]}>
@@ -181,52 +186,57 @@ export function BikeDocumentCard({
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: COLORS.card,
-    borderRadius: 6,
-    padding: 16,
-    marginBottom: 12,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
+    backgroundColor: COLORS.surface,
+    borderWidth: 1,
+    borderColor: COLORS.borderSubtle,
+    borderRadius: 10,
+    padding: 14,
+    marginBottom: 10,
   },
   titleRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "center",
+    alignItems: "flex-start",
+    gap: 8,
     marginBottom: 8,
   },
+  titleCol: {
+    flex: 1,
+  },
   title: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: "600",
     color: COLORS.text,
-    flex: 1,
-    marginRight: 8,
+  },
+  meta: {
+    fontSize: 11,
+    color: COLORS.textMuted,
+    marginTop: 2,
   },
   badge: {
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 9999,
+    paddingVertical: 2,
+    paddingHorizontal: 8,
+    borderRadius: 20,
+    flexShrink: 0,
   },
   badgeText: {
-    fontSize: 12,
-    fontWeight: "600",
+    fontSize: 11,
+    fontWeight: "500",
   },
   description: {
-    fontSize: 14,
-    color: COLORS.text,
+    fontSize: 12,
+    color: COLORS.textLight,
     marginBottom: 10,
-    lineHeight: 20,
+    lineHeight: 17,
   },
   filesRow: {
-    marginTop: 4,
+    marginTop: 2,
   },
   action: {
     justifyContent: "center",
     alignItems: "center",
     width: 80,
-    borderRadius: 6,
+    borderRadius: 10,
     height: "90%",
   },
   editAction: {

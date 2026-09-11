@@ -1,8 +1,4 @@
-import {
-  ImagePickerField,
-  StatusBadge,
-  TPickedImageFile,
-} from "@/components/main/shared";
+import { ImagePickerField, TPickedImageFile } from "@/components/main/shared";
 import { confirmDelete } from "@/components/main/shared/ConfirmDelete";
 import { useDelete, usePut } from "@/hooks/useApi";
 import { TFuelLog } from "@/types/fuel-log.types";
@@ -21,16 +17,16 @@ interface FuelLogCardProps {
   fuelLog: TFuelLog;
   bikeId: string;
   openSwipeableRef: React.MutableRefObject<SwipeableMethods | null>;
+  isLast?: boolean;
+  mileageKmPerLiter?: number;
 }
-
-const fullTankColors = {
-  true: { bg: COLORS.primary, text: COLORS.white },
-};
 
 export function FuelLogCard({
   fuelLog,
   bikeId,
   openSwipeableRef,
+  isLast,
+  mileageKmPerLiter,
 }: FuelLogCardProps) {
   const [editOpen, setEditOpen] = useState(false);
   const swipeableRef = useRef<SwipeableMethods>(null);
@@ -133,43 +129,48 @@ export function FuelLogCard({
         )}
       >
         <TouchableOpacity
-          // onPress={handleEdit}
-          style={styles.card}
+          style={[styles.row, isLast && styles.rowLast]}
           activeOpacity={0.7}
         >
-          <View style={styles.cardBody}>
-            <ImagePickerField
-              label="Receipt"
-              value={fuelLog.receiptImage}
-              onUpload={handleImageUpload}
-              onDelete={handleImageDelete}
-              uploading={isUploading || isDeletingImage}
-            />
-            <View style={styles.cardContent}>
-              <View style={styles.row}>
-                <Text style={styles.odometer}>
-                  Odometer: {fuelLog.odometerReading} km
-                </Text>
-                <Text style={styles.date}>
-                  {formatApiDate(fuelLog.date, "dd MMM")}
-                </Text>
+          <ImagePickerField
+            label="Receipt"
+            value={fuelLog.receiptImage}
+            onUpload={handleImageUpload}
+            onDelete={handleImageDelete}
+            uploading={isUploading || isDeletingImage}
+          />
+
+          <View style={styles.left}>
+            <Text style={styles.odometer}>
+              {fuelLog.odometerReading.toLocaleString()} km
+            </Text>
+            <Text style={styles.details}>
+              {fuelLog.litersAdded}L · ৳{fuelLog.pricePerLiter}/L
+            </Text>
+            {fuelLog.fuelStation && (
+              <Text style={styles.station}>{fuelLog.fuelStation}</Text>
+            )}
+            {(fuelLog.isFullTank || mileageKmPerLiter !== undefined) && (
+              <View style={styles.badgeRow}>
+                {fuelLog.isFullTank && (
+                  <View style={styles.badge}>
+                    <Text style={styles.badgeText}>Full Tank</Text>
+                  </View>
+                )}
+                {mileageKmPerLiter !== undefined && (
+                  <View style={[styles.badge, styles.mileageBadge]}>
+                    <Text style={[styles.badgeText, styles.mileageBadgeText]}>
+                      {mileageKmPerLiter.toFixed(1)} km/L
+                    </Text>
+                  </View>
+                )}
               </View>
-              <Text style={styles.details}>
-                {fuelLog.litersAdded}L @ ৳{fuelLog.pricePerLiter}/L
-              </Text>
-              <Text style={styles.totalCost}>
-                Total: ৳{totalCost.toFixed(2)}
-              </Text>
-              {fuelLog.isFullTank && (
-                <View style={styles.badgeContainer}>
-                  <StatusBadge
-                    label="Full Tank"
-                    colorKey="true"
-                    colors={fullTankColors}
-                  />
-                </View>
-              )}
-            </View>
+            )}
+          </View>
+
+          <View style={styles.right}>
+            <Text style={styles.cost}>৳{totalCost.toFixed(0)}</Text>
+            <Text style={styles.date}>{formatApiDate(fuelLog.date, "dd MMM")}</Text>
           </View>
         </TouchableOpacity>
       </Swipeable>
@@ -185,59 +186,77 @@ export function FuelLogCard({
 }
 
 const styles = StyleSheet.create({
-  card: {
-    backgroundColor: COLORS.card,
-    borderRadius: 6,
-    padding: 16,
-    marginBottom: 12,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  cardBody: {
-    flexDirection: "row",
-    gap: 12,
-  },
-  cardContent: {
-    flex: 1,
-  },
   row: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    gap: 12,
+    padding: 13,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.borderSubtle,
+  },
+  rowLast: {
+    borderBottomWidth: 0,
+  },
+  left: {
+    flex: 1,
+  },
+  right: {
+    alignItems: "flex-end",
+    flexShrink: 0,
   },
   odometer: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: "600",
     color: COLORS.text,
-  },
-  date: {
-    fontSize: 14,
-    color: COLORS.textLight,
   },
   details: {
-    fontSize: 14,
-    color: COLORS.text,
-    marginTop: 6,
+    fontSize: 12,
+    color: COLORS.textLight,
+    marginTop: 2,
   },
-  totalCost: {
+  station: {
+    fontSize: 11,
+    color: COLORS.textMuted,
+    marginTop: 2,
+  },
+  badgeRow: {
+    flexDirection: "row",
+    gap: 6,
+    marginTop: 5,
+  },
+  badge: {
+    alignSelf: "flex-start",
+    paddingVertical: 2,
+    paddingHorizontal: 8,
+    borderRadius: 20,
+    backgroundColor: "rgba(145,132,217,0.15)",
+  },
+  badgeText: {
+    fontSize: 11,
+    fontWeight: "500",
+    color: COLORS.accent,
+  },
+  mileageBadge: {
+    backgroundColor: "rgba(74,222,128,0.1)",
+  },
+  mileageBadgeText: {
+    color: COLORS.success,
+  },
+  cost: {
     fontSize: 14,
     fontWeight: "600",
     color: COLORS.text,
-    marginTop: 4,
+    fontFamily: "monospace",
   },
-  badgeContainer: {
-    marginTop: 8,
-    alignSelf: "flex-start",
+  date: {
+    fontSize: 11,
+    color: COLORS.textMuted,
+    marginTop: 3,
   },
   action: {
     justifyContent: "center",
     alignItems: "center",
     width: 80,
-    borderRadius: 6,
-    height: "90%",
+    height: "100%",
   },
   editAction: {
     backgroundColor: COLORS.success,

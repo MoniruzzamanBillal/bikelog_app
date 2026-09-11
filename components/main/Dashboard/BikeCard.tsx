@@ -3,10 +3,10 @@ import { confirmDelete } from "@/components/main/shared/ConfirmDelete";
 import { useDelete } from "@/hooks/useApi";
 import { TBike } from "@/types/bike.types";
 import { COLORS } from "@/utils/colors";
-import { formatApiDate } from "@/utils/formatApiDate";
+import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useRef, useState } from "react";
-import { StyleSheet, Text } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import { TouchableOpacity } from "react-native-gesture-handler";
 import Swipeable, {
   SwipeableMethods,
@@ -75,16 +75,42 @@ export function BikeCard({ bike, openSwipeableRef }: BikeCardProps) {
             })
           }
           style={styles.card}
-          activeOpacity={0.7}
+          activeOpacity={0.85}
         >
-          <Text style={styles.nickname}>{bike.nickname}</Text>
-          <Text style={styles.details}>
-            {bike.brand} {bike.model}
-          </Text>
-          <Text style={styles.reg}>Reg: {bike.registrationNumber}</Text>
-          <Text style={styles.reg}>
-            Purchased: {formatApiDate(bike.purchaseDate, "dd MMM yyyy")}
-          </Text>
+          <LinearGradient
+            colors={[COLORS.surface, "rgba(46,49,80,0.5)"]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.header}
+          >
+            <View style={styles.headerText}>
+              <Text style={styles.nickname}>{bike.nickname}</Text>
+              <Text style={styles.details}>
+                {bike.brand} {bike.model}
+              </Text>
+            </View>
+          </LinearGradient>
+
+          <View style={styles.statsRow}>
+            <View>
+              <Text style={styles.statLabel}>Reg No.</Text>
+              <Text style={styles.statValueMono}>
+                {bike.registrationNumber}
+              </Text>
+            </View>
+            <View style={styles.statCenter}>
+              <Text style={styles.statLabel}>Odometer</Text>
+              <Text style={styles.statValueOdo}>
+                {bike.currentOdometer.toLocaleString()} km
+              </Text>
+            </View>
+            <View style={styles.statRight}>
+              <Text style={styles.statLabel}>Tank</Text>
+              <Text style={styles.statValue}>
+                {bike.fuelTankCapacityLiters}L
+              </Text>
+            </View>
+          </View>
         </TouchableOpacity>
       </Swipeable>
 
@@ -99,15 +125,20 @@ export function BikeCard({ bike, openSwipeableRef }: BikeCardProps) {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: COLORS.card,
-    borderRadius: 6,
-    padding: 16,
-    marginBottom: 12,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
+    backgroundColor: COLORS.surface,
+    borderWidth: 1,
+    borderColor: COLORS.borderSubtle,
+    borderRadius: 10,
+    marginBottom: 10,
+    overflow: "hidden",
+  },
+  header: {
+    height: 96,
+    justifyContent: "flex-end",
+    padding: 14,
+  },
+  headerText: {
+    zIndex: 1,
   },
   nickname: {
     fontSize: 18,
@@ -115,20 +146,50 @@ const styles = StyleSheet.create({
     color: COLORS.text,
   },
   details: {
-    fontSize: 14,
-    color: COLORS.textLight,
-    marginTop: 4,
-  },
-  reg: {
-    fontSize: 12,
+    fontSize: 13,
     color: COLORS.textLight,
     marginTop: 2,
+  },
+  statsRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    padding: 14,
+  },
+  statCenter: {
+    alignItems: "center",
+  },
+  statRight: {
+    alignItems: "flex-end",
+  },
+  statLabel: {
+    fontSize: 11,
+    color: COLORS.textMuted,
+  },
+  statValueMono: {
+    fontSize: 12,
+    fontWeight: "500",
+    color: COLORS.text,
+    marginTop: 1,
+    fontFamily: "monospace",
+  },
+  statValueOdo: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: COLORS.text,
+    marginTop: 1,
+    fontFamily: "monospace",
+  },
+  statValue: {
+    fontSize: 12,
+    fontWeight: "500",
+    color: COLORS.text,
+    marginTop: 1,
   },
   action: {
     justifyContent: "center",
     alignItems: "center",
     width: 80,
-    borderRadius: 6,
+    borderRadius: 10,
     height: "90%",
   },
   editAction: {

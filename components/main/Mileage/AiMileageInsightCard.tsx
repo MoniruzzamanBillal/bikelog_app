@@ -21,7 +21,7 @@ export function AiMileageInsightCard({ bikeId }: AiMileageInsightCardProps) {
       <Text style={styles.label}>AI Insight</Text>
       <Text style={styles.body}>
         {isLoading
-          ? "Thinking..."
+          ? "Thinking…"
           : (insight?.insight ?? "No insight available yet.")}
       </Text>
     </View>
@@ -30,23 +30,23 @@ export function AiMileageInsightCard({ bikeId }: AiMileageInsightCardProps) {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: COLORS.card,
-    borderRadius: 6,
-    padding: 16,
-    marginBottom: 16,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
+    backgroundColor: "rgba(145,132,217,0.06)",
+    borderLeftWidth: 2,
+    borderLeftColor: COLORS.accent,
+    borderRadius: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    marginBottom: 14,
   },
   label: {
-    fontSize: 14,
-    color: COLORS.textLight,
+    fontSize: 11,
+    fontWeight: "600",
+    color: COLORS.accent,
+    marginBottom: 4,
   },
   body: {
-    fontSize: 15,
-    color: COLORS.text,
-    marginTop: 4,
+    fontSize: 12,
+    lineHeight: 18,
+    color: COLORS.textLight,
   },
 });

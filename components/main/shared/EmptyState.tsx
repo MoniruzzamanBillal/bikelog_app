@@ -15,12 +15,17 @@ export function EmptyState({ label }: EmptyStateProps) {
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
     alignItems: "center",
+    justifyContent: "center",
     paddingVertical: 40,
+    paddingHorizontal: 24,
+    gap: 8,
   },
   text: {
-    fontSize: 16,
+    fontSize: 14,
     color: COLORS.textLight,
     fontWeight: "500",
+    textAlign: "center",
   },
 });
