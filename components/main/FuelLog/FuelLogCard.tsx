@@ -31,7 +31,11 @@ export function FuelLogCard({
   const [editOpen, setEditOpen] = useState(false);
   const swipeableRef = useRef<SwipeableMethods>(null);
 
-  const deleteMutation = useDelete([["fuelLogs", bikeId]]);
+  const deleteMutation = useDelete([
+    ["fuelLogs", bikeId],
+    ["mileage", "history", bikeId],
+    ["mileage", "lifetime", bikeId],
+  ]);
   const { mutateAsync: uploadImage, isPending: isUploading } = usePut([
     ["fuelLogs", bikeId],
   ]);
