@@ -13,6 +13,12 @@ export type TCreateMaintenanceTypePayload = {
   defaultIntervalDays?: number;
 };
 
+export type TUpdateMaintenanceTypePayload = {
+  name?: string;
+  defaultIntervalKm?: number | null;
+  defaultIntervalDays?: number | null;
+};
+
 export type TEngineOilType = {
   _id: string;
   name: string;
@@ -24,4 +30,9 @@ export type TEngineOilType = {
 export type TCreateEngineOilTypePayload = {
   name: string;
   suggestedIntervalKm: number;
+};
+
+export type TUpdateEngineOilTypePayload = {
+  name?: string;
+  suggestedIntervalKm?: number;
 };

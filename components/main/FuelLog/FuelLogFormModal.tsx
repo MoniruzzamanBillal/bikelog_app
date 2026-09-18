@@ -37,8 +37,21 @@ export function FuelLogFormModal({
   const [date, setDate] = useState("");
   const [notes, setNotes] = useState("");
 
-  const createMutation = usePost([["fuelLogs", bikeId]]);
-  const updateMutation = usePatch([["fuelLogs", bikeId]]);
+  const createMutation = usePost([
+    ["fuelLogs"],
+    [bikeId],
+    ["mileage"],
+    ["history"],
+    ["lifetime"],
+  ]);
+
+  const updateMutation = usePatch([
+    ["fuelLogs"],
+    [bikeId],
+    ["mileage"],
+    ["history"],
+    ["lifetime"],
+  ]);
 
   const isPending = createMutation.isPending || updateMutation.isPending;
 
@@ -250,11 +263,19 @@ export function FuelLogFormModal({
             disabled={isPending}
           />
 
-          <PrimaryButton onPress={handleSubmit} loading={isPending} style={styles.button}>
+          <PrimaryButton
+            onPress={handleSubmit}
+            loading={isPending}
+            style={styles.button}
+          >
             {initialFuelLog ? "Save Changes" : "Save Fill-up"}
           </PrimaryButton>
 
-          <PrimaryButton onPress={onClose} disabled={isPending} style={styles.cancelButton}>
+          <PrimaryButton
+            onPress={onClose}
+            disabled={isPending}
+            style={styles.cancelButton}
+          >
             Cancel
           </PrimaryButton>
         </KeyboardAwareScrollView>

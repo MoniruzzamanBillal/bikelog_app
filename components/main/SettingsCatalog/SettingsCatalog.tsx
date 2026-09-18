@@ -12,12 +12,14 @@ import {
   ScreenHeader,
   SectionLoading,
 } from "@/components/main/shared";
-import { useFetchData, usePost } from "@/hooks/useApi";
+import { useFetchData, usePatch, usePost } from "@/hooks/useApi";
 import { useUserContext } from "@/context/user.context";
 import { COLORS } from "@/utils/colors";
 import {
   TMaintenanceType,
   TEngineOilType,
+  TUpdateMaintenanceTypePayload,
+  TUpdateEngineOilTypePayload,
 } from "@/types/catalog.types";
 
 export function SettingsCatalog() {
@@ -29,6 +31,8 @@ export function SettingsCatalog() {
 
   const createMaintType = usePost([["maintenance-types"]]);
   const createOilType = usePost([["engine-oil-types"]]);
+  const updateMaintType = usePatch([["maintenance-types"]]);
+  const updateOilType = usePatch([["engine-oil-types"]]);
 
   const maintTypes = maintData?.data ?? [];
   const oilTypes = oilData?.data ?? [];
@@ -41,6 +45,15 @@ export function SettingsCatalog() {
   const [newOilName, setNewOilName] = useState("");
   const [newOilIntervalKm, setNewOilIntervalKm] = useState("");
   const [expandOil, setExpandOil] = useState(false);
+
+  const [editingMaintId, setEditingMaintId] = useState<string | null>(null);
+  const [editMaintName, setEditMaintName] = useState("");
+  const [editMaintIntervalKm, setEditMaintIntervalKm] = useState("");
+  const [editMaintIntervalDays, setEditMaintIntervalDays] = useState("");
+
+  const [editingOilId, setEditingOilId] = useState<string | null>(null);
+  const [editOilName, setEditOilName] = useState("");
+  const [editOilIntervalKm, setEditOilIntervalKm] = useState("");
 
   const handleCreateMaint = async () => {
     if (!newMaintName.trim()) {
@@ -70,6 +83,94 @@ export function SettingsCatalog() {
       Toast.show({
         type: "error",
         text1: error?.message || "Failed to create",
+        position: "top",
+      });
+    }
+  };
+
+  const startEditMaint = (type: TMaintenanceType) => {
+    setEditingMaintId(type._id);
+    setEditMaintName(type.name);
+    setEditMaintIntervalKm(
+      type.defaultIntervalKm ? String(type.defaultIntervalKm) : "",
+    );
+    setEditMaintIntervalDays(
+      type.defaultIntervalDays ? String(type.defaultIntervalDays) : "",
+    );
+    setExpandMaint(false);
+  };
+
+  const cancelEditMaint = () => {
+    setEditingMaintId(null);
+  };
+
+  const handleSaveMaintEdit = async () => {
+    if (!editMaintName.trim()) {
+      Toast.show({ type: "error", text1: "Name is required", position: "top" });
+      return;
+    }
+    try {
+      const payload: TUpdateMaintenanceTypePayload = {
+        name: editMaintName.trim(),
+        defaultIntervalKm: editMaintIntervalKm.trim()
+          ? parseInt(editMaintIntervalKm, 10)
+          : null,
+        defaultIntervalDays: editMaintIntervalDays.trim()
+          ? parseInt(editMaintIntervalDays, 10)
+          : null,
+      };
+      await updateMaintType.mutateAsync({
+        url: `/maintenance-types/${editingMaintId}`,
+        payload,
+      });
+      setEditingMaintId(null);
+      Toast.show({ type: "success", text1: "Maintenance type updated", position: "top" });
+      refetchMaint();
+    } catch (error: any) {
+      Toast.show({
+        type: "error",
+        text1: error?.message || "Failed to update",
+        position: "top",
+      });
+    }
+  };
+
+  const startEditOil = (oil: TEngineOilType) => {
+    setEditingOilId(oil._id);
+    setEditOilName(oil.name);
+    setEditOilIntervalKm(String(oil.suggestedIntervalKm));
+    setExpandOil(false);
+  };
+
+  const cancelEditOil = () => {
+    setEditingOilId(null);
+  };
+
+  const handleSaveOilEdit = async () => {
+    if (!editOilName.trim() || !editOilIntervalKm.trim()) {
+      Toast.show({
+        type: "error",
+        text1: "Name and interval are required",
+        position: "top",
+      });
+      return;
+    }
+    try {
+      const payload: TUpdateEngineOilTypePayload = {
+        name: editOilName.trim(),
+        suggestedIntervalKm: parseInt(editOilIntervalKm, 10),
+      };
+      await updateOilType.mutateAsync({
+        url: `/engine-oil-types/${editingOilId}`,
+        payload,
+      });
+      setEditingOilId(null);
+      Toast.show({ type: "success", text1: "Oil type updated", position: "top" });
+      refetchOil();
+    } catch (error: any) {
+      Toast.show({
+        type: "error",
+        text1: error?.message || "Failed to update",
         position: "top",
       });
     }
@@ -132,21 +233,85 @@ export function SettingsCatalog() {
           <EmptyState label="No maintenance types yet." />
         ) : (
           <View style={styles.listCard}>
-            {maintTypes.map((type, i) => (
-              <View
-                key={type._id}
-                style={[styles.row, i === maintTypes.length - 1 && styles.rowLast]}
-              >
-                <Text style={styles.typeName}>{type.name}</Text>
-                <Text style={styles.typeDetail}>
-                  {type.defaultIntervalKm
-                    ? `Every ${type.defaultIntervalKm.toLocaleString()} km`
-                    : type.defaultIntervalDays
-                      ? `Every ${type.defaultIntervalDays} days`
-                      : "No default interval"}
-                </Text>
-              </View>
-            ))}
+            {maintTypes.map((type, i) =>
+              editingMaintId === type._id ? (
+                <View
+                  key={type._id}
+                  style={[
+                    styles.formCard,
+                    styles.inlineEditCard,
+                    i === maintTypes.length - 1 && styles.rowLast,
+                  ]}
+                >
+                  <FormField
+                    label="Type Name"
+                    value={editMaintName}
+                    onChangeText={setEditMaintName}
+                    editable={!updateMaintType.isPending}
+                  />
+                  <View style={styles.row2}>
+                    <FormField
+                      label="Interval (km)"
+                      placeholder="optional"
+                      value={editMaintIntervalKm}
+                      onChangeText={setEditMaintIntervalKm}
+                      keyboardType="number-pad"
+                      editable={!updateMaintType.isPending}
+                      style={styles.rowField}
+                    />
+                    <FormField
+                      label="Interval (days)"
+                      placeholder="optional"
+                      value={editMaintIntervalDays}
+                      onChangeText={setEditMaintIntervalDays}
+                      keyboardType="number-pad"
+                      editable={!updateMaintType.isPending}
+                      style={styles.rowField}
+                    />
+                  </View>
+                  <PrimaryButton
+                    onPress={handleSaveMaintEdit}
+                    loading={updateMaintType.isPending}
+                  >
+                    Save Changes
+                  </PrimaryButton>
+                  <TouchableOpacity
+                    onPress={cancelEditMaint}
+                    disabled={updateMaintType.isPending}
+                    style={styles.cancelButton}
+                  >
+                    <Text style={styles.cancelText}>Cancel</Text>
+                  </TouchableOpacity>
+                </View>
+              ) : (
+                <View
+                  key={type._id}
+                  style={[styles.row, i === maintTypes.length - 1 && styles.rowLast]}
+                >
+                  <View style={styles.rowText}>
+                    <Text style={styles.typeName}>{type.name}</Text>
+                    <Text style={styles.typeDetail}>
+                      {type.defaultIntervalKm
+                        ? `Every ${type.defaultIntervalKm.toLocaleString()} km`
+                        : type.defaultIntervalDays
+                          ? `Every ${type.defaultIntervalDays} days`
+                          : "No default interval"}
+                    </Text>
+                  </View>
+                  <TouchableOpacity
+                    onPress={() => startEditMaint(type)}
+                    style={styles.editIconButton}
+                    hitSlop={8}
+                  >
+                    <MaterialCommunityIcons
+                      name="pencil-outline"
+                      size={16}
+                      color={COLORS.textMuted}
+                    />
+                  </TouchableOpacity>
+                </View>
+              ),
+            )}
           </View>
         )}
 
@@ -211,17 +376,68 @@ export function SettingsCatalog() {
           <EmptyState label="No oil types yet." />
         ) : (
           <View style={styles.listCard}>
-            {oilTypes.map((oil, i) => (
-              <View
-                key={oil._id}
-                style={[styles.row, i === oilTypes.length - 1 && styles.rowLast]}
-              >
-                <Text style={styles.typeName}>{oil.name}</Text>
-                <Text style={styles.typeDetail}>
-                  Change every {oil.suggestedIntervalKm.toLocaleString()} km
-                </Text>
-              </View>
-            ))}
+            {oilTypes.map((oil, i) =>
+              editingOilId === oil._id ? (
+                <View
+                  key={oil._id}
+                  style={[
+                    styles.formCard,
+                    styles.inlineEditCard,
+                    i === oilTypes.length - 1 && styles.rowLast,
+                  ]}
+                >
+                  <FormField
+                    label="Oil Type Name"
+                    value={editOilName}
+                    onChangeText={setEditOilName}
+                    editable={!updateOilType.isPending}
+                  />
+                  <FormField
+                    label="Suggested Interval (km)"
+                    value={editOilIntervalKm}
+                    onChangeText={setEditOilIntervalKm}
+                    keyboardType="number-pad"
+                    editable={!updateOilType.isPending}
+                  />
+                  <PrimaryButton
+                    onPress={handleSaveOilEdit}
+                    loading={updateOilType.isPending}
+                  >
+                    Save Changes
+                  </PrimaryButton>
+                  <TouchableOpacity
+                    onPress={cancelEditOil}
+                    disabled={updateOilType.isPending}
+                    style={styles.cancelButton}
+                  >
+                    <Text style={styles.cancelText}>Cancel</Text>
+                  </TouchableOpacity>
+                </View>
+              ) : (
+                <View
+                  key={oil._id}
+                  style={[styles.row, i === oilTypes.length - 1 && styles.rowLast]}
+                >
+                  <View style={styles.rowText}>
+                    <Text style={styles.typeName}>{oil.name}</Text>
+                    <Text style={styles.typeDetail}>
+                      Change every {oil.suggestedIntervalKm.toLocaleString()} km
+                    </Text>
+                  </View>
+                  <TouchableOpacity
+                    onPress={() => startEditOil(oil)}
+                    style={styles.editIconButton}
+                    hitSlop={8}
+                  >
+                    <MaterialCommunityIcons
+                      name="pencil-outline"
+                      size={16}
+                      color={COLORS.textMuted}
+                    />
+                  </TouchableOpacity>
+                </View>
+              ),
+            )}
           </View>
         )}
 
@@ -310,6 +526,26 @@ const styles = StyleSheet.create({
   },
   rowLast: {
     borderBottomWidth: 0,
+  },
+  rowText: {
+    flex: 1,
+  },
+  editIconButton: {
+    padding: 6,
+    marginLeft: 8,
+  },
+  inlineEditCard: {
+    borderRadius: 0,
+    marginBottom: 0,
+  },
+  cancelButton: {
+    alignItems: "center",
+    paddingVertical: 10,
+  },
+  cancelText: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: COLORS.textMuted,
   },
   typeName: {
     fontSize: 13,
