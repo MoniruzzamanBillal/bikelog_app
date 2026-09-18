@@ -135,7 +135,8 @@ export function MaintenanceLogCard({
 
   const oilTypeName = getOilTypeName(log, oilTypes);
   const parts = log.partsReplaced?.filter(Boolean) ?? [];
-  const primaryDetail = oilTypeName ?? (parts.length > 0 ? parts.join(", ") : null);
+  const primaryDetail =
+    oilTypeName ?? (parts.length > 0 ? parts.join(", ") : null);
 
   return (
     <>
@@ -172,24 +173,30 @@ export function MaintenanceLogCard({
           />
 
           <View style={styles.left}>
-            <Text style={styles.typeName}>{getTypeName(log, maintenanceTypes)}</Text>
+            <Text style={styles.typeName}>
+              {getTypeName(log, maintenanceTypes)}
+            </Text>
             <Text style={styles.details}>
-              {primaryDetail ? `${primaryDetail} · ` : ""}৳{log.cost.toLocaleString()}
+              {primaryDetail ? `${primaryDetail} · ` : ""}৳
+              {log?.cost?.toLocaleString()}
             </Text>
             <Text style={styles.meta}>
-              {log.serviceCenter ?? "—"} · {log.odometerReading.toLocaleString()} km
+              {log?.serviceCenter ?? "—"} ·{" "}
+              {log?.odometerReading?.toLocaleString()} km
             </Text>
-            {log.nextDueOdometer !== undefined && (
+            {log?.nextDueOdometer !== undefined && (
               <View style={styles.badge}>
                 <Text style={styles.badgeText}>
-                  Next: {log.nextDueOdometer.toLocaleString()} km
+                  Next: {log?.nextDueOdometer?.toLocaleString()} km
                 </Text>
               </View>
             )}
-            {log.notes && <Text style={styles.notes}>{log.notes}</Text>}
+            {log?.notes && <Text style={styles.notes}>{log?.notes}</Text>}
           </View>
 
-          <Text style={styles.date}>{formatApiDate(log.serviceDate, "dd MMM")}</Text>
+          <Text style={styles.date}>
+            {formatApiDate(log?.serviceDate, "dd MMM")}
+          </Text>
         </TouchableOpacity>
       </Swipeable>
 

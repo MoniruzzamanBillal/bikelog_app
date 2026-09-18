@@ -3,7 +3,12 @@ import { RefreshControl, ScrollView, StyleSheet, View } from "react-native";
 import { Text } from "react-native-paper";
 import { useLocalSearchParams } from "expo-router";
 import { SwipeableMethods } from "react-native-gesture-handler/ReanimatedSwipeable";
-import { EmptyState, ErrorState, ScreenHeader, SectionLoading } from "@/components/main/shared";
+import {
+  EmptyState,
+  ErrorState,
+  ScreenHeader,
+  SectionLoading,
+} from "@/components/main/shared";
 import { useFetchData } from "@/hooks/useApi";
 import { COLORS } from "@/utils/colors";
 import { TBike } from "@/types/bike.types";
@@ -28,11 +33,12 @@ export function MaintenanceLog() {
   );
   const bike = bikeData?.data;
 
-  const { data, isLoading, isError, refetch } = useFetchData<TMaintenanceLogsApiResponse>(
-    ["maintenanceLogs", bikeId],
-    `/bikes/${bikeId}/maintenance-logs?page=1&limit=${LIMIT}&sort=-serviceDate`,
-    { enabled: !!bikeId },
-  );
+  const { data, isLoading, isError, refetch } =
+    useFetchData<TMaintenanceLogsApiResponse>(
+      ["maintenanceLogs", bikeId],
+      `/bikes/${bikeId}/maintenance-logs?page=1&limit=${LIMIT}&sort=-serviceDate`,
+      { enabled: !!bikeId },
+    );
   const { data: mtData } = useFetchData<TMaintenanceType[]>(
     ["maintenance-types"],
     "/maintenance-types",
