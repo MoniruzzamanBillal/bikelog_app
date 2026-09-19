@@ -1,5 +1,11 @@
 import { useRef, useState } from "react";
-import { RefreshControl, ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
+import {
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Text } from "react-native-paper";
 import { useLocalSearchParams } from "expo-router";
@@ -31,7 +37,11 @@ const URGENCIES: { key: TAccessoryUrgency | null; label: string }[] = [
   { key: "low", label: "Low" },
 ];
 
-const STATUSES: { key: TAccessoryStatus; label: string; sectionLabel: string }[] = [
+const STATUSES: {
+  key: TAccessoryStatus;
+  label: string;
+  sectionLabel: string;
+}[] = [
   { key: "pending", label: "Pending", sectionLabel: "Pending / Wishlist" },
   { key: "purchased", label: "Purchased", sectionLabel: "Purchased" },
   { key: "cancelled", label: "Cancelled", sectionLabel: "Cancelled" },
@@ -41,7 +51,9 @@ export function BikeAccessory() {
   const insets = useSafeAreaInsets();
   const { bikeId } = useLocalSearchParams<{ bikeId: string }>();
   const [page, setPage] = useState(1);
-  const [urgencyFilter, setUrgencyFilter] = useState<TAccessoryUrgency | null>(null);
+  const [urgencyFilter, setUrgencyFilter] = useState<TAccessoryUrgency | null>(
+    null,
+  );
   const [statusFilter, setStatusFilter] = useState<TAccessoryStatus>("pending");
   const [modalOpen, setModalOpen] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -61,15 +73,23 @@ export function BikeAccessory() {
   filterParams.set("status", statusFilter);
   const queryString = filterParams.toString();
 
-  const { data, isLoading, isError, refetch } = useFetchData<TBikeAccessoriesApiResponse>(
-    ["accessories", bikeId, page.toString(), urgencyFilter ?? "all", statusFilter],
-    `/bikes/${bikeId}/accessories?${queryString}`,
-    { enabled: !!bikeId },
-  );
+  const { data, isLoading, isError, refetch } =
+    useFetchData<TBikeAccessoriesApiResponse>(
+      [
+        "accessories",
+        bikeId,
+        page.toString(),
+        urgencyFilter ?? "all",
+        statusFilter,
+      ],
+      `/bikes/${bikeId}/accessories?${queryString}`,
+      { enabled: !!bikeId },
+    );
 
   const accessories = data?.data?.result ?? [];
   const totalPages = Math.ceil((data?.data?.meta ?? 0) / LIMIT) || 1;
-  const sectionLabel = STATUSES.find((s) => s.key === statusFilter)?.sectionLabel ?? "";
+  const sectionLabel =
+    STATUSES.find((s) => s.key === statusFilter)?.sectionLabel ?? "";
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -105,7 +125,10 @@ export function BikeAccessory() {
               onPress={() => handleStatusChange(key)}
             >
               <Text
-                style={[styles.tabText, statusFilter === key && styles.tabTextActive]}
+                style={[
+                  styles.tabText,
+                  statusFilter === key && styles.tabTextActive,
+                ]}
               >
                 {label}
               </Text>
@@ -124,7 +147,12 @@ export function BikeAccessory() {
               style={[styles.chip, urgencyFilter === key && styles.chipActive]}
               onPress={() => handleUrgencyChange(key)}
             >
-              <Text style={[styles.chipText, urgencyFilter === key && styles.chipTextActive]}>
+              <Text
+                style={[
+                  styles.chipText,
+                  urgencyFilter === key && styles.chipTextActive,
+                ]}
+              >
                 {label}
               </Text>
             </TouchableOpacity>
@@ -165,7 +193,9 @@ export function BikeAccessory() {
           </ScrollView>
 
           {totalPages > 1 && (
-            <View style={[styles.pagination, { paddingBottom: 16 + insets.bottom }]}>
+            <View
+              style={[styles.pagination, { paddingBottom: 16 + insets.bottom }]}
+            >
               <Text style={styles.pageInfo}>
                 Page {page} of {totalPages}
               </Text>

@@ -95,7 +95,7 @@ export function MaintenanceLog() {
         >
           <Text style={styles.sectionHeading}>Recent Services</Text>
           <View style={styles.listCard}>
-            {logs.map((log, i) => (
+            {logs?.map((log, i) => (
               <MaintenanceLogCard
                 key={log._id}
                 log={log}

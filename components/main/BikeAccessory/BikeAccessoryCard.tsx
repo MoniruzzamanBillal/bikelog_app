@@ -25,10 +25,25 @@ const URGENCY_LABEL: Record<string, string> = {
   low: "Low",
 };
 
-const STATUS_BADGE: Record<string, { bg: string; text: string; label: string }> = {
-  pending: { bg: "rgba(251,191,36,0.1)", text: COLORS.warning, label: "Pending" },
-  purchased: { bg: "rgba(74,222,128,0.1)", text: COLORS.success, label: "Purchased" },
-  cancelled: { bg: "rgba(255,255,255,0.07)", text: COLORS.textLight, label: "Cancelled" },
+const STATUS_BADGE: Record<
+  string,
+  { bg: string; text: string; label: string }
+> = {
+  pending: {
+    bg: "rgba(251,191,36,0.1)",
+    text: COLORS.warning,
+    label: "Pending",
+  },
+  purchased: {
+    bg: "rgba(74,222,128,0.1)",
+    text: COLORS.success,
+    label: "Purchased",
+  },
+  cancelled: {
+    bg: "rgba(255,255,255,0.07)",
+    text: COLORS.textLight,
+    label: "Cancelled",
+  },
 };
 
 export function BikeAccessoryCard({
@@ -56,7 +71,11 @@ export function BikeAccessoryCard({
         url: `/bikes/${bikeId}/accessories/${accessory._id}/image`,
         payload: formData,
       });
-      Toast.show({ type: "success", text1: "Product image uploaded", position: "top" });
+      Toast.show({
+        type: "success",
+        text1: "Product image uploaded",
+        position: "top",
+      });
     } catch (error: any) {
       Toast.show({
         type: "error",
@@ -71,7 +90,11 @@ export function BikeAccessoryCard({
       await deleteImage({
         url: `/bikes/${bikeId}/accessories/${accessory._id}/image`,
       });
-      Toast.show({ type: "success", text1: "Product image deleted", position: "top" });
+      Toast.show({
+        type: "success",
+        text1: "Product image deleted",
+        position: "top",
+      });
     } catch (error: any) {
       Toast.show({
         type: "error",
@@ -117,7 +140,11 @@ export function BikeAccessoryCard({
         url: `/bikes/${bikeId}/accessories/${accessory._id}`,
         payload: { status: "purchased" },
       });
-      Toast.show({ type: "success", text1: "Marked as purchased", position: "top" });
+      Toast.show({
+        type: "success",
+        text1: "Marked as purchased",
+        position: "top",
+      });
     } catch (error: any) {
       Toast.show({
         type: "error",
@@ -163,29 +190,37 @@ export function BikeAccessoryCard({
             <View style={styles.cardContent}>
               <View style={styles.titleRow}>
                 <Text style={styles.name}>{accessory.name}</Text>
-                <View style={[styles.badge, { backgroundColor: statusBadge.bg }]}>
+                <View
+                  style={[styles.badge, { backgroundColor: statusBadge.bg }]}
+                >
                   <Text style={[styles.badgeText, { color: statusBadge.text }]}>
                     {statusBadge.label}
                   </Text>
                 </View>
               </View>
 
-              {accessory.status === "purchased" && accessory.purchaseDate ? (
+              {accessory?.status === "purchased" && accessory?.purchaseDate ? (
                 <Text style={styles.meta}>
-                  Purchased {format(new Date(accessory.purchaseDate), "dd MMM yyyy")}
+                  Purchased{" "}
+                  {format(new Date(accessory?.purchaseDate), "dd MMM yyyy")}
                 </Text>
               ) : (
                 <Text style={styles.meta}>
-                  Urgency: {URGENCY_LABEL[accessory.urgency]}
+                  Urgency: {URGENCY_LABEL[accessory?.urgency]}
                 </Text>
               )}
 
-              {accessory.price !== undefined && (
-                <Text style={styles.price}>৳{accessory.price.toLocaleString()}</Text>
+              {accessory?.price !== undefined && (
+                <Text style={styles.price}>
+                  ৳{accessory?.price?.toLocaleString()}
+                </Text>
               )}
 
-              {accessory.status === "pending" && (
-                <TouchableOpacity onPress={handleMarkPurchased} style={styles.markButton}>
+              {accessory?.status === "pending" && (
+                <TouchableOpacity
+                  onPress={handleMarkPurchased}
+                  style={styles.markButton}
+                >
                   <Text style={styles.markButtonText}>Mark Purchased</Text>
                 </TouchableOpacity>
               )}
