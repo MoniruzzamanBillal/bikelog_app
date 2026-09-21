@@ -45,6 +45,8 @@ Update this file after every spec — status table, Recent Activity log, and Kno
 | 33   | ✅ Complete    | Make Service Interval (km) optional on the maintenance log form, client for backend spec 28 — see `context/specs/33-maintenance-log-optional-service-interval.md`.                                                  |
 | 34   | 🔄 In progress | Added diagnostic logging to `registerPushToken.ts`; `eas credentials` check + on-device run + backend spec 29 trigger are blocked on the user (see spec's own status line) — see `context/specs/34-push-notification-delivery-diagnostics.md`.     |
 | 35   | ✅ Complete    | Inline edit for maintenance types and engine oil types in `SettingsCatalog.tsx` — client for backend spec 38 — see `context/specs/35-maintenance-and-oil-type-update.md`.                                            |
+| 36   | ⛔ Not Started | Quick-add fuel log Android home-screen widget — see `ai context/specs/36-quick-add-fuel-log-widget.md`.                                                                                                              |
+| 37   | ⛔ Not Started | Fuel-efficiency anomaly banner — client for backend spec 39 — see `ai context/specs/37-fuel-efficiency-anomaly-banner.md`.                                                                                            |
 
 ## Completed (already implemented)
 
