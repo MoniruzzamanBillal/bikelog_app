@@ -19,9 +19,18 @@ export type TApproximateMileage = {
   isEstimate: boolean;
 };
 
+export type TEfficiencyAlert = {
+  isAnomaly: boolean;
+  latestKmPerLiter: number;
+  rollingAverageKmPerLiter: number;
+  percentChange: number;
+  periodsUsed: number;
+};
+
 export type TMileageHistoryResponse = {
   exactRecords: TMileageRecord[];
   approximate: TApproximateMileage | null;
+  efficiencyAlert: TEfficiencyAlert | null;
 };
 
 export type TMonthlyMileage = {

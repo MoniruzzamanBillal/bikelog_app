@@ -7,6 +7,7 @@ import {
 import { usePatch, usePost } from "@/hooks/useApi";
 import { TCreateFuelLogPayload, TFuelLog } from "@/types/fuel-log.types";
 import { COLORS } from "@/utils/colors";
+import { setLastUsedBike } from "@/utils/lastUsedBike";
 import { format } from "date-fns";
 import { useEffect, useState } from "react";
 import { StyleSheet, View } from "react-native";
@@ -21,6 +22,7 @@ interface FuelLogFormModalProps {
   onClose: () => void;
   bikeId: string;
   initialFuelLog?: TFuelLog;
+  seedFromLastLog?: { fuelStation?: string; pricePerLiter: number };
 }
 
 export function FuelLogFormModal({
@@ -28,6 +30,7 @@ export function FuelLogFormModal({
   onClose,
   bikeId,
   initialFuelLog,
+  seedFromLastLog,
 }: FuelLogFormModalProps) {
   const [odometer, setOdometer] = useState("");
   const [liters, setLiters] = useState("");
@@ -70,11 +73,12 @@ export function FuelLogFormModal({
       setOdometer("");
       setLiters("");
       setIsFullTank(false);
-      setPricePerLiter("");
-      setStation("");
+      setPricePerLiter(seedFromLastLog?.pricePerLiter?.toString() ?? "");
+      setStation(seedFromLastLog?.fuelStation ?? "");
       setDate(format(new Date(), "yyyy-MM-dd"));
       setNotes("");
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialFuelLog, open]);
 
   const parsedLiters = parseFloat(liters);
@@ -144,6 +148,7 @@ export function FuelLogFormModal({
           url: `/bikes/${bikeId}/fuel-logs`,
           payload,
         });
+        setLastUsedBike(bikeId);
         Toast.show({
           type: "success",
           text1: "Fuel log added",

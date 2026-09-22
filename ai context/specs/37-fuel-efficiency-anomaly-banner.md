@@ -2,7 +2,7 @@
 
 ## Status
 
-⛔ Not Started
+✅ Complete
 
 ## Goal
 
@@ -97,16 +97,16 @@ Depends on `bikelog_server` spec 39 shipping first (`efficiencyAlert` field on `
 
 ## Implementation
 
-- [ ] `types/mileage.types.ts` — add `TEfficiencyAlert`, extend `TMileageHistoryResponse`.
-- [ ] `components/main/Mileage/EfficiencyAlertBanner.tsx` — new component.
-- [ ] `BikeDetailPage.tsx` — import and render `EfficiencyAlertBanner` under `RemindersBanner`.
-- [ ] Confirm the exact `COLORS.danger` token name/value at implementation time (already spot-checked as `#f87171` in `utils/colors.ts` during planning — reconfirm nothing changed).
-- [ ] `expo lint` / `npx tsc --noEmit` clean.
-- [ ] `ai context/progress-tracker.md` — add this spec's row, Recent Activity entry once implemented.
+- [x] `types/mileage.types.ts` — added `TEfficiencyAlert`, extended `TMileageHistoryResponse` with `efficiencyAlert: TEfficiencyAlert | null` — matches the backend's real shape byte-for-byte (cross-checked against `bikelog_server/context/progress-tracker.md`'s spec 39 entry, not just this spec's own Design sketch).
+- [x] `components/main/Mileage/EfficiencyAlertBanner.tsx` — new component, built exactly as designed.
+- [x] `BikeDetailPage.tsx` — imports and renders `EfficiencyAlertBanner` directly under `RemindersBanner`, reusing `styles.reminder`.
+- [x] Confirmed `COLORS.danger` is `#f87171` in `utils/colors.ts` at implementation time — unchanged from planning.
+- [x] `expo lint` / `npx tsc --noEmit` clean.
+- [x] `ai context/progress-tracker.md` — spec's row + Recent Activity entry added.
 
 ## Verify
 
-- [ ] With a bike whose latest `GET /bikes/:bikeId/mileage` response has `efficiencyAlert: null` or `isAnomaly: false` — banner renders nothing (no layout shift, no empty box).
-- [ ] With `efficiencyAlert.isAnomaly: true` (server spec 39 verified this can happen) — banner renders with the red/danger tint, correct rounded km/L values and percent drop in the text.
-- [ ] Confirm this doesn't trigger a second network request — same query key as `FuelLog.tsx`/`MileageHistoryTab.tsx`, so React Query should dedupe (verify via network inspector/log if available).
-- [ ] `expo lint`/`tsc --noEmit` clean. Actual on-device rendering (text wrapping at phone width, icon/tint correctness) flagged as unverified without a device/emulator, matching this project's own standing pattern for UI-only changes.
+- [x] With `efficiencyAlert: null` or `isAnomaly: false` — code-traced: the component's own early `if (isLoading || !alert || !alert.isAnomaly) return null;` guard means no layout shift/empty box in either case, by construction.
+- [x] With `efficiencyAlert.isAnomaly: true` — code-traced against the exact Design sample (unchanged from spec): red/danger tint (`rgba(248,113,113,...)` background/border, `COLORS.danger` icon, `#fca5a5` text), `toFixed(1)`/`toFixed(0)` rounding on the km/L values and percent drop.
+- [x] Confirmed via source read (not a live network inspector, none available in this environment): `EfficiencyAlertBanner` uses the identical query key (`["mileage", "history", bikeId]`) and URL (`/bikes/${bikeId}/mileage`) as `FuelLog.tsx`/`MileageHistoryTab.tsx`'s own `useFetchData` calls — React Query dedupes same-key concurrent fetches by design, so this is a shared cache read, not a new request, by construction rather than by observation.
+- [x] `expo lint`/`tsc --noEmit` clean (0 issues both times, checked together with spec 36's changes since both touch `BikeDetailPage.tsx`). **Not verified on-device** — same standing gap as every UI spec in this project (no device/emulator available in this environment): actual text wrapping at phone width, icon/tint rendering, and the banner's visual position relative to `RemindersBanner` when both are present are all unconfirmed. Also unconfirmed: has never been exercised against a bike with real seeded data that actually trips `isAnomaly: true` from this app's own UI — the backend's own spec 39 verification (see `bikelog_server/context/progress-tracker.md`) is the only live confirmation this shape/logic exists, not a round-trip from this client.

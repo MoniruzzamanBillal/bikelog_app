@@ -1,14 +1,16 @@
 import { EmptyState, ErrorState, ScreenHeader, SectionLoading } from "@/components/main/shared";
 import { confirmDelete } from "@/components/main/shared/ConfirmDelete";
 import { RemindersBanner } from "@/components/main/MaintenanceLog/RemindersBanner";
+import { EfficiencyAlertBanner } from "@/components/main/Mileage/EfficiencyAlertBanner";
 import { useDelete, useFetchData } from "@/hooks/useApi";
 import { TMaintenanceType } from "@/types/catalog.types";
 import { TBike } from "@/types/bike.types";
 import { COLORS } from "@/utils/colors";
 import { formatApiDate } from "@/utils/formatApiDate";
+import { setLastUsedBike } from "@/utils/lastUsedBike";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { StyleSheet, TouchableOpacity, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { Text } from "react-native-paper";
@@ -48,6 +50,10 @@ export function BikeDetailPage() {
     "/maintenance-types",
   );
   const maintenanceTypes = maintenanceTypesData?.data ?? [];
+
+  useEffect(() => {
+    if (bikeId) setLastUsedBike(bikeId);
+  }, [bikeId]);
 
   const deleteMutation = useDelete([["bikes"]]);
 
@@ -126,6 +132,7 @@ export function BikeDetailPage() {
           maintenanceTypes={maintenanceTypes}
           style={styles.reminder}
         />
+        <EfficiencyAlertBanner bikeId={bikeId} style={styles.reminder} />
 
         <View style={styles.tileGrid}>
           {TILES.map((tile) => (
