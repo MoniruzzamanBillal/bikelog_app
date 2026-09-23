@@ -48,7 +48,22 @@
           "cameraPermission": "Allow $(PRODUCT_NAME) to access your camera to take receipt/service/damage photos."
         }
       ],
-      "expo-notifications"
+      "expo-notifications",
+      [
+        "react-native-android-widget",
+        {
+          "widgets": [
+            {
+              "name": "QuickAddFuelWidget",
+              "label": "Add Fuel Log",
+              "description": "Quickly log a fuel fill-up for your bike",
+              "minWidth": "180dp",
+              "minHeight": "110dp",
+              "resizeMode": "none"
+            }
+          ]
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
