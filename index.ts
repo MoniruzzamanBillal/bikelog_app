@@ -27,7 +27,8 @@ if (Platform.OS === "android") {
     } = require("./widgets/quickAddFuelWidgetTaskHandler");
     /* eslint-enable @typescript-eslint/no-require-imports */
     registerWidgetTaskHandler(quickAddFuelWidgetTaskHandler);
-  } catch {
+  } catch (error) {
+    console.warn("Widget task handler not registered:", error);
     // Native module not present in this binary (Expo Go / stale dev client)
     // — rest of the app still boots normally.
   }
