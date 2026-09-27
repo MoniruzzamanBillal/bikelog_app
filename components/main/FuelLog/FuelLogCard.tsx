@@ -1,35 +1,37 @@
-import { ImagePickerField, TPickedImageFile } from "@/components/main/shared";
+import {
+  ActionMenu,
+  ImagePickerField,
+  TPickedImageFile,
+} from "@/components/main/shared";
 import { confirmDelete } from "@/components/main/shared/ConfirmDelete";
+import { Panel } from "@/components/main/shared/Panel";
+import { toneStyle } from "@/components/main/shared/StatusBadge";
 import { useDelete, usePut } from "@/hooks/useApi";
 import { TFuelLog } from "@/types/fuel-log.types";
-import { COLORS, tint } from "@/utils/colors";
+import { COLORS } from "@/utils/colors";
 import { formatApiDate } from "@/utils/formatApiDate";
-import { useRef, useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
-import { TouchableOpacity } from "react-native-gesture-handler";
-import Swipeable, {
-  SwipeableMethods,
-} from "react-native-gesture-handler/ReanimatedSwipeable";
+import { formatTaka } from "@/utils/formatTaka";
+import { useState } from "react";
+import { StyleSheet, View } from "react-native";
+import { Text } from "react-native-paper";
 import Toast from "react-native-toast-message";
 import { FuelLogFormModal } from "./FuelLogFormModal";
 
 interface FuelLogCardProps {
   fuelLog: TFuelLog;
   bikeId: string;
-  openSwipeableRef: React.MutableRefObject<SwipeableMethods | null>;
-  isLast?: boolean;
   mileageKmPerLiter?: number;
+  /** Set when the log belongs to a closed mileage period — edits are rejected. */
+  lockedNote?: string;
 }
 
 export function FuelLogCard({
   fuelLog,
   bikeId,
-  openSwipeableRef,
-  isLast,
   mileageKmPerLiter,
+  lockedNote,
 }: FuelLogCardProps) {
   const [editOpen, setEditOpen] = useState(false);
-  const swipeableRef = useRef<SwipeableMethods>(null);
 
   const deleteMutation = useDelete([
     ["fuelLogs", bikeId],
@@ -84,18 +86,7 @@ export function FuelLogCard({
     }
   };
 
-  const handleSwipeableWillOpen = () => {
-    if (
-      openSwipeableRef.current &&
-      openSwipeableRef.current !== swipeableRef.current
-    ) {
-      openSwipeableRef.current.close();
-    }
-    openSwipeableRef.current = swipeableRef.current;
-  };
-
   const handleDelete = () => {
-    swipeableRef.current?.close();
     confirmDelete("fuel log", async () => {
       await deleteMutation.mutateAsync({
         url: `/bikes/${bikeId}/fuel-logs/${fuelLog._id}`,
@@ -103,81 +94,82 @@ export function FuelLogCard({
     });
   };
 
-  const handleEdit = () => {
-    swipeableRef.current?.close();
-    setEditOpen(true);
-  };
-
   const totalCost = fuelLog.litersAdded * fuelLog.pricePerLiter;
+  const tankTone = toneStyle(fuelLog.isFullTank ? "success" : "neutral");
+  const mileageTone = toneStyle("accent");
 
   return (
     <>
-      <Swipeable
-        ref={swipeableRef}
-        onSwipeableWillOpen={handleSwipeableWillOpen}
-        renderLeftActions={() => (
-          <TouchableOpacity
-            onPress={handleEdit}
-            style={[styles.action, styles.editAction]}
-          >
-            <Text style={styles.actionText}>Edit</Text>
-          </TouchableOpacity>
-        )}
-        renderRightActions={() => (
-          <TouchableOpacity
-            onPress={handleDelete}
-            style={[styles.action, styles.deleteAction]}
-          >
-            <Text style={styles.actionText}>Delete</Text>
-          </TouchableOpacity>
-        )}
-      >
-        <TouchableOpacity
-          style={[styles.row, isLast && styles.rowLast]}
-          activeOpacity={0.7}
-        >
+      <Panel style={styles.card}>
+        <View style={styles.left}>
+          <View style={styles.metaRow}>
+            <Text style={styles.date}>
+              {formatApiDate(fuelLog.date, "dd MMM yyyy")}
+            </Text>
+            <View style={[styles.tag, { backgroundColor: tankTone.bg }]}>
+              <Text style={[styles.tagText, { color: tankTone.text }]}>
+                {fuelLog.isFullTank ? "Full" : "Partial"}
+              </Text>
+            </View>
+            {mileageKmPerLiter !== undefined && (
+              <View style={[styles.tag, { backgroundColor: mileageTone.bg }]}>
+                <Text style={[styles.tagText, { color: mileageTone.text }]}>
+                  {mileageKmPerLiter.toFixed(1)} km/l
+                </Text>
+              </View>
+            )}
+          </View>
+
+          <View style={styles.costRow}>
+            <Text style={styles.cost}>{formatTaka(totalCost)}</Text>
+            <Text style={styles.costDetail}>
+              {fuelLog.litersAdded} L · ৳{fuelLog.pricePerLiter}/L
+            </Text>
+          </View>
+
+          <Text style={styles.odoLine} numberOfLines={1}>
+            {fuelLog.odometerReading.toLocaleString()} km
+            {fuelLog.fuelStation ? ` · ${fuelLog.fuelStation}` : ""}
+          </Text>
+
+          {lockedNote ? (
+            <Text style={styles.lockedNote} numberOfLines={2}>
+              {lockedNote}
+            </Text>
+          ) : null}
+        </View>
+
+        <View style={styles.right}>
+          <ActionMenu
+            size={16}
+            style={styles.menuTrigger}
+            actions={[
+              {
+                label: "Edit",
+                icon: "pencil-outline",
+                disabled: !!lockedNote,
+                onPress: () => setEditOpen(true),
+              },
+              {
+                label: "Delete",
+                icon: "trash-can-outline",
+                destructive: true,
+                disabled: !!lockedNote,
+                onPress: handleDelete,
+              },
+            ]}
+          />
+
           <ImagePickerField
             label="Receipt"
+            size={32}
             value={fuelLog.receiptImage}
             onUpload={handleImageUpload}
             onDelete={handleImageDelete}
             uploading={isUploading || isDeletingImage}
           />
-
-          <View style={styles.left}>
-            <Text style={styles.odometer}>
-              {fuelLog.odometerReading.toLocaleString()} km
-            </Text>
-            <Text style={styles.details}>
-              {fuelLog.litersAdded}L · ৳{fuelLog.pricePerLiter}/L
-            </Text>
-            {fuelLog.fuelStation && (
-              <Text style={styles.station}>{fuelLog.fuelStation}</Text>
-            )}
-            {(fuelLog.isFullTank || mileageKmPerLiter !== undefined) && (
-              <View style={styles.badgeRow}>
-                {fuelLog.isFullTank && (
-                  <View style={styles.badge}>
-                    <Text style={styles.badgeText}>Full Tank</Text>
-                  </View>
-                )}
-                {mileageKmPerLiter !== undefined && (
-                  <View style={[styles.badge, styles.mileageBadge]}>
-                    <Text style={[styles.badgeText, styles.mileageBadgeText]}>
-                      {mileageKmPerLiter.toFixed(1)} km/L
-                    </Text>
-                  </View>
-                )}
-              </View>
-            )}
-          </View>
-
-          <View style={styles.right}>
-            <Text style={styles.cost}>৳{totalCost.toFixed(0)}</Text>
-            <Text style={styles.date}>{formatApiDate(fuelLog.date, "dd MMM")}</Text>
-          </View>
-        </TouchableOpacity>
-      </Swipeable>
+        </View>
+      </Panel>
 
       <FuelLogFormModal
         open={editOpen}
@@ -190,86 +182,69 @@ export function FuelLogCard({
 }
 
 const styles = StyleSheet.create({
-  row: {
+  card: {
     flexDirection: "row",
     gap: 12,
-    padding: 13,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.borderSubtle,
-  },
-  rowLast: {
-    borderBottomWidth: 0,
+    paddingTop: 12,
+    paddingBottom: 12,
+    paddingLeft: 14,
+    paddingRight: 12,
   },
   left: {
     flex: 1,
+    minWidth: 0,
+    gap: 4,
   },
   right: {
     alignItems: "flex-end",
-    flexShrink: 0,
-  },
-  odometer: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: COLORS.text,
-  },
-  details: {
-    fontSize: 12,
-    color: COLORS.textLight,
-    marginTop: 2,
-  },
-  station: {
-    fontSize: 11,
-    color: COLORS.textMuted,
-    marginTop: 2,
-  },
-  badgeRow: {
-    flexDirection: "row",
+    justifyContent: "space-between",
     gap: 6,
-    marginTop: 5,
   },
-  badge: {
-    alignSelf: "flex-start",
-    paddingVertical: 2,
-    paddingHorizontal: 8,
-    borderRadius: 20,
-    backgroundColor: tint(COLORS.accent, 0.15),
+  menuTrigger: {
+    width: 32,
+    height: 32,
   },
-  badgeText: {
-    fontSize: 11,
-    fontWeight: "500",
-    color: COLORS.accent,
-  },
-  mileageBadge: {
-    backgroundColor: tint(COLORS.success, 0.15),
-  },
-  mileageBadgeText: {
-    color: COLORS.success,
-  },
-  cost: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: COLORS.text,
-    fontFamily: "monospace",
+  metaRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    flexWrap: "wrap",
   },
   date: {
-    fontSize: 11,
-    color: COLORS.textMuted,
-    marginTop: 3,
+    fontSize: 12,
+    color: COLORS.textLight,
   },
-  action: {
-    justifyContent: "center",
-    alignItems: "center",
-    width: 80,
-    height: "100%",
+  tag: {
+    paddingHorizontal: 7,
+    paddingVertical: 1,
+    borderRadius: 6,
   },
-  editAction: {
-    backgroundColor: COLORS.success,
+  tagText: {
+    fontSize: 10.5,
   },
-  deleteAction: {
-    backgroundColor: COLORS.danger,
+  costRow: {
+    flexDirection: "row",
+    alignItems: "baseline",
+    gap: 10,
   },
-  actionText: {
-    color: COLORS.white,
-    fontWeight: "600",
+  cost: {
+    fontSize: 18,
+    fontWeight: "500",
+    color: COLORS.text,
+    fontVariant: ["tabular-nums"],
+  },
+  costDetail: {
+    fontSize: 13,
+    color: COLORS.textLight,
+    fontVariant: ["tabular-nums"],
+  },
+  odoLine: {
+    fontSize: 12,
+    color: COLORS.textLight,
+    fontVariant: ["tabular-nums"],
+  },
+  lockedNote: {
+    fontSize: 11.5,
+    color: COLORS.warning,
   },
 });

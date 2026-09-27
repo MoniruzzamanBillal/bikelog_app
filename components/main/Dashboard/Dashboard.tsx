@@ -1,11 +1,16 @@
 import { BikeFormModal } from "@/components/main/Bike/BikeFormModal";
-import { EmptyState, ErrorState, SectionLoading } from "@/components/main/shared";
+import {
+  EmptyState,
+  ErrorState,
+  PrimaryButton,
+  ScreenHeader,
+  SectionLoading,
+} from "@/components/main/shared";
 import { useFetchData } from "@/hooks/useApi";
 import { TBike } from "@/types/bike.types";
 import { COLORS } from "@/utils/colors";
-import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRef, useState } from "react";
-import { RefreshControl, ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
+import { RefreshControl, ScrollView, StyleSheet, View } from "react-native";
 import { SwipeableMethods } from "react-native-gesture-handler/ReanimatedSwipeable";
 import { Text } from "react-native-paper";
 import { BikeCard } from "./BikeCard";
@@ -27,48 +32,60 @@ export function Dashboard() {
     setRefreshing(false);
   };
 
+  const addButton = (
+    <PrimaryButton onPress={() => setModalOpen(true)} icon="plus" compact>
+      Add bike
+    </PrimaryButton>
+  );
+
   return (
     <View style={styles.container}>
-      <View style={styles.navBar}>
-        <Text style={styles.navTitle}>My Bikes</Text>
-        <TouchableOpacity
-          onPress={() => setModalOpen(true)}
-          style={styles.navBtn}
-          hitSlop={8}
-        >
-          <MaterialCommunityIcons name="plus" size={22} color={COLORS.accent} />
-        </TouchableOpacity>
-      </View>
+      <ScreenHeader title="My bikes" />
 
-      {isLoading ? (
-        <View style={styles.pad}>
-          <SectionLoading count={3} />
+      <ScrollView
+        contentContainerStyle={styles.page}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            tintColor={COLORS.accent}
+          />
+        }
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.topRow}>
+          <Text style={styles.count}>
+            {isLoading
+              ? ""
+              : `${bikes.length} bike${bikes.length === 1 ? "" : "s"}`}
+          </Text>
+          {addButton}
         </View>
-      ) : isError ? (
-        <ErrorState onRetry={refetch} />
-      ) : bikes.length === 0 ? (
-        <EmptyState label="No bikes yet. Tap + to add one." />
-      ) : (
-        <ScrollView
-          contentContainerStyle={styles.pad}
-          refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={handleRefresh}
-              tintColor={COLORS.accent}
-            />
-          }
-          showsVerticalScrollIndicator={false}
-        >
-          {bikes.map((bike) => (
-            <BikeCard
-              key={bike._id}
-              bike={bike}
-              openSwipeableRef={openSwipeableRef}
-            />
-          ))}
-        </ScrollView>
-      )}
+
+        {isLoading ? (
+          <SectionLoading count={3} />
+        ) : isError ? (
+          <ErrorState title="Couldn’t load your bikes" onRetry={refetch} />
+        ) : bikes.length === 0 ? (
+          <EmptyState
+            icon="motorbike"
+            title="No bikes yet"
+            message="Add your first bike to start logging fuel, service and spending."
+            action={addButton}
+          />
+        ) : (
+          <View style={styles.list}>
+            {bikes.map((bike, i) => (
+              <BikeCard
+                key={bike._id}
+                bike={bike}
+                highlight={i === 0}
+                openSwipeableRef={openSwipeableRef}
+              />
+            ))}
+          </View>
+        )}
+      </ScrollView>
 
       <BikeFormModal open={modalOpen} onClose={() => setModalOpen(false)} />
     </View>
@@ -80,27 +97,23 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.background,
   },
-  navBar: {
-    height: 52,
+  page: {
+    paddingHorizontal: 16,
+    paddingTop: 14,
+    paddingBottom: 24,
+    gap: 12,
+  },
+  topRow: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.borderSubtle,
+    justifyContent: "space-between",
+    gap: 12,
   },
-  navTitle: {
-    flex: 1,
-    fontSize: 17,
-    fontWeight: "600",
-    color: COLORS.text,
+  count: {
+    fontSize: 13,
+    color: COLORS.textLight,
   },
-  navBtn: {
-    width: 32,
-    height: 32,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  pad: {
-    padding: 16,
+  list: {
+    gap: 10,
   },
 });

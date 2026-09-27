@@ -28,3 +28,5 @@ export { StatTile } from "./StatTile";
 export { SegmentedTabs } from "./SegmentedTabs";
 export { InsightCard } from "./InsightCard";
 export type { TStatusTone } from "./StatusBadge";
+export { ActionMenu } from "./ActionMenu";
+export type { TMenuAction } from "./ActionMenu";
