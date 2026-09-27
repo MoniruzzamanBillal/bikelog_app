@@ -47,6 +47,7 @@ Update this file after every spec — status table, Recent Activity log, and Kno
 | 35   | ✅ Complete    | Inline edit for maintenance types and engine oil types in `SettingsCatalog.tsx` — client for backend spec 38 — see `context/specs/35-maintenance-and-oil-type-update.md`.                                                                      |
 | 36   | 🔄 In progress | Quick-add fuel log Android home-screen widget — all code (§1/§2/§3) implemented; blocked on the user's own EAS dev-client build + on-device tap-through — see `ai context/specs/36-quick-add-fuel-log-widget.md` and `36a-widget-implementation-findings.md`. |
 | 37   | ✅ Complete    | Fuel-efficiency anomaly banner — client for backend spec 39 (shipped/verified 2026-09-21) — see `ai context/specs/37-fuel-efficiency-anomaly-banner.md`.                                                                                       |
+| 38   | ⛔ Not started | Nocturne web parity — restyle the app (dark only, same navigation) to match the redesigned web client (web spec 27). Detailed self-contained handoff spec: `ai context/specs/38-nocturne-web-parity.md` — implement in a fresh session. |
 
 ## Completed (already implemented)
 
