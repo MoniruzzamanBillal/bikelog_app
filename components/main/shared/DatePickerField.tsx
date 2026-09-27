@@ -3,7 +3,9 @@ import { Platform, StyleSheet, TouchableOpacity, View } from "react-native";
 import { Text } from "react-native-paper";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { format, parse } from "date-fns";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { COLORS } from "@/utils/colors";
+import { fieldStyles } from "./FormField";
 
 interface DatePickerFieldProps {
   label: string;
@@ -35,9 +37,16 @@ export function DatePickerField({
         onPress={() => setShowPicker(true)}
         style={styles.box}
       >
-        <Text style={value ? styles.valueText : styles.placeholderText}>
-          {value ? format(dateValue, "dd MMM yyyy") : "Select date"}
-        </Text>
+        <View style={styles.boxContent}>
+          <Text style={value ? styles.valueText : styles.placeholderText}>
+            {value ? format(dateValue, "dd MMM yyyy") : "Select date"}
+          </Text>
+          <MaterialCommunityIcons
+            name="calendar-blank-outline"
+            size={16}
+            color={COLORS.textLight}
+          />
+        </View>
       </TouchableOpacity>
 
       {showPicker && (
@@ -60,26 +69,11 @@ export function DatePickerField({
 }
 
 const styles = StyleSheet.create({
-  field: {
-    marginBottom: 14,
+  ...fieldStyles,
+  boxContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 8,
   },
-  label: {
-    fontSize: 11,
-    fontWeight: "500",
-    color: COLORS.textLight,
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
-    marginBottom: 5,
-  },
-  box: {
-    backgroundColor: COLORS.surface,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    borderRadius: 8,
-    paddingHorizontal: 14,
-    height: 44,
-    justifyContent: "center",
-  },
-  valueText: { fontSize: 15, color: COLORS.text },
-  placeholderText: { fontSize: 15, color: COLORS.placeholder },
 });

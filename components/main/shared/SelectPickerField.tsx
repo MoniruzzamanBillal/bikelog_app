@@ -3,6 +3,7 @@ import { StyleSheet, View } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { Menu, Text, TouchableRipple } from "react-native-paper";
 import { COLORS } from "@/utils/colors";
+import { fieldStyles } from "./FormField";
 
 interface SelectPickerFieldProps {
   label: string;
@@ -63,7 +64,7 @@ export function SelectPickerField({
               <MaterialCommunityIcons
                 name="chevron-down"
                 size={16}
-                color={COLORS.textMuted}
+                color={COLORS.textLight}
               />
             </View>
           </TouchableRipple>
@@ -87,30 +88,7 @@ export function SelectPickerField({
 }
 
 const styles = StyleSheet.create({
-  field: {
-    marginBottom: 14,
-  },
-  label: {
-    fontSize: 11,
-    fontWeight: "500",
-    color: COLORS.textLight,
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
-    marginBottom: 5,
-  },
-  required: {
-    color: COLORS.danger,
-    textTransform: "none",
-  },
-  box: {
-    backgroundColor: COLORS.surface,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    borderRadius: 8,
-    paddingHorizontal: 14,
-    height: 44,
-    justifyContent: "center",
-  },
+  ...fieldStyles,
   boxDisabled: {
     opacity: 0.5,
   },
@@ -119,12 +97,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
   },
-  valueText: { fontSize: 15, color: COLORS.text },
-  placeholderText: { fontSize: 15, color: COLORS.placeholder },
   menuContent: {
-    backgroundColor: COLORS.surface2,
+    backgroundColor: COLORS.card,
+    borderWidth: 1,
+    borderColor: COLORS.edge,
+    borderRadius: 10,
   },
   menuItemTitle: {
     color: COLORS.text,
+    fontSize: 14,
   },
 });

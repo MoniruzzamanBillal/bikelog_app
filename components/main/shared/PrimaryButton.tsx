@@ -1,56 +1,103 @@
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { ReactNode } from "react";
-import { ActivityIndicator, StyleSheet, TouchableOpacity } from "react-native";
+import {
+  ActivityIndicator,
+  Pressable,
+  StyleProp,
+  StyleSheet,
+  View,
+  ViewStyle,
+} from "react-native";
 import { Text } from "react-native-paper";
-import { COLORS } from "@/utils/colors";
+import { COLORS, tint } from "@/utils/colors";
+
+type TButtonVariant = "primary" | "secondary" | "destructive";
 
 interface PrimaryButtonProps {
   children: ReactNode;
   onPress: () => void;
   loading?: boolean;
   disabled?: boolean;
-  style?: object;
+  variant?: TButtonVariant;
+  icon?: React.ComponentProps<typeof MaterialCommunityIcons>["name"];
+  /** Auto width instead of the default full-width block. */
+  compact?: boolean;
+  style?: StyleProp<ViewStyle>;
 }
+
+const variantColors: Record<TButtonVariant, { border: string; label: string }> = {
+  primary: { border: COLORS.accent, label: COLORS.accent },
+  secondary: { border: COLORS.border, label: COLORS.text },
+  destructive: { border: COLORS.border, label: COLORS.danger },
+};
 
 export function PrimaryButton({
   children,
   onPress,
   loading,
   disabled,
+  variant = "primary",
+  icon,
+  compact,
   style,
 }: PrimaryButtonProps) {
+  const tone = variantColors[variant];
+  const isOff = disabled || loading;
+
   return (
-    <TouchableOpacity
+    <Pressable
       onPress={onPress}
-      disabled={disabled || loading}
-      activeOpacity={0.7}
-      style={[styles.button, (disabled || loading) && styles.disabled, style]}
+      disabled={isOff}
+      style={({ pressed }) => [
+        styles.button,
+        { borderColor: tone.border },
+        compact && styles.compact,
+        pressed && !isOff && { backgroundColor: tint(tone.label, 0.12) },
+        isOff && styles.disabled,
+        style,
+      ]}
     >
       {loading ? (
-        <ActivityIndicator size="small" color={COLORS.accent} />
+        <ActivityIndicator size="small" color={tone.label} />
       ) : (
-        <Text style={styles.label}>{children}</Text>
+        <View style={styles.content}>
+          {icon ? (
+            <MaterialCommunityIcons name={icon} size={16} color={tone.label} />
+          ) : null}
+          <Text style={[styles.label, { color: tone.label }]}>{children}</Text>
+        </View>
       )}
-    </TouchableOpacity>
+    </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
   button: {
     borderWidth: 1,
-    borderColor: COLORS.accent,
     borderRadius: 8,
-    paddingVertical: 12,
-    paddingHorizontal: 24,
+    minHeight: 42,
+    paddingVertical: 9,
+    paddingHorizontal: 16,
     alignItems: "center",
     justifyContent: "center",
     width: "100%",
   },
+  compact: {
+    width: "auto",
+    minHeight: 36,
+    paddingVertical: 7,
+    paddingHorizontal: 12,
+  },
+  content: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
   disabled: {
-    opacity: 0.5,
+    opacity: 0.45,
   },
   label: {
-    fontSize: 15,
-    fontWeight: "600",
-    color: COLORS.accent,
+    fontSize: 14,
+    fontWeight: "500",
   },
 });

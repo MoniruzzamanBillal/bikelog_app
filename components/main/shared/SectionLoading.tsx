@@ -1,25 +1,23 @@
 import { useEffect, useRef } from "react";
-import { Animated, StyleSheet, View } from "react-native";
+import { Animated, DimensionValue, StyleProp, StyleSheet, View, ViewStyle } from "react-native";
 import { COLORS } from "@/utils/colors";
+import { panelStyle } from "./Panel";
 
-interface SectionLoadingProps {
-  count?: number;
-}
-
-export function SectionLoading({ count = 3 }: SectionLoadingProps) {
-  const pulse = useRef(new Animated.Value(0.4)).current;
+/** Gentle 1 → 0.45 opacity loop shared by every skeleton. */
+function usePulse() {
+  const pulse = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     const loop = Animated.loop(
       Animated.sequence([
         Animated.timing(pulse, {
-          toValue: 1,
-          duration: 650,
+          toValue: 0.45,
+          duration: 800,
           useNativeDriver: true,
         }),
         Animated.timing(pulse, {
-          toValue: 0.4,
-          duration: 650,
+          toValue: 1,
+          duration: 800,
           useNativeDriver: true,
         }),
       ]),
@@ -28,31 +26,66 @@ export function SectionLoading({ count = 3 }: SectionLoadingProps) {
     return () => loop.stop();
   }, [pulse]);
 
+  return pulse;
+}
+
+interface SkeletonBarProps {
+  width?: DimensionValue;
+  height?: number;
+  style?: StyleProp<ViewStyle>;
+}
+
+/** A single pulsing placeholder bar — reused by `InsightCard` and screens. */
+export function SkeletonBar({ width = "100%", height = 12, style }: SkeletonBarProps) {
+  const pulse = usePulse();
+
   return (
-    <View>
+    <Animated.View
+      style={[styles.bar, { width, height, opacity: pulse }, style]}
+    />
+  );
+}
+
+interface SectionLoadingProps {
+  count?: number;
+  style?: StyleProp<ViewStyle>;
+}
+
+/** `count` panel-shaped skeletons — the loading state of every list screen. */
+export function SectionLoading({ count = 3, style }: SectionLoadingProps) {
+  const pulse = usePulse();
+
+  return (
+    <View style={[styles.stack, style]}>
       {Array.from({ length: count }).map((_, i) => (
-        <Animated.View key={i} style={[styles.skeleton, { opacity: pulse }]}>
-          <View style={styles.skeletonLine} />
-          <View style={[styles.skeletonLine, { width: "80%" }]} />
-        </Animated.View>
+        <View key={i} style={styles.panel}>
+          <Animated.View
+            style={[styles.bar, { width: "55%", opacity: pulse }]}
+          />
+          <Animated.View
+            style={[styles.bar, { width: "85%", opacity: pulse }]}
+          />
+          <Animated.View
+            style={[styles.bar, { width: "40%", opacity: pulse }]}
+          />
+        </View>
       ))}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  skeleton: {
-    padding: 16,
-    marginBottom: 10,
-    backgroundColor: COLORS.surface,
-    borderWidth: 1,
-    borderColor: COLORS.borderSubtle,
-    borderRadius: 10,
+  stack: {
+    gap: 10,
   },
-  skeletonLine: {
+  panel: {
+    ...panelStyle,
+    padding: 14,
+    gap: 8,
+  },
+  bar: {
     height: 12,
-    backgroundColor: COLORS.surface3,
+    backgroundColor: COLORS.surface2,
     borderRadius: 6,
-    marginBottom: 8,
   },
 });
