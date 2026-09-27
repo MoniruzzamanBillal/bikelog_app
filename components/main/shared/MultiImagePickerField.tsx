@@ -6,7 +6,7 @@ import * as ImagePicker from "expo-image-picker";
 import { useState } from "react";
 import { Alert, StyleSheet, View } from "react-native";
 import { TouchableOpacity } from "react-native-gesture-handler";
-import { ActivityIndicator } from "react-native-paper";
+import { ActivityIndicator, Text } from "react-native-paper";
 import Toast from "react-native-toast-message";
 import { TPickedImageFile } from "./ImagePickerField";
 import { ImageViewerModal } from "./ImageViewerModal";
@@ -142,11 +142,14 @@ export function MultiImagePickerField({
           {uploading ? (
             <ActivityIndicator color={COLORS.primary} size="small" />
           ) : (
-            <MaterialCommunityIcons
-              name="plus"
-              size={22}
-              color={COLORS.textLight}
-            />
+            <>
+              <MaterialCommunityIcons
+                name="plus"
+                size={18}
+                color={COLORS.textLight}
+              />
+              <Text style={styles.addTileLabel}>{remaining} left</Text>
+            </>
           )}
         </TouchableOpacity>
       )}
@@ -164,7 +167,7 @@ export function MultiImagePickerField({
   );
 }
 
-const SIZE = 64;
+const SIZE = 56;
 
 const styles = StyleSheet.create({
   row: {
@@ -180,16 +183,21 @@ const styles = StyleSheet.create({
   tile: {
     width: SIZE,
     height: SIZE,
-    borderRadius: 6,
+    borderRadius: 8,
     overflow: "hidden",
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    backgroundColor: COLORS.background,
+    backgroundColor: COLORS.surface3,
   },
   addTile: {
-    borderStyle: "dashed",
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    backgroundColor: "transparent",
     alignItems: "center",
     justifyContent: "center",
+    gap: 2,
+  },
+  addTileLabel: {
+    fontSize: 10,
+    color: COLORS.textLight,
   },
   image: {
     width: "100%",

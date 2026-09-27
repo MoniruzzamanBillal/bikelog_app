@@ -7,11 +7,18 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import Markdown from "react-native-markdown-display";
 import { ActivityIndicator, Text, TextInput } from "react-native-paper";
 import Toast from "react-native-toast-message";
-import { ScreenHeader } from "@/components/main/shared";
+import { Panel, ScreenHeader } from "@/components/main/shared";
 import { useFetchData, usePost } from "@/hooks/useApi";
-import { COLORS, tint } from "@/utils/colors";
+import { COLORS } from "@/utils/colors";
 import { TBike } from "@/types/bike.types";
 import { TBikeChatResponse, TChatMessage } from "@/types/ai-assistant.types";
+
+const STARTER_PROMPTS = [
+  "When is my next oil change due?",
+  "Why did my mileage change recently?",
+  "How much did I spend on fuel this year?",
+  "What tyre pressure does the manual recommend?",
+];
 
 export function AiAssistant() {
   const insets = useSafeAreaInsets();
@@ -37,8 +44,8 @@ export function AiAssistant() {
     setMessages([]);
   }
 
-  const handleSend = async () => {
-    const content = input.trim();
+  const handleSend = async (prompt?: string) => {
+    const content = (prompt ?? input).trim();
     if (!content || chatMutation.isPending) return;
 
     const userMessage: TChatMessage = { role: "user", content };
@@ -66,7 +73,11 @@ export function AiAssistant() {
 
   return (
     <View style={styles.screen}>
-      <ScreenHeader title="AI Assistant" backLabel={bike?.nickname ?? "Back"} />
+      <ScreenHeader
+        title="AI Assistant"
+        subtitle={bike?.nickname}
+        backLabel={bike?.nickname ?? "Back"}
+      />
 
       <ScrollView
         ref={scrollRef}
@@ -77,18 +88,35 @@ export function AiAssistant() {
         }
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.groundedPillWrap}>
-          <Text style={styles.groundedPill}>
-            Grounded in your bike manual &amp; logs
-          </Text>
-        </View>
-
         {messages.length === 0 && !chatMutation.isPending && (
-          <View style={[styles.bubble, styles.bubbleAssistant]}>
-            <Text style={styles.bubbleSender}>bikeLog AI</Text>
-            <Text style={styles.bubbleText}>
-              Ask anything about this bike&apos;s fuel, mileage, or maintenance.
+          <View style={styles.emptyState}>
+            <View style={styles.emptyChip}>
+              <MaterialCommunityIcons
+                name="robot-outline"
+                size={20}
+                color={COLORS.accent}
+              />
+            </View>
+            <Text style={styles.emptyTitle}>
+              Ask about {bike?.nickname ?? "this bike"}
             </Text>
+            <Text style={styles.emptyLede}>
+              Answers use this bike&apos;s fuel, mileage, maintenance and
+              spending.
+            </Text>
+
+            <View style={styles.starterList}>
+              {STARTER_PROMPTS.map((prompt) => (
+                <TouchableOpacity
+                  key={prompt}
+                  onPress={() => handleSend(prompt)}
+                  style={styles.starterChip}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.starterChipText}>{prompt}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
           </View>
         )}
 
@@ -97,22 +125,23 @@ export function AiAssistant() {
             key={index}
             style={[
               styles.bubble,
-              message.role === "user" ? styles.bubbleUser : styles.bubbleAssistant,
+              message.role === "user"
+                ? styles.bubbleUser
+                : styles.bubbleAssistant,
             ]}
           >
             {message.role === "user" ? (
               <Text style={styles.bubbleTextUser}>{message.content}</Text>
             ) : (
-              <>
-                <Text style={styles.bubbleSender}>bikeLog AI</Text>
-                <Markdown style={markdownStyles}>{message.content}</Markdown>
-              </>
+              <Markdown style={markdownStyles}>{message.content}</Markdown>
             )}
           </View>
         ))}
 
         {chatMutation.isPending && (
-          <View style={[styles.bubble, styles.bubbleAssistant, styles.bubbleThinking]}>
+          <View
+            style={[styles.bubble, styles.bubbleAssistant, styles.bubbleThinking]}
+          >
             <ActivityIndicator size="small" color={COLORS.accent} />
             <Text style={styles.bubbleText}>AI is thinking…</Text>
           </View>
@@ -120,34 +149,42 @@ export function AiAssistant() {
       </ScrollView>
 
       <KeyboardStickyView
-        style={styles.inputRow}
+        style={styles.composerWrap}
         offset={{ closed: -insets.bottom, opened: 0 }}
       >
-        <TextInput
-          value={input}
-          onChangeText={setInput}
-          placeholder="Ask about your bike…"
-          placeholderTextColor={COLORS.placeholder}
-          multiline
-          numberOfLines={2}
-          editable={!chatMutation.isPending}
-          textColor={COLORS.text}
-          cursorColor={COLORS.accent}
-          selectionColor={COLORS.accent}
-          underlineColor="transparent"
-          activeUnderlineColor="transparent"
-          style={styles.input}
-        />
-        <TouchableOpacity
-          onPress={handleSend}
-          disabled={chatMutation.isPending || !input.trim()}
-          style={[
-            styles.sendButton,
-            (chatMutation.isPending || !input.trim()) && styles.sendButtonDisabled,
-          ]}
-        >
-          <MaterialCommunityIcons name="send" size={16} color={COLORS.white} />
-        </TouchableOpacity>
+        <Panel glow={messages.length === 0} style={styles.composer}>
+          <TextInput
+            value={input}
+            onChangeText={setInput}
+            placeholder="Ask about your bike…"
+            placeholderTextColor={COLORS.placeholder}
+            multiline
+            numberOfLines={2}
+            editable={!chatMutation.isPending}
+            textColor={COLORS.text}
+            cursorColor={COLORS.accent}
+            selectionColor={COLORS.accent}
+            underlineColor="transparent"
+            activeUnderlineColor="transparent"
+            underlineStyle={{ display: "none" }}
+            style={styles.input}
+          />
+          <TouchableOpacity
+            onPress={() => handleSend()}
+            disabled={chatMutation.isPending || !input.trim()}
+            style={[
+              styles.sendButton,
+              (chatMutation.isPending || !input.trim()) &&
+                styles.sendButtonDisabled,
+            ]}
+          >
+            <MaterialCommunityIcons
+              name="send"
+              size={16}
+              color={COLORS.accent}
+            />
+          </TouchableOpacity>
+        </Panel>
       </KeyboardStickyView>
     </View>
   );
@@ -162,7 +199,8 @@ export function AiAssistant() {
 const markdownStyles = {
   body: {
     color: COLORS.text,
-    fontSize: 13,
+    fontSize: 13.5,
+    lineHeight: 21,
   },
   paragraph: {
     marginTop: 0,
@@ -175,23 +213,25 @@ const markdownStyles = {
   heading5: { fontSize: 12, fontWeight: "600" as const, color: COLORS.text },
   heading6: { fontSize: 12, fontWeight: "600" as const, color: COLORS.text },
   strong: {
-    fontWeight: "700" as const,
+    fontWeight: "600" as const,
     color: COLORS.text,
   },
   bullet_list: {
     marginBottom: 6,
+    paddingLeft: 18,
   },
   ordered_list: {
     marginBottom: 6,
+    paddingLeft: 18,
   },
   list_item: {
     marginBottom: 2,
   },
   code_inline: {
     backgroundColor: COLORS.surface2,
-    borderColor: COLORS.borderSubtle,
+    borderColor: COLORS.edge,
     borderWidth: 1,
-    borderRadius: 4,
+    borderRadius: 6,
     paddingHorizontal: 4,
     paddingVertical: 1,
     fontSize: 12,
@@ -199,18 +239,18 @@ const markdownStyles = {
   },
   code_block: {
     backgroundColor: COLORS.surface2,
-    borderColor: COLORS.borderSubtle,
+    borderColor: COLORS.edge,
     borderWidth: 1,
-    borderRadius: 4,
+    borderRadius: 6,
     padding: 8,
     fontSize: 12,
     color: COLORS.text,
   },
   fence: {
     backgroundColor: COLORS.surface2,
-    borderColor: COLORS.borderSubtle,
+    borderColor: COLORS.edge,
     borderWidth: 1,
-    borderRadius: 4,
+    borderRadius: 6,
     padding: 8,
     fontSize: 12,
     color: COLORS.text,
@@ -230,88 +270,126 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   messagesContent: {
-    padding: 16,
+    paddingHorizontal: 16,
+    paddingTop: 14,
+    paddingBottom: 12,
     gap: 10,
   },
-  groundedPillWrap: {
-    alignItems: "center",
-    marginBottom: 4,
+  emptyState: {
+    alignItems: "flex-start",
+    gap: 8,
+    paddingVertical: 8,
   },
-  groundedPill: {
-    fontSize: 11,
-    color: COLORS.placeholder,
-    backgroundColor: tint(COLORS.card, 0.6),
-    paddingVertical: 4,
-    paddingHorizontal: 10,
-    borderRadius: 20,
-    overflow: "hidden",
+  emptyChip: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: COLORS.accent,
+    shadowColor: COLORS.accent,
+    shadowOpacity: 0.45,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 0 },
+    elevation: 6,
+  },
+  emptyTitle: {
+    fontSize: 18,
+    fontWeight: "500",
+    color: COLORS.text,
+    marginTop: 2,
+  },
+  emptyLede: {
+    fontSize: 13.5,
+    lineHeight: 20,
+    color: COLORS.textLight,
+  },
+  starterList: {
+    marginTop: 8,
+    gap: 8,
+    alignSelf: "stretch",
+  },
+  starterChip: {
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+  },
+  starterChipText: {
+    fontSize: 13,
+    color: COLORS.text,
   },
   bubble: {
-    maxWidth: "82%",
-    borderRadius: 14,
     paddingVertical: 9,
     paddingHorizontal: 13,
   },
   bubbleUser: {
+    maxWidth: "80%",
     alignSelf: "flex-end",
-    backgroundColor: COLORS.accent,
-    borderBottomRightRadius: 3,
+    backgroundColor: COLORS.surface3,
+    borderTopLeftRadius: 12,
+    borderTopRightRadius: 12,
+    borderBottomRightRadius: 4,
+    borderBottomLeftRadius: 12,
   },
   bubbleAssistant: {
+    maxWidth: "86%",
     alignSelf: "flex-start",
-    backgroundColor: COLORS.surface,
+    backgroundColor: COLORS.card,
     borderWidth: 1,
-    borderColor: COLORS.borderSubtle,
-    borderBottomLeftRadius: 3,
+    borderColor: COLORS.edge,
+    borderTopLeftRadius: 12,
+    borderTopRightRadius: 12,
+    borderBottomRightRadius: 12,
+    borderBottomLeftRadius: 4,
   },
   bubbleThinking: {
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
   },
-  bubbleSender: {
-    fontSize: 10,
-    fontWeight: "500",
-    color: COLORS.textMuted,
-    marginBottom: 4,
-  },
   bubbleTextUser: {
-    fontSize: 13,
-    lineHeight: 19,
-    color: COLORS.white,
+    fontSize: 13.5,
+    lineHeight: 21,
+    color: COLORS.accentForeground,
   },
   bubbleText: {
-    fontSize: 13,
-    lineHeight: 19,
+    fontSize: 13.5,
+    lineHeight: 21,
     color: COLORS.text,
   },
-  inputRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    padding: 10,
-    borderTopWidth: 1,
-    borderTopColor: COLORS.borderSubtle,
+  composerWrap: {
+    paddingHorizontal: 16,
+    paddingBottom: 12,
+    paddingTop: 4,
     backgroundColor: COLORS.background,
+  },
+  composer: {
+    flexDirection: "row",
+    alignItems: "flex-end",
+    gap: 6,
+    borderRadius: 12,
+    padding: 6,
   },
   input: {
     flex: 1,
-    backgroundColor: COLORS.surface,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    borderRadius: 20,
+    backgroundColor: "transparent",
     maxHeight: 90,
+    fontSize: 14,
   },
   sendButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: COLORS.accent,
+    width: 40,
+    height: 40,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: COLORS.accent,
     alignItems: "center",
     justifyContent: "center",
     flexShrink: 0,
   },
   sendButtonDisabled: {
-    opacity: 0.5,
+    opacity: 0.45,
   },
 });
