@@ -20,7 +20,7 @@ interface ImagePickerFieldProps {
   uploading: boolean;
   disabled?: boolean;
   /**
-   * Tile edge length. Defaults to the original 64. Below `COMPACT_BELOW` the
+   * Tile edge length. Defaults to the original 64. Below `COMPACT_BELOW` (64) the
    * floating pencil/close badges have no room, so view/replace/delete move into
    * one native action sheet instead — same actions, just not as badges.
    */
@@ -144,7 +144,9 @@ export function ImagePickerField({
         <TouchableOpacity
           onPress={handlePress}
           disabled={uploading || disabled}
-          style={styles.touchable}
+          // Explicit size, not 100%: RNGH wraps the touchable in its own container,
+          // so a percentage collapses on web and hides the image (spec 38a).
+          style={[styles.touchable, { width: size, height: size }]}
         >
           {value ? (
             <Image
@@ -207,7 +209,9 @@ export function ImagePickerField({
 }
 
 const SIZE = 64;
-const COMPACT_BELOW = 48;
+// ! Any non-default size uses the action sheet: the badges' fixed `top: -75` is
+// ! tuned (and device-verified, spec 29) for the 64pt tile only. See spec 38a.
+const COMPACT_BELOW = 64;
 
 const styles = StyleSheet.create({
   wrapper: {
@@ -224,8 +228,8 @@ const styles = StyleSheet.create({
     backgroundColor: "transparent",
   },
   touchable: {
-    width: "100%",
-    height: "100%",
+    alignItems: "center",
+    justifyContent: "center",
   },
   image: {
     width: "100%",

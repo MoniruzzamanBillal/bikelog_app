@@ -112,6 +112,9 @@ const styles = StyleSheet.create({
     borderWidth: 0,
     backgroundColor: "transparent",
     padding: 0,
+    // Paper's flat TextInput only drops its own inner inset for a numeric
+    // paddingHorizontal (spec 38a) — `padding: 0` alone doesn't reach it.
+    paddingHorizontal: 0,
     fontSize: 15,
     height: 42,
   },

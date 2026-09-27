@@ -58,9 +58,11 @@ export function YearlyMileageTab({ bikeId }: YearlyMileageTabProps) {
             <Text style={styles.chartTitle}>Distance by month</Text>
             <BarChart
               data={barData}
-              barWidth={14}
-              spacing={10}
+              barWidth={12}
+              spacing={9}
               initialSpacing={8}
+              endSpacing={8}
+              yAxisLabelWidth={34}
               roundedTop
               height={140}
               yAxisThickness={0}

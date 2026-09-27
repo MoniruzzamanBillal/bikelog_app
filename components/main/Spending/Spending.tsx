@@ -356,9 +356,11 @@ function TrendTab({ bikeId }: { bikeId: string }) {
         <Text style={styles.chartTitle}>Spending, last 6 months</Text>
         <BarChart
           data={barData}
-          barWidth={30}
-          spacing={20}
-          initialSpacing={10}
+          barWidth={24}
+          spacing={16}
+          initialSpacing={8}
+          endSpacing={8}
+          yAxisLabelWidth={34}
           roundedTop
           height={180}
           yAxisThickness={0}
