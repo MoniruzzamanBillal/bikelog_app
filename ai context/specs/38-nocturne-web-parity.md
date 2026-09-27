@@ -2,11 +2,11 @@
 
 ## Status
 
-🔄 In progress (started 2026-09-27). Phases 1, 2 and screens 1–8 of phase 3 are
-done and committed on `dev/monir`; screens 9–11 and phase 4 are not. See
-**Implementation progress (2026-09-27)** at the bottom of this file before
-continuing. Everything needed is in this file. Read it top to bottom before
-touching code.
+✅ Complete (2026-09-27). All four phases implemented and committed on `dev/monir`;
+the Verify pass (Expo web at 375×812, API fully mocked) found four visual defects,
+planned and fixed in `38a-nocturne-visual-pass-fixes.md`. **Still owed: a
+real-device pass** — see Verify and Implementation notes. Read the notes at the
+bottom before touching any of these screens.
 
 ## Goal
 
@@ -289,27 +289,41 @@ Page padding is 16 horizontal / 14 top, and the gap between blocks is 10–12.
 
 ## Implementation order (commit after each, on `dev/monir`)
 
-1. **Phase 1, tokens**: section A. Commit message: `feat(ui): retune Nocturne tokens to web parity (spec 38)`.
-2. **Phase 2, shared**: section C, including the tab bar. Screens should still render; verify quickly.
-3. **Phase 3, screens**: section D in order 1 → 11. You may split this into 2–3 commits (e.g. 1–3, 4–6, 7–11).
-4. **Phase 4, docs**:
-   - spec status → ✅, with an Implementation notes section added here
-   - the `progress-tracker.md` row + a Recent Activity entry
-   - a spec 38 row in `specs/00-build-plan.md` (that index currently stops at spec 30, a pre-existing gap; don't backfill 31–37 unless asked)
-   - rewrite `ai context/ui-context.md`'s "Colors", "Status Badges", "Spacing & Radius", "Typography" and "Shadows / Elevation" sections to the new values
-   - the Known Gaps: Manual screen, Admin screen, no light theme
+1. ✅ **Phase 1, tokens**: section A. Commit message: `feat(ui): retune Nocturne tokens to web parity (spec 38)`.
+2. ✅ **Phase 2, shared**: section C, including the tab bar. Screens should still render; verify quickly.
+3. ✅ **Phase 3, screens**: section D in order 1 → 11. You may split this into 2–3 commits (e.g. 1–3, 4–6, 7–11).
+4. ✅ **Phase 4, docs**:
+   - ✅ spec status → ✅, with an Implementation notes section added here
+   - ✅ the `progress-tracker.md` row + a Recent Activity entry
+   - ✅ a spec 38 row in `specs/00-build-plan.md` (that index currently stops at spec 30, a pre-existing gap; don't backfill 31–37 unless asked)
+   - ✅ rewrite `ai context/ui-context.md`'s "Colors", "Status Badges", "Spacing & Radius", "Typography" and "Shadows / Elevation" sections to the new values
+   - ✅ the Known Gaps: Manual screen, Admin screen, no light theme
 
 ## Verify
 
-- [ ] `npx tsc --noEmit` clean; `yarn lint` shows no new warnings versus the baseline.
-- [ ] The guardrail 1 audit shows only the allowed read-only additions: the hub's 3 reuse fetches, the optional fuel-lock reuse, and the assistant nickname reuse.
-- [ ] `bikelog_client-web-` and `bikelog_server` `git status` are empty.
-- [ ] **Visual check on Expo web** (`yarn web`) with Playwright at **375×812**:
-  - `utils/envConfig.ts` points at the **production** API (`https://bikelog-server.vercel.app`). **Don't create test data there.**
-  - Mock `https://bikelog-server.vercel.app/api/**` with fixtures. The web session's script is reusable: `…/scratchpad/shots.py` from the 2026-09-27 web session may be gone, so rebuild it. It fulfilled each route with `{success:true,statusCode:200,message:"ok",data}` shaped per the `types/*.types.ts` files.
-  - Seed the session: `context/user.context.tsx` reads AsyncStorage keys **`token`** and **`user`** (JSON). On web, AsyncStorage maps to `localStorage`, so set them via `add_init_script` before load. The token is any JWT-shaped string with a future `exp`.
-  - Screenshot every screen and compare against the web's dark mobile screens (`bikelog_client-web-` running `yarn dev` with the same mocks) or the mockups in `redesign/extracted/`.
-- [ ] Remind the user that a **real-device pass** (Expo Go / dev client) is still needed. Shadows/glow, gifted-charts, the date pickers and Paper `Menu` positioning render differently on native.
+- [x] `npx tsc --noEmit` clean; `yarn lint` shows no new warnings versus the baseline (0 → 0).
+- [x] The guardrail 1 audit shows only the allowed read-only additions (see
+      Implementation notes: the hub's 3 reuses + `RemindersBanner`'s bike reuse;
+      the fuel-lock and nickname reuses needed no new fetch; two removals, both
+      caused by this spec's own layouts).
+- [x] `bikelog_client-web-` and `bikelog_server` `git status` are empty (checked before every commit).
+- [x] **Visual check on Expo web** (`yarn web`) with Playwright at **375×812**:
+  - Every `https://bikelog-server.vercel.app/api/**` request was fulfilled from
+    fixtures shaped per `types/*.types.ts` (`{success,statusCode,message,data}`);
+    the run logged **0 unmocked requests** and **0 page errors**, so nothing
+    touched production. The session was seeded through `localStorage` `token` /
+    `user`.
+  - 22 screenshots: all 11 screen areas, the mileage/spending sub-tabs, the hub
+    ⋯ menu, two form modals, login, the login-error banner and register.
+    Compared against `redesign/extracted/<Screen>.html` (isMob branches).
+  - Found four defects (chart overflow, `ImagePickerField` collapse + badge
+    placement, `FormField` inset) → planned and fixed in spec 38a, then re-shot.
+  - Script: session scratchpad `shots.py` (not committed; rebuild from 38a's
+    description if needed).
+- [ ] **Real-device pass (Expo Go / dev client) — still needed, and the user has
+      been reminded.** Shadows/glow, gifted-charts sizing, the date pickers, Paper
+      `Menu` positioning, and the small-thumb action sheets all render differently
+      on native than on web. Nothing here has run on a device or against live data.
 
 ## Known gaps carried forward (don't build in this spec)
 
@@ -317,13 +331,14 @@ Page padding is 16 horizontal / 14 top, and the gap between blocks is 10–12.
 - **Admin error-log screen**: web only (web spec 26). Already noted in the web tracker.
 - **Light theme**: the user chose dark-only for the app.
 
-## Implementation progress (2026-09-27)
+## Implementation notes (2026-09-27)
 
-Stopped partway through phase 3 because the session hit its usage limit — not
-because of a blocker. `npx tsc --noEmit` and `yarn lint` were clean at every
-commit, and the guardrail-1 audit showed only the allowed read-only additions.
+The work was split across two sessions (the first hit its usage limit after
+screen 8 and left a handover here; the second finished it). `npx tsc --noEmit`
+and `yarn lint` were clean at every commit — the lint baseline was 0 warnings
+and stayed there — and the guardrail-1 audit ran before each one.
 
-### Done and committed on `dev/monir`
+### Commits on `dev/monir`
 
 | Commit    | Scope                                                                 |
 | --------- | --------------------------------------------------------------------- |
@@ -332,48 +347,52 @@ commit, and the guardrail-1 audit showed only the allowed read-only additions.
 | `5effcb9` | Phase 3 screens 1–3 — Dashboard, bike hub, fuel logs                  |
 | `be25352` | Phase 3 screens 4–6 — mileage, spending, maintenance                  |
 | `c5e7194` | Phase 3 screens 7–8 — issues / accessories / documents, AI assistant  |
-
-### Still to do
-
-1. **§D.9 Settings catalog** (`components/main/SettingsCatalog/SettingsCatalog.tsx`) — untouched.
-2. **§D.10 Auth** (`app/auth.tsx`, `app/register.tsx`, `components/main/Auth/{LoginForm,RegisterForm}.tsx`) — untouched.
-3. **§D.11 Form modals + quick add** — they already inherit the restyled shared
-   fields and buttons, but the modal surface (`COLORS.card`, radius 14), the
-   20/500 title and the Cancel/Save actions row have **not** been set yet.
-4. **Phase 4 docs** — spec status → ✅, `progress-tracker.md` row + Recent
-   Activity, a spec 38 row in `specs/00-build-plan.md`, the `ui-context.md`
-   rewrite, and the Known Gaps entries.
-5. **Verify** — the checklist below is entirely unrun: no Expo-web/Playwright
-   pass at 375×812, and no real-device pass.
+| `8c9aa15` | Phase 3 screens 9–11 — settings catalog, auth, form modals + quick add |
+| `3d8a3de` | Spec 38a — the four defects the Verify pass found                     |
+| (this)    | Phase 4 — docs                                                        |
 
 ### Decisions and deviations worth knowing
 
 - **Swipe rows replaced by explicit controls.** Fuel logs, maintenance logs,
   issues, accessories and documents used `ReanimatedSwipeable` edit/delete
-  panels. The spec's own layouts specify ⋯ menus and icon buttons instead, so
+  panels. This spec's own layouts specify ⋯ menus and icon buttons instead, so
   those rows are now plain panels and `openSwipeableRef` is gone from them.
   Every action stays reachable. The dashboard's `BikeCard` **keeps** its swipe
-  (the spec's card design has no ⋯ affordance), just tone-tinted.
+  (its design has no ⋯ affordance), just tone-tinted.
+- **Accessories keep "Mark purchased"** — it moved into the card's ⋯ menu
+  (pending items only), beside the spec's Edit/Delete, so the feature survives.
 - **New shared pieces beyond §C**: `ActionMenu` (the ⋯ menu, carrying
   `SelectPickerField`'s Paper-`Menu` remount fix), `RuleFade` (the `.rule-fade`
-  divider) and `utils/formatTaka.ts` (mirrors the web's `formatTaka`).
-- **`ImagePickerField` gained an optional `size`** (default 64, so existing call
-  sites are untouched). Below 48 the floating pencil/close badges have no room,
-  so view/replace/delete move into one native action sheet. The badges' verified
-  `top: -75` geometry was left alone. `MultiImagePickerField` is now 56pt with
-  an "{n} left" add tile, and `MultiFilePickerField` is a 40pt chip row.
-  **These thumb sizes have not been seen on a device** — check them in the
-  real-device pass.
+  divider), `FormActions` (the modal Cancel + Save row), `SkeletonBar`, and
+  `utils/formatTaka.ts` (mirrors the web's `formatTaka`). Auth screens share a
+  new `components/main/Auth/AuthLayout.tsx`.
+- **`ImagePickerField` gained an optional `size`** (default 64, so existing
+  64pt behaviour is untouched). Any non-default size swaps the floating
+  pencil/close badges for one native action sheet (View / Replace / Delete) —
+  first at <48pt, widened to <64pt in 38a once the 56pt thumbs showed the badges'
+  fixed `top: -75` only fits 64. `MultiImagePickerField` is now 56pt with an
+  "{n} left" add tile, and `MultiFilePickerField` is a 40pt chip row with an
+  "Attach" chip.
+- **`FormField` gained optional `required` / `errorText`.** Named `errorText`,
+  not `error`, because Paper's `TextInput` already has a boolean `error` prop.
+- **Login error banner**: shown *in addition to* the toast (the axios
+  interceptor already toasts every non-2xx). Wrong passwords are 403s, so this
+  never touches the interceptor's 401 session-clearing path.
 - **Reg number is not shortened** on the dashboard card. The mockup's `regShort`
   drops `-METRO`, which loses information, so the full number renders truncated
-  instead (the spec's own fallback).
-- **Two allowed-additions notes for the guardrail-1 audit**: the hub added the
-  3 read-only reuse fetches and `RemindersBanner` now reads `["bikes", bikeId]`
-  (needed for the real overdue overshoot, as §D.2 requires). Two *removals* also
-  appear, both consequences of this spec's own layouts: `FuelLog.tsx` no longer
-  reads `["mileage","lifetime",bikeId]` (its stats strip is gone) and
-  `MileageHistoryTab.tsx` no longer reads it either (the rolling-average panel
-  replaced the old "Lifetime total" figure, which the Lifetime tab still owns).
+  instead (this spec's own fallback).
+- **Guardrail-1 audit — full picture.** Additions: the hub's 3 read-only reuse
+  fetches, and `RemindersBanner` reading `["bikes", bikeId]` (needed for the real
+  overdue overshoot, as §D.2 requires). The fuel-lock and assistant-nickname
+  reuses needed **no** new fetch — both screens already read those keys. Two
+  *removals* also appear, both consequences of this spec's own layouts:
+  `FuelLog.tsx` and `MileageHistoryTab.tsx` no longer read
+  `["mileage","lifetime",bikeId]` (the fuel stats strip is gone; the
+  rolling-average panel replaced the old "Lifetime total", which the Lifetime tab
+  still owns). No URL, payload or mutation changed anywhere.
 - **"Log fuel"** in the hub's ⋯ menu pushes `/bikes/${bikeId}/fuel-logs/new` as
   a string, not a typed route: the generated `.expo/types/router.d.ts` in this
   checkout predates that route and would reject the typed form.
+- **Metro watcher gotcha** (hit during Verify, details in 38a): in this checkout
+  (path contains spaces) `expo start` did not pick up edits made while running.
+  Restart with `--clear` and grep the served bundle before trusting a screenshot.
