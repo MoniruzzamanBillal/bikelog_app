@@ -53,7 +53,11 @@ export function QuickAddFuelLogScreen() {
 
   return (
     <View style={styles.screen}>
-      <ScreenHeader title="Quick Add Fuel" backLabel={bike?.nickname ?? "Back"} />
+      <ScreenHeader
+        title="Quick add fuel"
+        subtitle={bike?.nickname}
+        backLabel={bike?.nickname ?? "Back"}
+      />
       {isLoading ? (
         <View style={styles.pad}>
           <SectionLoading count={3} />
@@ -78,6 +82,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.background,
   },
   pad: {
-    padding: 16,
+    paddingHorizontal: 16,
+    paddingTop: 14,
   },
 });

@@ -1,13 +1,11 @@
 import { useState } from "react";
-import { Keyboard, StyleSheet, TouchableOpacity, View } from "react-native";
+import { Keyboard, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
-import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
-import { Text } from "react-native-paper";
 import Toast from "react-native-toast-message";
 import { FormField, PrimaryButton } from "@/components/main/shared";
 import { usePost } from "@/hooks/useApi";
-import { COLORS } from "@/utils/colors";
 import { TRegisterPayload } from "@/types/global.types";
+import { AuthLayout } from "./AuthLayout";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -77,100 +75,55 @@ export function RegisterForm() {
   };
 
   return (
-    <KeyboardAwareScrollView
-      style={styles.screen}
-      contentContainerStyle={styles.content}
-      bottomOffset={30}
-      extraKeyboardSpace={10}
-      showsVerticalScrollIndicator={false}
+    <AuthLayout
+      heading="Create your account"
+      lede="Start logging your first bike in a minute."
+      switchPrompt="Already have an account?"
+      switchLabel="Log in"
+      onSwitch={() => router.push("/auth")}
     >
-      <View style={styles.container}>
-        <View style={styles.header}>
-          <Text style={styles.title}>Create account</Text>
-          <View style={styles.headerRow}>
-            <Text style={styles.subtitle}>Already have one? </Text>
-            <TouchableOpacity onPress={() => router.push("/auth")}>
-              <Text style={styles.link}>Sign in</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
+      <FormField
+        label="Name"
+        placeholder="Test Rider"
+        value={name}
+        onChangeText={setName}
+        autoCorrect={false}
+        editable={!registerMutation.isPending}
+      />
 
-        <FormField
-          label="Name"
-          placeholder="Test Rider"
-          value={name}
-          onChangeText={setName}
-          autoCorrect={false}
-          editable={!registerMutation.isPending}
-        />
+      <FormField
+        label="Email"
+        placeholder="rider@example.com"
+        value={email}
+        onChangeText={setEmail}
+        keyboardType="email-address"
+        autoCapitalize="none"
+        autoCorrect={false}
+        editable={!registerMutation.isPending}
+      />
 
-        <FormField
-          label="Email"
-          placeholder="rider@example.com"
-          value={email}
-          onChangeText={setEmail}
-          keyboardType="email-address"
-          autoCapitalize="none"
-          autoCorrect={false}
-          editable={!registerMutation.isPending}
-        />
+      <FormField
+        label="Password (min 6 chars)"
+        placeholder="••••••••"
+        value={password}
+        onChangeText={setPassword}
+        secureTextEntry
+        editable={!registerMutation.isPending}
+        style={styles.passwordField}
+      />
 
-        <FormField
-          label="Password (min 6 chars)"
-          placeholder="••••••••"
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-          editable={!registerMutation.isPending}
-          style={styles.passwordField}
-        />
-
-        <PrimaryButton
-          onPress={handleSubmit}
-          loading={registerMutation.isPending}
-        >
-          Create account
-        </PrimaryButton>
-      </View>
-    </KeyboardAwareScrollView>
+      <PrimaryButton
+        onPress={handleSubmit}
+        loading={registerMutation.isPending}
+      >
+        Create account
+      </PrimaryButton>
+    </AuthLayout>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
-  content: {
-    flexGrow: 1,
-    justifyContent: "center",
-  },
-  container: {
-    paddingHorizontal: 28,
-    paddingVertical: 24,
-  },
-  header: {
-    marginBottom: 32,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: "700",
-    color: COLORS.text,
-    marginBottom: 4,
-  },
-  headerRow: {
-    flexDirection: "row",
-  },
-  subtitle: {
-    fontSize: 13,
-    color: COLORS.textMuted,
-  },
-  link: {
-    fontSize: 13,
-    color: COLORS.accent,
-    fontWeight: "600",
-  },
   passwordField: {
-    marginBottom: 24,
+    marginBottom: 20,
   },
 });

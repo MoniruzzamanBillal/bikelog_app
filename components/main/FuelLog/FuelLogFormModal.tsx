@@ -1,9 +1,4 @@
-import {
-  DatePickerField,
-  FormField,
-  PrimaryButton,
-  SwitchField,
-} from "@/components/main/shared";
+import { DatePickerField, FormActions, FormField, SwitchField } from "@/components/main/shared";
 import { usePatch, usePost } from "@/hooks/useApi";
 import { TCreateFuelLogPayload, TFuelLog } from "@/types/fuel-log.types";
 import { COLORS } from "@/utils/colors";
@@ -268,21 +263,9 @@ export function FuelLogFormModal({
             disabled={isPending}
           />
 
-          <PrimaryButton
-            onPress={handleSubmit}
-            loading={isPending}
-            style={styles.button}
-          >
+          <FormActions onSave={handleSubmit} onCancel={onClose} saving={isPending}>
             {initialFuelLog ? "Save Changes" : "Save Fill-up"}
-          </PrimaryButton>
-
-          <PrimaryButton
-            onPress={onClose}
-            disabled={isPending}
-            style={styles.cancelButton}
-          >
-            Cancel
-          </PrimaryButton>
+          </FormActions>
         </KeyboardAwareScrollView>
       </Modal>
     </Portal>
@@ -291,17 +274,17 @@ export function FuelLogFormModal({
 
 const styles = StyleSheet.create({
   modal: {
-    backgroundColor: COLORS.background,
+    backgroundColor: COLORS.card,
     borderWidth: 1,
-    borderColor: COLORS.borderSubtle,
+    borderColor: COLORS.edge,
     marginHorizontal: 20,
     padding: 20,
-    borderRadius: 12,
+    borderRadius: 14,
     maxHeight: "85%",
   },
   title: {
-    fontSize: 18,
-    fontWeight: "600",
+    fontSize: 20,
+    fontWeight: "500",
     color: COLORS.text,
     marginBottom: 18,
   },
@@ -319,9 +302,9 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    backgroundColor: COLORS.surface,
+    backgroundColor: COLORS.surface2,
     borderWidth: 1,
-    borderColor: COLORS.borderSubtle,
+    borderColor: COLORS.border,
     borderRadius: 8,
     paddingVertical: 10,
     paddingHorizontal: 12,
@@ -334,15 +317,8 @@ const styles = StyleSheet.create({
   },
   totalValue: {
     fontSize: 16,
-    fontWeight: "700",
+    fontWeight: "500",
     color: COLORS.text,
-    fontFamily: "monospace",
-  },
-  button: {
-    marginTop: 10,
-  },
-  cancelButton: {
-    marginTop: 10,
-    borderColor: COLORS.borderSubtle,
+    fontVariant: ["tabular-nums"],
   },
 });

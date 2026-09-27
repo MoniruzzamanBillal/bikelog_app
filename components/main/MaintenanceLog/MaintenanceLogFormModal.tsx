@@ -5,8 +5,8 @@ import { Modal, Portal, Text } from "react-native-paper";
 import Toast from "react-native-toast-message";
 import {
   DatePickerField,
+  FormActions,
   FormField,
-  PrimaryButton,
   SectionLoading,
   SelectPickerField,
 } from "@/components/main/shared";
@@ -290,13 +290,9 @@ export function MaintenanceLogFormModal({
             editable={!isPending}
           />
 
-          <PrimaryButton onPress={handleSubmit} loading={isPending} style={styles.button}>
+          <FormActions onSave={handleSubmit} onCancel={onClose} saving={isPending}>
             {log ? "Save Changes" : "Save Service"}
-          </PrimaryButton>
-
-          <PrimaryButton onPress={onClose} disabled={isPending} style={styles.cancelButton}>
-            Cancel
-          </PrimaryButton>
+          </FormActions>
         </KeyboardAwareScrollView>
       </Modal>
     </Portal>
@@ -305,17 +301,17 @@ export function MaintenanceLogFormModal({
 
 const styles = StyleSheet.create({
   modal: {
-    backgroundColor: COLORS.background,
+    backgroundColor: COLORS.card,
     borderWidth: 1,
-    borderColor: COLORS.borderSubtle,
+    borderColor: COLORS.edge,
     marginHorizontal: 20,
     padding: 20,
-    borderRadius: 12,
+    borderRadius: 14,
     maxHeight: "85%",
   },
   title: {
-    fontSize: 18,
-    fontWeight: "600",
+    fontSize: 20,
+    fontWeight: "500",
     color: COLORS.text,
     marginBottom: 18,
   },
@@ -328,12 +324,5 @@ const styles = StyleSheet.create({
   },
   noMarginBottom: {
     marginBottom: 14,
-  },
-  button: {
-    marginTop: 10,
-  },
-  cancelButton: {
-    marginTop: 10,
-    borderColor: COLORS.borderSubtle,
   },
 });

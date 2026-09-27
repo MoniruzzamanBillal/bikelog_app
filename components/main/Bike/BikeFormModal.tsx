@@ -3,11 +3,7 @@ import { StyleSheet, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { Modal, Portal, Text } from "react-native-paper";
 import Toast from "react-native-toast-message";
-import {
-  DatePickerField,
-  FormField,
-  PrimaryButton,
-} from "@/components/main/shared";
+import { DatePickerField, FormActions, FormField } from "@/components/main/shared";
 import { usePatch, usePost } from "@/hooks/useApi";
 import { COLORS } from "@/utils/colors";
 import { TBike, TCreateBikePayload, TUpdateBikePayload } from "@/types/bike.types";
@@ -207,17 +203,9 @@ export function BikeFormModal({ open, onClose, initialBike }: BikeFormModalProps
             </View>
           )}
 
-          <PrimaryButton onPress={handleSubmit} loading={isPending} style={styles.button}>
+          <FormActions onSave={handleSubmit} onCancel={onClose} saving={isPending}>
             {initialBike ? "Save Changes" : "Save Bike"}
-          </PrimaryButton>
-
-          <PrimaryButton
-            onPress={onClose}
-            disabled={isPending}
-            style={styles.cancelButton}
-          >
-            Cancel
-          </PrimaryButton>
+          </FormActions>
         </KeyboardAwareScrollView>
       </Modal>
     </Portal>
@@ -226,17 +214,17 @@ export function BikeFormModal({ open, onClose, initialBike }: BikeFormModalProps
 
 const styles = StyleSheet.create({
   modal: {
-    backgroundColor: COLORS.background,
+    backgroundColor: COLORS.card,
     borderWidth: 1,
-    borderColor: COLORS.borderSubtle,
+    borderColor: COLORS.edge,
     marginHorizontal: 20,
     padding: 20,
-    borderRadius: 12,
+    borderRadius: 14,
     maxHeight: "85%",
   },
   title: {
-    fontSize: 18,
-    fontWeight: "600",
+    fontSize: 20,
+    fontWeight: "500",
     color: COLORS.text,
     marginBottom: 18,
   },
@@ -249,12 +237,5 @@ const styles = StyleSheet.create({
   },
   lastField: {
     marginBottom: 24,
-  },
-  button: {
-    marginTop: 8,
-  },
-  cancelButton: {
-    marginTop: 10,
-    borderColor: COLORS.borderSubtle,
   },
 });
