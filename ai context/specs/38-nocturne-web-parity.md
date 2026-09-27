@@ -2,7 +2,11 @@
 
 ## Status
 
-🔄 In progress (started 2026-09-27). Spec written 2026-09-27 per direct user request. Everything needed is in this file. Read it top to bottom before touching code.
+🔄 In progress (started 2026-09-27). Phases 1, 2 and screens 1–8 of phase 3 are
+done and committed on `dev/monir`; screens 9–11 and phase 4 are not. See
+**Implementation progress (2026-09-27)** at the bottom of this file before
+continuing. Everything needed is in this file. Read it top to bottom before
+touching code.
 
 ## Goal
 
@@ -312,3 +316,64 @@ Page padding is 16 horizontal / 14 top, and the gap between blocks is 10–12.
 - **Manual screen** (`/bikes/[bikeId]/manual`) exists on the web but not in the app. It's a feature, and would need its own spec.
 - **Admin error-log screen**: web only (web spec 26). Already noted in the web tracker.
 - **Light theme**: the user chose dark-only for the app.
+
+## Implementation progress (2026-09-27)
+
+Stopped partway through phase 3 because the session hit its usage limit — not
+because of a blocker. `npx tsc --noEmit` and `yarn lint` were clean at every
+commit, and the guardrail-1 audit showed only the allowed read-only additions.
+
+### Done and committed on `dev/monir`
+
+| Commit    | Scope                                                                 |
+| --------- | --------------------------------------------------------------------- |
+| `36762e0` | Phase 1 — tokens (§A): `utils/colors.ts` retuned, `tint()`, ~37 literals replaced across 20 files |
+| `0256302` | Phase 2 — shared components (§C) including the tab bar                |
+| `5effcb9` | Phase 3 screens 1–3 — Dashboard, bike hub, fuel logs                  |
+| `be25352` | Phase 3 screens 4–6 — mileage, spending, maintenance                  |
+| `c5e7194` | Phase 3 screens 7–8 — issues / accessories / documents, AI assistant  |
+
+### Still to do
+
+1. **§D.9 Settings catalog** (`components/main/SettingsCatalog/SettingsCatalog.tsx`) — untouched.
+2. **§D.10 Auth** (`app/auth.tsx`, `app/register.tsx`, `components/main/Auth/{LoginForm,RegisterForm}.tsx`) — untouched.
+3. **§D.11 Form modals + quick add** — they already inherit the restyled shared
+   fields and buttons, but the modal surface (`COLORS.card`, radius 14), the
+   20/500 title and the Cancel/Save actions row have **not** been set yet.
+4. **Phase 4 docs** — spec status → ✅, `progress-tracker.md` row + Recent
+   Activity, a spec 38 row in `specs/00-build-plan.md`, the `ui-context.md`
+   rewrite, and the Known Gaps entries.
+5. **Verify** — the checklist below is entirely unrun: no Expo-web/Playwright
+   pass at 375×812, and no real-device pass.
+
+### Decisions and deviations worth knowing
+
+- **Swipe rows replaced by explicit controls.** Fuel logs, maintenance logs,
+  issues, accessories and documents used `ReanimatedSwipeable` edit/delete
+  panels. The spec's own layouts specify ⋯ menus and icon buttons instead, so
+  those rows are now plain panels and `openSwipeableRef` is gone from them.
+  Every action stays reachable. The dashboard's `BikeCard` **keeps** its swipe
+  (the spec's card design has no ⋯ affordance), just tone-tinted.
+- **New shared pieces beyond §C**: `ActionMenu` (the ⋯ menu, carrying
+  `SelectPickerField`'s Paper-`Menu` remount fix), `RuleFade` (the `.rule-fade`
+  divider) and `utils/formatTaka.ts` (mirrors the web's `formatTaka`).
+- **`ImagePickerField` gained an optional `size`** (default 64, so existing call
+  sites are untouched). Below 48 the floating pencil/close badges have no room,
+  so view/replace/delete move into one native action sheet. The badges' verified
+  `top: -75` geometry was left alone. `MultiImagePickerField` is now 56pt with
+  an "{n} left" add tile, and `MultiFilePickerField` is a 40pt chip row.
+  **These thumb sizes have not been seen on a device** — check them in the
+  real-device pass.
+- **Reg number is not shortened** on the dashboard card. The mockup's `regShort`
+  drops `-METRO`, which loses information, so the full number renders truncated
+  instead (the spec's own fallback).
+- **Two allowed-additions notes for the guardrail-1 audit**: the hub added the
+  3 read-only reuse fetches and `RemindersBanner` now reads `["bikes", bikeId]`
+  (needed for the real overdue overshoot, as §D.2 requires). Two *removals* also
+  appear, both consequences of this spec's own layouts: `FuelLog.tsx` no longer
+  reads `["mileage","lifetime",bikeId]` (its stats strip is gone) and
+  `MileageHistoryTab.tsx` no longer reads it either (the rolling-average panel
+  replaced the old "Lifetime total" figure, which the Lifetime tab still owns).
+- **"Log fuel"** in the hub's ⋯ menu pushes `/bikes/${bikeId}/fuel-logs/new` as
+  a string, not a typed route: the generated `.expo/types/router.d.ts` in this
+  checkout predates that route and would reject the typed form.
