@@ -1,225 +1,232 @@
-import { StyleSheet, Text, View } from "react-native";
-import { ScrollView } from "react-native-gesture-handler";
-import { EmptyState, ErrorState, SectionLoading } from "@/components/main/shared";
+import {
+  EmptyState,
+  ErrorState,
+  Panel,
+  SectionLoading,
+} from "@/components/main/shared";
 import { useFetchData } from "@/hooks/useApi";
-import { COLORS, tint } from "@/utils/colors";
+import { TMileageHistoryResponse } from "@/types/mileage.types";
+import { CHART_COLORS, COLORS } from "@/utils/colors";
 import { formatApiDate } from "@/utils/formatApiDate";
-import { TLifetimeMileage, TMileageHistoryResponse } from "@/types/mileage.types";
+import { StyleSheet, View } from "react-native";
+import { Text } from "react-native-paper";
 
 interface MileageHistoryTabProps {
   bikeId: string;
 }
 
 export function MileageHistoryTab({ bikeId }: MileageHistoryTabProps) {
-  const { data, isLoading, isError, refetch } = useFetchData<TMileageHistoryResponse>(
-    ["mileage", "history", bikeId],
-    `/bikes/${bikeId}/mileage`,
-    { enabled: !!bikeId },
-  );
-  const { data: lifetimeData } = useFetchData<TLifetimeMileage>(
-    ["mileage", "lifetime", bikeId],
-    `/bikes/${bikeId}/mileage/lifetime`,
-    { enabled: !!bikeId },
-  );
+  const { data, isLoading, isError, refetch } =
+    useFetchData<TMileageHistoryResponse>(
+      ["mileage", "history", bikeId],
+      `/bikes/${bikeId}/mileage`,
+      { enabled: !!bikeId },
+    );
 
   const history = data?.data;
   const records = history?.exactRecords ?? [];
   const approx = history?.approximate;
-  const avgMileage = approx?.mileageKmPerLiter;
-  const lifetimeKm = lifetimeData?.data?.totalDistanceKm;
 
   if (isLoading) {
     return <SectionLoading count={5} />;
   }
 
   if (isError) {
-    return <ErrorState onRetry={refetch} />;
+    return <ErrorState title="Couldn’t load mileage" onRetry={refetch} />;
   }
 
-  return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      {records.length === 0 && !approx ? (
-        <EmptyState label="No mileage data yet. Log full tanks to track consumption." />
-      ) : (
-        <>
-          {(avgMileage !== undefined || lifetimeKm !== undefined) && (
-            <View style={styles.summaryCard}>
-              {avgMileage !== undefined && (
-                <View>
-                  <Text style={styles.summaryLabel}>Rolling Average</Text>
-                  <Text style={styles.summaryValue}>
-                    {avgMileage.toFixed(1)} <Text style={styles.summaryUnit}>km/L</Text>
-                  </Text>
-                </View>
-              )}
-              {lifetimeKm !== undefined && (
-                <View style={styles.summaryRight}>
-                  <Text style={styles.summaryLabel}>Lifetime total</Text>
-                  <Text style={styles.summaryValueSmall}>
-                    {lifetimeKm.toLocaleString()} <Text style={styles.summaryUnit}>km</Text>
-                  </Text>
-                </View>
-              )}
-            </View>
-          )}
+  if (records.length === 0 && !approx) {
+    return (
+      <EmptyState
+        icon="speedometer-medium"
+        title="No mileage data yet"
+        message="Mileage is calculated when a full-tank fill closes a period. Log two full-tank fills to see your first exact km/l."
+      />
+    );
+  }
 
-          {records.length > 0 && (
-            <>
-              <Text style={styles.recordsTitle}>Mileage Records</Text>
-              <View style={styles.listCard}>
-                {records.map((record, i) => {
-                  const mileage = record.mileageKmPerLiter;
-                  const isGood = avgMileage !== undefined && mileage >= avgMileage;
-                  return (
-                    <View
-                      key={record._id}
-                      style={[styles.row, i === records.length - 1 && styles.rowLast]}
-                    >
-                      <View style={styles.rowLeft}>
-                        <Text style={styles.recordMileage}>
-                          {mileage?.toFixed(1) ?? "—"} km/L
-                        </Text>
-                        <Text style={styles.recordDetail}>
-                          {record.distanceKm.toLocaleString()} km / {record.litersConsumed.toFixed(2)}L
-                        </Text>
-                        <Text style={styles.recordDate}>
-                          {formatApiDate(record.periodEndDate, "dd MMM")} — Full tank closed
-                        </Text>
-                      </View>
-                      {avgMileage !== undefined && (
-                        <View
-                          style={[styles.badge, isGood ? styles.badgeOk : styles.badgeWarn]}
-                        >
-                          <Text
-                            style={[
-                              styles.badgeText,
-                              isGood ? styles.badgeOkText : styles.badgeWarnText,
-                            ]}
-                          >
-                            {isGood ? "Good" : "Avg"}
-                          </Text>
-                        </View>
-                      )}
-                    </View>
-                  );
-                })}
-              </View>
-            </>
-          )}
-        </>
+  const maxKmpl = Math.max(...records.map((r) => r.mileageKmPerLiter), 0);
+
+  return (
+    <View style={styles.stack}>
+      {approx && (
+        <Panel glow style={styles.rollingPanel}>
+          <View>
+            <Text style={styles.rollingLabel}>Rolling average</Text>
+            <View style={styles.rollingValueRow}>
+              <Text style={styles.rollingValue}>
+                {approx.mileageKmPerLiter.toFixed(2)}
+              </Text>
+              <Text style={styles.rollingUnit}>km/l</Text>
+            </View>
+          </View>
+          <View style={styles.rollingMeta}>
+            <Text style={styles.rollingMetaText}>
+              Based on last {approx.basedOnFuelLogCount} fills
+            </Text>
+            <Text
+              style={[
+                styles.rollingMetaText,
+                { color: approx.isEstimate ? COLORS.warning : COLORS.success },
+              ]}
+            >
+              {approx.isEstimate
+                ? "Estimate · partial fills"
+                : "Exact · full tanks"}
+            </Text>
+          </View>
+        </Panel>
       )}
-    </ScrollView>
+
+      <Text style={styles.kicker}>EXACT RECORDS</Text>
+
+      {records.length === 0 ? (
+        <Text style={styles.noRecords}>
+          No exact records yet — log a full-tank fill to close a period.
+        </Text>
+      ) : (
+        records.map((record) => (
+          <Panel key={record._id} style={styles.record}>
+            <View style={styles.recordRow}>
+              <View style={styles.recordLeft}>
+                <Text style={styles.recordPeriod}>
+                  {formatApiDate(record.periodStartDate, "dd MMM")} →{" "}
+                  {formatApiDate(record.periodEndDate, "dd MMM yyyy")}
+                </Text>
+                <Text style={styles.recordDetail}>
+                  {record.distanceKm.toLocaleString()} km ·{" "}
+                  {record.litersConsumed.toFixed(2)} L
+                </Text>
+              </View>
+              <View style={styles.recordKmplRow}>
+                <Text style={styles.recordKmpl}>
+                  {record.mileageKmPerLiter.toFixed(1)}
+                </Text>
+                <Text style={styles.recordKmplUnit}>km/l</Text>
+              </View>
+            </View>
+
+            <View style={styles.barTrack}>
+              <View
+                style={[
+                  styles.barFill,
+                  {
+                    width: `${
+                      maxKmpl > 0
+                        ? (record.mileageKmPerLiter / maxKmpl) * 100
+                        : 0
+                    }%`,
+                  },
+                ]}
+              />
+            </View>
+          </Panel>
+        ))
+      )}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
+  stack: {
+    gap: 10,
   },
-  summaryCard: {
+  rollingPanel: {
     flexDirection: "row",
+    alignItems: "center",
     justifyContent: "space-between",
-    alignItems: "flex-start",
-    backgroundColor: COLORS.surface,
-    borderWidth: 1,
-    borderColor: COLORS.borderSubtle,
-    borderRadius: 10,
-    padding: 14,
-    marginBottom: 12,
+    gap: 12,
+    paddingHorizontal: 18,
+    paddingVertical: 16,
   },
-  summaryRight: {
-    alignItems: "flex-end",
-  },
-  summaryLabel: {
-    fontSize: 11,
-    color: COLORS.textMuted,
-  },
-  summaryValue: {
-    fontSize: 28,
-    lineHeight: 32,
-    fontWeight: "700",
-    color: COLORS.text,
-    fontFamily: "monospace",
-    marginTop: 4,
-  },
-  summaryValueSmall: {
-    fontSize: 22,
-    lineHeight: 26,
-    fontWeight: "700",
-    color: COLORS.text,
-    fontFamily: "monospace",
-    marginTop: 4,
-  },
-  summaryUnit: {
-    fontSize: 13,
-    fontWeight: "400",
-    color: COLORS.textLight,
-    fontFamily: "System",
-  },
-  recordsTitle: {
-    fontSize: 11,
-    fontWeight: "500",
-    color: COLORS.textMuted,
-    textTransform: "uppercase",
-    letterSpacing: 0.6,
-    marginBottom: 8,
-  },
-  listCard: {
-    backgroundColor: COLORS.surface,
-    borderWidth: 1,
-    borderColor: COLORS.borderSubtle,
-    borderRadius: 10,
-  },
-  row: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    padding: 13,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.borderSubtle,
-  },
-  rowLast: {
-    borderBottomWidth: 0,
-  },
-  rowLeft: {
-    flex: 1,
-  },
-  recordMileage: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: COLORS.text,
-    fontFamily: "monospace",
-  },
-  recordDetail: {
+  rollingLabel: {
     fontSize: 12,
     color: COLORS.textLight,
-    marginTop: 2,
   },
-  recordDate: {
-    fontSize: 11,
-    color: COLORS.textMuted,
-    marginTop: 1,
+  rollingValueRow: {
+    flexDirection: "row",
+    alignItems: "baseline",
+    gap: 4,
   },
-  badge: {
-    paddingVertical: 2,
-    paddingHorizontal: 8,
-    borderRadius: 20,
-    flexShrink: 0,
-  },
-  badgeOk: {
-    backgroundColor: tint(COLORS.success, 0.15),
-  },
-  badgeWarn: {
-    backgroundColor: tint(COLORS.warning, 0.15),
-  },
-  badgeText: {
-    fontSize: 11,
+  rollingValue: {
+    fontSize: 30,
     fontWeight: "500",
+    color: COLORS.text,
+    fontVariant: ["tabular-nums"],
   },
-  badgeOkText: {
-    color: COLORS.success,
+  rollingUnit: {
+    fontSize: 14,
+    color: COLORS.textLight,
   },
-  badgeWarnText: {
-    color: COLORS.warning,
+  rollingMeta: {
+    alignItems: "flex-end",
+  },
+  rollingMetaText: {
+    fontSize: 12,
+    color: COLORS.textLight,
+    textAlign: "right",
+  },
+  kicker: {
+    fontSize: 11,
+    letterSpacing: 0.9,
+    textTransform: "uppercase",
+    color: COLORS.textLight,
+    marginTop: 4,
+  },
+  noRecords: {
+    fontSize: 13,
+    color: COLORS.textLight,
+  },
+  record: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    gap: 8,
+  },
+  recordRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+  },
+  recordLeft: {
+    flex: 1,
+    minWidth: 0,
+    gap: 2,
+  },
+  recordPeriod: {
+    fontSize: 12.5,
+    color: COLORS.textLight,
+    fontVariant: ["tabular-nums"],
+  },
+  recordDetail: {
+    fontSize: 13,
+    color: COLORS.text,
+    fontVariant: ["tabular-nums"],
+  },
+  recordKmplRow: {
+    flexDirection: "row",
+    alignItems: "baseline",
+    gap: 3,
+  },
+  recordKmpl: {
+    fontSize: 17,
+    fontWeight: "500",
+    color: COLORS.text,
+    fontVariant: ["tabular-nums"],
+  },
+  recordKmplUnit: {
+    fontSize: 12,
+    color: COLORS.textLight,
+  },
+  barTrack: {
+    height: 3,
+    borderRadius: 3,
+    backgroundColor: COLORS.surface2,
+    overflow: "hidden",
+  },
+  barFill: {
+    height: 3,
+    borderRadius: 3,
+    backgroundColor: CHART_COLORS[0],
   },
 });

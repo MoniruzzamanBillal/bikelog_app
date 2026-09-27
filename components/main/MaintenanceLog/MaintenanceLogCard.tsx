@@ -1,16 +1,20 @@
-import { ImagePickerField, TPickedImageFile } from "@/components/main/shared";
+import {
+  ImagePickerField,
+  Panel,
+  TPickedImageFile,
+} from "@/components/main/shared";
 import { confirmDelete } from "@/components/main/shared/ConfirmDelete";
+import { toneStyle } from "@/components/main/shared/StatusBadge";
 import { useDelete, usePut } from "@/hooks/useApi";
 import { TEngineOilType, TMaintenanceType } from "@/types/catalog.types";
 import { TMaintenanceLog } from "@/types/maintenance-log.types";
-import { COLORS, tint } from "@/utils/colors";
+import { COLORS } from "@/utils/colors";
 import { formatApiDate } from "@/utils/formatApiDate";
-import { useRef, useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
-import { TouchableOpacity } from "react-native-gesture-handler";
-import Swipeable, {
-  SwipeableMethods,
-} from "react-native-gesture-handler/ReanimatedSwipeable";
+import { formatTaka } from "@/utils/formatTaka";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { useState } from "react";
+import { StyleSheet, TouchableOpacity, View } from "react-native";
+import { Text } from "react-native-paper";
 import Toast from "react-native-toast-message";
 import { MaintenanceLogFormModal } from "./MaintenanceLogFormModal";
 
@@ -19,8 +23,6 @@ interface MaintenanceLogCardProps {
   bikeId: string;
   maintenanceTypes: TMaintenanceType[];
   oilTypes: TEngineOilType[];
-  openSwipeableRef: React.MutableRefObject<SwipeableMethods | null>;
-  isLast?: boolean;
 }
 
 function getTypeName(
@@ -51,11 +53,8 @@ export function MaintenanceLogCard({
   bikeId,
   maintenanceTypes,
   oilTypes,
-  openSwipeableRef,
-  isLast,
 }: MaintenanceLogCardProps) {
   const [editOpen, setEditOpen] = useState(false);
-  const swipeableRef = useRef<SwipeableMethods>(null);
 
   const deleteMutation = useDelete([
     ["maintenanceLogs", bikeId],
@@ -109,18 +108,7 @@ export function MaintenanceLogCard({
     }
   };
 
-  const handleSwipeableWillOpen = () => {
-    if (
-      openSwipeableRef.current &&
-      openSwipeableRef.current !== swipeableRef.current
-    ) {
-      openSwipeableRef.current.close();
-    }
-    openSwipeableRef.current = swipeableRef.current;
-  };
-
   const handleDelete = () => {
-    swipeableRef.current?.close();
     confirmDelete("maintenance log", async () => {
       await deleteMutation.mutateAsync({
         url: `/bikes/${bikeId}/maintenance-logs/${log._id}`,
@@ -128,77 +116,119 @@ export function MaintenanceLogCard({
     });
   };
 
-  const handleEdit = () => {
-    swipeableRef.current?.close();
-    setEditOpen(true);
-  };
-
   const oilTypeName = getOilTypeName(log, oilTypes);
   const parts = log.partsReplaced?.filter(Boolean) ?? [];
-  const primaryDetail =
-    oilTypeName ?? (parts.length > 0 ? parts.join(", ") : null);
+  const oilTone = toneStyle("accent");
+  const neutralTone = toneStyle("neutral");
+
+  const nextDue =
+    log.nextDueOdometer !== undefined
+      ? `${log.nextDueOdometer.toLocaleString()} km`
+      : log.nextDueDate
+        ? formatApiDate(log.nextDueDate, "dd MMM yyyy")
+        : "—";
 
   return (
     <>
-      <Swipeable
-        ref={swipeableRef}
-        onSwipeableWillOpen={handleSwipeableWillOpen}
-        renderLeftActions={() => (
-          <TouchableOpacity
-            onPress={handleEdit}
-            style={[styles.action, styles.editAction]}
-          >
-            <Text style={styles.actionText}>Edit</Text>
-          </TouchableOpacity>
-        )}
-        renderRightActions={() => (
-          <TouchableOpacity
-            onPress={handleDelete}
-            style={[styles.action, styles.deleteAction]}
-          >
-            <Text style={styles.actionText}>Delete</Text>
-          </TouchableOpacity>
-        )}
-      >
-        <TouchableOpacity
-          style={[styles.row, isLast && styles.rowLast]}
-          activeOpacity={0.7}
-        >
+      <Panel style={styles.card}>
+        <View style={styles.topRow}>
           <ImagePickerField
             label="Service"
+            size={56}
             value={log.serviceImage}
             onUpload={handleImageUpload}
             onDelete={handleImageDelete}
             uploading={isUploading || isDeletingImage}
           />
 
-          <View style={styles.left}>
-            <Text style={styles.typeName}>
-              {getTypeName(log, maintenanceTypes)}
-            </Text>
-            <Text style={styles.details}>
-              {primaryDetail ? `${primaryDetail} · ` : ""}৳
-              {log?.cost?.toLocaleString()}
-            </Text>
+          <View style={styles.titleCol}>
+            <View style={styles.titleLine}>
+              <Text style={styles.typeName} numberOfLines={1}>
+                {getTypeName(log, maintenanceTypes)}
+              </Text>
+              {oilTypeName ? (
+                <View style={[styles.tag, { backgroundColor: oilTone.bg }]}>
+                  <Text style={[styles.tagText, { color: oilTone.text }]}>
+                    {oilTypeName}
+                  </Text>
+                </View>
+              ) : null}
+            </View>
             <Text style={styles.meta}>
-              {log?.serviceCenter ?? "—"} ·{" "}
-              {log?.odometerReading?.toLocaleString()} km
+              {formatApiDate(log.serviceDate, "dd MMM yyyy")} ·{" "}
+              {log.odometerReading?.toLocaleString()} km
             </Text>
-            {log?.nextDueOdometer !== undefined && (
-              <View style={styles.badge}>
-                <Text style={styles.badgeText}>
-                  Next: {log?.nextDueOdometer?.toLocaleString()} km
-                </Text>
-              </View>
-            )}
-            {log?.notes && <Text style={styles.notes}>{log?.notes}</Text>}
           </View>
 
-          <Text style={styles.date}>
-            {formatApiDate(log?.serviceDate, "dd MMM")}
-          </Text>
-        </TouchableOpacity>
-      </Swipeable>
+          <View style={styles.actions}>
+            <TouchableOpacity
+              onPress={() => setEditOpen(true)}
+              style={styles.iconButton}
+              hitSlop={6}
+            >
+              <MaterialCommunityIcons
+                name="pencil-outline"
+                size={16}
+                color={COLORS.textLight}
+              />
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={handleDelete}
+              style={styles.iconButton}
+              hitSlop={6}
+            >
+              <MaterialCommunityIcons
+                name="trash-can-outline"
+                size={16}
+                color={COLORS.danger}
+              />
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        <View style={styles.grid}>
+          <View style={styles.gridCell}>
+            <Text style={styles.gridLabel}>Cost</Text>
+            <Text style={styles.gridValue}>{formatTaka(log.cost ?? 0)}</Text>
+          </View>
+          <View style={styles.gridCell}>
+            <Text style={styles.gridLabel}>Interval</Text>
+            <Text style={styles.gridValue}>
+              {log.intervalKmUsed !== undefined
+                ? `${log.intervalKmUsed.toLocaleString()} km`
+                : "—"}
+            </Text>
+          </View>
+          <View style={styles.gridCell}>
+            <Text style={styles.gridLabel}>Next due</Text>
+            <Text style={styles.gridValue}>{nextDue}</Text>
+          </View>
+        </View>
+
+        {(log.serviceCenter || parts.length > 0) && (
+          <View style={styles.tagRow}>
+            {log.serviceCenter ? (
+              <View style={[styles.tag, { backgroundColor: neutralTone.bg }]}>
+                <Text style={[styles.tagText, { color: neutralTone.text }]}>
+                  {log.serviceCenter}
+                </Text>
+              </View>
+            ) : null}
+            {parts.map((part) => (
+              <View
+                key={part}
+                style={[styles.tag, { backgroundColor: neutralTone.bg }]}
+              >
+                <Text style={[styles.tagText, { color: neutralTone.text }]}>
+                  {part}
+                </Text>
+              </View>
+            ))}
+          </View>
+        )}
+
+        {log.notes ? <Text style={styles.notes}>{log.notes}</Text> : null}
+      </Panel>
 
       <MaintenanceLogFormModal
         open={editOpen}
@@ -211,72 +241,80 @@ export function MaintenanceLogCard({
 }
 
 const styles = StyleSheet.create({
-  row: {
-    flexDirection: "row",
+  card: {
+    padding: 14,
     gap: 12,
-    padding: 13,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.borderSubtle,
   },
-  rowLast: {
-    borderBottomWidth: 0,
+  topRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 12,
   },
-  left: {
+  titleCol: {
     flex: 1,
+    minWidth: 0,
+    gap: 3,
+  },
+  titleLine: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    flexWrap: "wrap",
   },
   typeName: {
     fontSize: 14,
-    fontWeight: "600",
+    fontWeight: "500",
     color: COLORS.text,
   },
-  details: {
+  meta: {
     fontSize: 12,
     color: COLORS.textLight,
-    marginTop: 2,
+    fontVariant: ["tabular-nums"],
   },
-  meta: {
-    fontSize: 11,
-    color: COLORS.textMuted,
-    marginTop: 2,
+  actions: {
+    flexDirection: "row",
+    gap: 2,
   },
-  badge: {
-    alignSelf: "flex-start",
-    marginTop: 5,
-    paddingVertical: 2,
-    paddingHorizontal: 8,
-    borderRadius: 20,
-    backgroundColor: tint(COLORS.warning, 0.15),
+  iconButton: {
+    width: 32,
+    height: 32,
+    alignItems: "center",
+    justifyContent: "center",
   },
-  badgeText: {
-    fontSize: 11,
+  grid: {
+    flexDirection: "row",
+    gap: 8,
+  },
+  gridCell: {
+    flex: 1,
+    minWidth: 0,
+  },
+  gridLabel: {
+    fontSize: 12,
+    color: COLORS.textLight,
+  },
+  gridValue: {
+    fontSize: 13.5,
     fontWeight: "500",
-    color: COLORS.warning,
+    color: COLORS.text,
+    fontVariant: ["tabular-nums"],
+  },
+  tagRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 6,
+  },
+  tag: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  tagText: {
+    fontSize: 11,
   },
   notes: {
-    fontSize: 12,
-    color: COLORS.textMuted,
-    fontStyle: "italic",
-    marginTop: 5,
-  },
-  date: {
-    fontSize: 11,
-    color: COLORS.textMuted,
-    flexShrink: 0,
-  },
-  action: {
-    justifyContent: "center",
-    alignItems: "center",
-    width: 80,
-    height: "100%",
-  },
-  editAction: {
-    backgroundColor: COLORS.success,
-  },
-  deleteAction: {
-    backgroundColor: COLORS.danger,
-  },
-  actionText: {
-    color: COLORS.white,
-    fontWeight: "600",
+    fontSize: 12.5,
+    lineHeight: 18,
+    color: COLORS.textLight,
   },
 });

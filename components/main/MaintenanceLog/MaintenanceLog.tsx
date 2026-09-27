@@ -1,19 +1,19 @@
-import { useRef, useState } from "react";
-import { RefreshControl, ScrollView, StyleSheet, View } from "react-native";
-import { Text } from "react-native-paper";
-import { useLocalSearchParams } from "expo-router";
-import { SwipeableMethods } from "react-native-gesture-handler/ReanimatedSwipeable";
 import {
   EmptyState,
   ErrorState,
+  PrimaryButton,
   ScreenHeader,
   SectionLoading,
 } from "@/components/main/shared";
 import { useFetchData } from "@/hooks/useApi";
-import { COLORS } from "@/utils/colors";
 import { TBike } from "@/types/bike.types";
 import { TEngineOilType, TMaintenanceType } from "@/types/catalog.types";
 import { TMaintenanceLogsApiResponse } from "@/types/maintenance-log.types";
+import { COLORS } from "@/utils/colors";
+import { useLocalSearchParams } from "expo-router";
+import { useState } from "react";
+import { RefreshControl, ScrollView, StyleSheet, View } from "react-native";
+import { Text } from "react-native-paper";
 import { MaintenanceLogCard } from "./MaintenanceLogCard";
 import { MaintenanceLogFormModal } from "./MaintenanceLogFormModal";
 import { RemindersBanner } from "./RemindersBanner";
@@ -24,7 +24,6 @@ export function MaintenanceLog() {
   const { bikeId } = useLocalSearchParams<{ bikeId: string }>();
   const [modalOpen, setModalOpen] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const openSwipeableRef = useRef<SwipeableMethods | null>(null);
 
   const { data: bikeData } = useFetchData<TBike>(
     ["bikes", bikeId],
@@ -58,57 +57,73 @@ export function MaintenanceLog() {
     setRefreshing(false);
   };
 
+  const addButton = (
+    <PrimaryButton onPress={() => setModalOpen(true)} icon="plus" compact>
+      Add
+    </PrimaryButton>
+  );
+
   return (
     <View style={styles.screen}>
       <ScreenHeader
         title="Maintenance"
+        subtitle={bike?.nickname}
         backLabel={bike?.nickname ?? "Back"}
-        rightIcon="plus"
-        onRightPress={() => setModalOpen(true)}
       />
 
-      <RemindersBanner
-        bikeId={bikeId}
-        maintenanceTypes={maintenanceTypes}
-        style={styles.reminder}
-      />
-
-      {isLoading ? (
-        <View style={styles.pad}>
-          <SectionLoading count={5} />
+      <ScrollView
+        contentContainerStyle={styles.page}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            tintColor={COLORS.accent}
+          />
+        }
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.topRow}>
+          <Text style={styles.count}>
+            {isLoading ? "" : `${logs.length} services logged`}
+          </Text>
+          {addButton}
         </View>
-      ) : isError ? (
-        <ErrorState onRetry={refetch} />
-      ) : logs.length === 0 ? (
-        <EmptyState label="No maintenance logs yet." />
-      ) : (
-        <ScrollView
-          contentContainerStyle={styles.pad}
-          refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={handleRefresh}
-              tintColor={COLORS.accent}
-            />
-          }
-          showsVerticalScrollIndicator={false}
-        >
-          <Text style={styles.sectionHeading}>Recent Services</Text>
-          <View style={styles.listCard}>
-            {logs?.map((log, i) => (
+
+        <RemindersBanner bikeId={bikeId} maintenanceTypes={maintenanceTypes} />
+
+        {isLoading ? (
+          <SectionLoading count={4} />
+        ) : isError ? (
+          <ErrorState title="Couldn’t load service history" onRetry={refetch} />
+        ) : logs.length === 0 ? (
+          <EmptyState
+            icon="wrench-outline"
+            title="No service history yet"
+            message="Log a service with an interval (km) or a next due date and Bike Log will remind you when it's due."
+            action={
+              <PrimaryButton
+                onPress={() => setModalOpen(true)}
+                icon="plus"
+                compact
+              >
+                Add service
+              </PrimaryButton>
+            }
+          />
+        ) : (
+          <View style={styles.list}>
+            {logs.map((log) => (
               <MaintenanceLogCard
                 key={log._id}
                 log={log}
                 bikeId={bikeId}
                 maintenanceTypes={maintenanceTypes}
                 oilTypes={oilTypes}
-                openSwipeableRef={openSwipeableRef}
-                isLast={i === logs.length - 1}
               />
             ))}
           </View>
-        </ScrollView>
-      )}
+        )}
+      </ScrollView>
 
       <MaintenanceLogFormModal
         open={modalOpen}
@@ -124,25 +139,23 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.background,
   },
-  reminder: {
-    margin: 14,
-    marginBottom: 0,
+  page: {
+    paddingHorizontal: 16,
+    paddingTop: 14,
+    paddingBottom: 24,
+    gap: 12,
   },
-  pad: {
-    padding: 16,
+  topRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
   },
-  sectionHeading: {
-    fontSize: 11,
-    fontWeight: "500",
-    color: COLORS.textMuted,
-    textTransform: "uppercase",
-    letterSpacing: 0.6,
-    marginBottom: 8,
+  count: {
+    fontSize: 13,
+    color: COLORS.textLight,
   },
-  listCard: {
-    backgroundColor: COLORS.surface,
-    borderWidth: 1,
-    borderColor: COLORS.borderSubtle,
-    borderRadius: 10,
+  list: {
+    gap: 10,
   },
 });

@@ -2,9 +2,11 @@ import {
   EmptyState,
   ErrorState,
   MonthStepper,
+  Panel,
   PrimaryButton,
   ScreenHeader,
   SectionLoading,
+  SegmentedTabs,
   YearStepper,
 } from "@/components/main/shared";
 import { useFetchData } from "@/hooks/useApi";
@@ -20,21 +22,17 @@ import { generateSpendingPdf } from "@/utils/generateSpendingPdf";
 import { format, getDate, getDaysInMonth, isSameMonth, parse } from "date-fns";
 import { useLocalSearchParams } from "expo-router";
 import { useState } from "react";
-import {
-  RefreshControl,
-  ScrollView,
-  StyleSheet,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { RefreshControl, ScrollView, StyleSheet, View } from "react-native";
 import { BarChart, PieChart } from "react-native-gifted-charts";
-import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { Text } from "react-native-paper";
 import Toast from "react-native-toast-message";
 import { AiSpendingInsightCard } from "./AiSpendingInsightCard";
 import { SpendingSummaryView } from "./SpendingSummaryView";
 
 type TPeriod = "month" | "year" | "lifetime" | "trend";
+
+const EMPTY_MESSAGE =
+  "Fuel logs, maintenance logs and purchased accessories dated in this period will appear here.";
 
 async function exportSpendingPdf(
   bikeId: string,
@@ -67,11 +65,11 @@ async function exportSpendingPdf(
   }
 }
 
-const TABS: { key: TPeriod; label: string }[] = [
-  { key: "month", label: "Month" },
-  { key: "year", label: "Year" },
-  { key: "lifetime", label: "Lifetime" },
-  { key: "trend", label: "Trend" },
+const TABS: { value: TPeriod; label: string }[] = [
+  { value: "month", label: "Month" },
+  { value: "year", label: "Year" },
+  { value: "lifetime", label: "Lifetime" },
+  { value: "trend", label: "Trend" },
 ];
 
 function getElapsedDaysInMonth(targetMonth: string): number {
@@ -87,6 +85,27 @@ function getElapsedDaysInMonth(targetMonth: string): number {
   return getDaysInMonth(monthDate);
 }
 
+function PdfButton({
+  isExporting,
+  onPress,
+}: {
+  isExporting: boolean;
+  onPress: () => void;
+}) {
+  return (
+    <PrimaryButton
+      variant="secondary"
+      icon="download"
+      compact
+      loading={isExporting}
+      disabled={isExporting}
+      onPress={onPress}
+    >
+      PDF
+    </PrimaryButton>
+  );
+}
+
 function MonthTab({ bikeId }: { bikeId: string }) {
   const [targetMonth, setTargetMonth] = useState(format(new Date(), "yyyy-MM"));
   const [refreshing, setRefreshing] = useState(false);
@@ -99,6 +118,10 @@ function MonthTab({ bikeId }: { bikeId: string }) {
   );
   const summary = data?.data;
 
+  const periodLabel = format(
+    parse(targetMonth, "yyyy-MM", new Date()),
+    "MMMM yyyy",
+  );
   const daysElapsed = getElapsedDaysInMonth(targetMonth);
   const avgDailyExpense =
     daysElapsed > 0 ? (summary?.totalSpending ?? 0) / daysElapsed : 0;
@@ -109,46 +132,54 @@ function MonthTab({ bikeId }: { bikeId: string }) {
     setRefreshing(false);
   };
 
-  const handleExportPdf = () =>
-    exportSpendingPdf(
-      bikeId,
-      "month",
-      { targetMonth },
-      format(parse(targetMonth, "yyyy-MM", new Date()), "MMMM yyyy"),
-      setIsExporting,
-    );
-
   return (
-    <KeyboardAwareScrollView
+    <ScrollView
+      contentContainerStyle={styles.tabContent}
       refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={handleRefresh}
+          tintColor={COLORS.accent}
+        />
       }
       showsVerticalScrollIndicator={false}
     >
-      <MonthStepper targetMonth={targetMonth} onChange={setTargetMonth} />
-
-      <PrimaryButton
-        loading={isExporting}
-        disabled={isExporting}
-        onPress={handleExportPdf}
-        style={styles.exportButton}
-      >
-        {isExporting ? "Exporting…" : "Export PDF"}
-      </PrimaryButton>
+      <View style={styles.controlRow}>
+        <MonthStepper targetMonth={targetMonth} onChange={setTargetMonth} />
+        <PdfButton
+          isExporting={isExporting}
+          onPress={() =>
+            exportSpendingPdf(
+              bikeId,
+              "month",
+              { targetMonth },
+              periodLabel,
+              setIsExporting,
+            )
+          }
+        />
+      </View>
 
       {isLoading ? (
         <SectionLoading count={3} />
       ) : isError ? (
-        <ErrorState onRetry={refetch} />
+        <ErrorState title="Couldn’t load spending" onRetry={refetch} />
       ) : summary && summary.totalSpending > 0 ? (
         <SpendingSummaryView
           summary={summary}
+          periodLabel={periodLabel}
           {...(daysElapsed > 0 ? { avgDailyExpense, daysElapsed } : {})}
         />
       ) : (
-        <EmptyState label="No spending data for this month" />
+        <EmptyState
+          icon="cash-multiple"
+          title={`Nothing spent in ${periodLabel}`}
+          message={EMPTY_MESSAGE}
+        />
       )}
-    </KeyboardAwareScrollView>
+
+      <AiSpendingInsightCard bikeId={bikeId} />
+    </ScrollView>
   );
 }
 
@@ -170,38 +201,50 @@ function YearTab({ bikeId }: { bikeId: string }) {
     setRefreshing(false);
   };
 
-  const handleExportPdf = () =>
-    exportSpendingPdf(bikeId, "year", { targetYear }, targetYear, setIsExporting);
-
   return (
-    <KeyboardAwareScrollView
-      style={{ flex: 1 }}
+    <ScrollView
+      contentContainerStyle={styles.tabContent}
       refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={handleRefresh}
+          tintColor={COLORS.accent}
+        />
       }
       showsVerticalScrollIndicator={false}
     >
-      <YearStepper year={targetYear} onChange={setTargetYear} />
-
-      <PrimaryButton
-        loading={isExporting}
-        disabled={isExporting}
-        onPress={handleExportPdf}
-        style={styles.exportButton}
-      >
-        {isExporting ? "Exporting…" : "Export PDF"}
-      </PrimaryButton>
+      <View style={styles.controlRow}>
+        <YearStepper year={targetYear} onChange={setTargetYear} />
+        <PdfButton
+          isExporting={isExporting}
+          onPress={() =>
+            exportSpendingPdf(
+              bikeId,
+              "year",
+              { targetYear },
+              targetYear,
+              setIsExporting,
+            )
+          }
+        />
+      </View>
 
       {isLoading ? (
         <SectionLoading count={3} />
       ) : isError ? (
-        <ErrorState onRetry={refetch} />
+        <ErrorState title="Couldn’t load spending" onRetry={refetch} />
       ) : summary && summary.totalSpending > 0 ? (
-        <SpendingSummaryView summary={summary} />
+        <SpendingSummaryView summary={summary} periodLabel={targetYear} />
       ) : (
-        <EmptyState label="No spending data for this year" />
+        <EmptyState
+          icon="cash-multiple"
+          title={`Nothing spent in ${targetYear}`}
+          message={EMPTY_MESSAGE}
+        />
       )}
-    </KeyboardAwareScrollView>
+
+      <AiSpendingInsightCard bikeId={bikeId} />
+    </ScrollView>
   );
 }
 
@@ -222,35 +265,42 @@ function LifetimeTab({ bikeId }: { bikeId: string }) {
     setRefreshing(false);
   };
 
-  const handleExportPdf = () =>
-    exportSpendingPdf(bikeId, "lifetime", {}, "Lifetime", setIsExporting);
-
   return (
     <ScrollView
-      style={{ flex: 1 }}
+      contentContainerStyle={styles.tabContent}
       refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={handleRefresh}
+          tintColor={COLORS.accent}
+        />
       }
       showsVerticalScrollIndicator={false}
     >
-      <PrimaryButton
-        loading={isExporting}
-        disabled={isExporting}
-        onPress={handleExportPdf}
-        style={styles.exportButton}
-      >
-        {isExporting ? "Exporting…" : "Export PDF"}
-      </PrimaryButton>
+      <View style={styles.controlRowEnd}>
+        <PdfButton
+          isExporting={isExporting}
+          onPress={() =>
+            exportSpendingPdf(bikeId, "lifetime", {}, "Lifetime", setIsExporting)
+          }
+        />
+      </View>
 
       {isLoading ? (
         <SectionLoading count={3} />
       ) : isError ? (
-        <ErrorState onRetry={refetch} />
+        <ErrorState title="Couldn’t load spending" onRetry={refetch} />
       ) : summary && summary.totalSpending > 0 ? (
-        <SpendingSummaryView summary={summary} />
+        <SpendingSummaryView summary={summary} periodLabel="Lifetime" />
       ) : (
-        <EmptyState label="No lifetime spending data" />
+        <EmptyState
+          icon="cash-multiple"
+          title="Nothing spent yet"
+          message={EMPTY_MESSAGE}
+        />
       )}
+
+      <AiSpendingInsightCard bikeId={bikeId} />
     </ScrollView>
   );
 }
@@ -261,8 +311,7 @@ function TrendTab({ bikeId }: { bikeId: string }) {
     `/bikes/${bikeId}/spending-summary/trend?months=6`,
   );
 
-  const trend = data?.data;
-  const monthlySummary = trend?.monthlySummary ?? [];
+  const monthlySummary = data?.data?.monthlySummary ?? [];
   const latest = monthlySummary[monthlySummary.length - 1];
   const latestBreakdown = latest?.categoryBreakdown ?? [];
   const breakdownTotal = latestBreakdown.reduce((sum, c) => sum + c.total, 0);
@@ -271,91 +320,112 @@ function TrendTab({ bikeId }: { bikeId: string }) {
     value: m.totalSpending,
     label: format(parse(m.targetMonth, "yyyy-MM", new Date()), "MMM"),
     frontColor:
-      i === monthlySummary.length - 1 ? COLORS.accent : tint(COLORS.accent, 0.3),
+      i === monthlySummary.length - 1
+        ? CHART_COLORS[0]
+        : tint(CHART_COLORS[0], 0.55),
   }));
 
   const pieData = latestBreakdown.map((c, i) => ({
     value: c.total,
     text: c.category,
-    color: CHART_COLORS[i % CHART_COLORS.length],
+    color: CHART_COLORS[Math.min(i, 4)],
   }));
 
   if (isLoading) {
-    return <SectionLoading count={2} />;
+    return (
+      <View style={styles.tabContent}>
+        <SectionLoading count={2} />
+      </View>
+    );
   }
 
   if (isError) {
-    return <ErrorState onRetry={refetch} />;
+    return (
+      <View style={styles.tabContent}>
+        <ErrorState title="Couldn’t load the trend" onRetry={refetch} />
+      </View>
+    );
   }
 
   return (
-    <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
-      <View style={styles.chartCard}>
+    <ScrollView
+      contentContainerStyle={styles.tabContent}
+      showsVerticalScrollIndicator={false}
+    >
+      <Panel style={styles.chartPanel}>
         <Text style={styles.chartTitle}>Spending, last 6 months</Text>
         <BarChart
           data={barData}
-          barWidth={28}
-          spacing={24}
+          barWidth={30}
+          spacing={20}
+          initialSpacing={10}
           roundedTop
+          height={180}
           yAxisThickness={0}
           xAxisThickness={0}
-          yAxisTextStyle={{ color: COLORS.textMuted, fontSize: 10 }}
-          xAxisLabelTextStyle={{ color: COLORS.textMuted, fontSize: 10 }}
-          rulesColor={COLORS.borderSubtle}
+          hideRules
+          showValuesAsTopLabel
+          topLabelTextStyle={{ color: COLORS.textLight, fontSize: 11 }}
+          yAxisTextStyle={{ color: COLORS.textLight, fontSize: 10 }}
+          xAxisLabelTextStyle={{ color: COLORS.textLight, fontSize: 11 }}
           noOfSections={4}
         />
-      </View>
+      </Panel>
 
       {pieData.length > 0 ? (
-        <View style={styles.chartCard}>
+        <Panel style={styles.chartPanel}>
           <Text style={styles.chartTitle}>
-            By category (
+            By category
             {latest
-              ? format(
+              ? ` · ${format(
                   parse(latest.targetMonth, "yyyy-MM", new Date()),
                   "MMM yyyy",
-                )
+                )}`
               : ""}
-            )
           </Text>
-          <PieChart
-            data={pieData}
-            donut
-            radius={90}
-            innerRadius={60}
-            innerCircleColor={COLORS.surface}
-          />
 
-          <View style={styles.legend}>
-            {latestBreakdown.map((c, i) => {
-              const percentage =
-                breakdownTotal > 0
-                  ? ((c.total / breakdownTotal) * 100).toFixed(1)
-                  : "0.0";
-              return (
-                <View key={c.category} style={styles.legendItem}>
-                  <View
-                    style={[
-                      styles.legendSwatch,
-                      {
-                        backgroundColor: CHART_COLORS[i % CHART_COLORS.length],
-                      },
-                    ]}
-                  />
-                  <Text style={styles.legendLabel} numberOfLines={1}>
-                    {c.category}
-                  </Text>
-                  <Text style={styles.legendValue}>
-                    ৳{c.total.toFixed(2)} ({percentage}%)
-                  </Text>
-                </View>
-              );
-            })}
+          <View style={styles.donutRow}>
+            <PieChart
+              data={pieData}
+              donut
+              radius={64}
+              innerRadius={42}
+              innerCircleColor={COLORS.card}
+            />
+
+            <View style={styles.legend}>
+              {latestBreakdown.map((c, i) => {
+                const percentage =
+                  breakdownTotal > 0
+                    ? ((c.total / breakdownTotal) * 100).toFixed(1)
+                    : "0.0";
+                return (
+                  <View key={c.category} style={styles.legendItem}>
+                    <View
+                      style={[
+                        styles.legendSwatch,
+                        { backgroundColor: CHART_COLORS[Math.min(i, 4)] },
+                      ]}
+                    />
+                    <Text style={styles.legendLabel} numberOfLines={1}>
+                      {c.category}
+                    </Text>
+                    <Text style={styles.legendValue}>{percentage}%</Text>
+                  </View>
+                );
+              })}
+            </View>
           </View>
-        </View>
+        </Panel>
       ) : (
-        <EmptyState label="No spending data for this month" />
+        <EmptyState
+          icon="cash-multiple"
+          title="Nothing spent this month"
+          message={EMPTY_MESSAGE}
+        />
       )}
+
+      <AiSpendingInsightCard bikeId={bikeId} />
     </ScrollView>
   );
 }
@@ -373,31 +443,21 @@ export function Spending() {
 
   return (
     <View style={styles.container}>
-      <ScreenHeader title="Spending" backLabel={bike?.nickname ?? "Back"} />
+      <ScreenHeader
+        title="Spending"
+        subtitle={bike?.nickname}
+        backLabel={bike?.nickname ?? "Back"}
+      />
 
       <View style={styles.body}>
-        <AiSpendingInsightCard bikeId={bikeId} />
+        <SegmentedTabs
+          value={activeTab}
+          onChange={setActiveTab}
+          options={TABS}
+          style={styles.tabs}
+        />
 
-        <View style={styles.tabBar}>
-          {TABS.map(({ key, label }) => (
-            <TouchableOpacity
-              key={key}
-              style={[styles.tab, activeTab === key && styles.tabActive]}
-              onPress={() => setActiveTab(key)}
-            >
-              <Text
-                style={[
-                  styles.tabText,
-                  activeTab === key && styles.tabTextActive,
-                ]}
-              >
-                {label}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        <View style={styles.tabContent}>
+        <View style={styles.tabHost}>
           {activeTab === "month" && <MonthTab bikeId={bikeId} />}
           {activeTab === "year" && <YearTab bikeId={bikeId} />}
           {activeTab === "lifetime" && <LifetimeTab bikeId={bikeId} />}
@@ -415,61 +475,47 @@ const styles = StyleSheet.create({
   },
   body: {
     flex: 1,
-    padding: 16,
+    paddingHorizontal: 16,
+    paddingTop: 14,
   },
-  tabBar: {
-    flexDirection: "row",
-    gap: 6,
-    marginBottom: 16,
-  },
-  tab: {
-    flex: 1,
-    paddingVertical: 7,
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: COLORS.borderSubtle,
-    backgroundColor: COLORS.surface,
-    alignItems: "center",
-  },
-  tabActive: {
-    backgroundColor: COLORS.accent,
-    borderColor: COLORS.accent,
-  },
-  tabText: {
-    fontSize: 12,
-    fontWeight: "600",
-    color: COLORS.textMuted,
-  },
-  tabTextActive: {
-    color: COLORS.white,
-  },
-  tabContent: {
-    flex: 1,
-  },
-  exportButton: {
-    marginBottom: 16,
-    alignSelf: "flex-start",
-    width: "auto",
-    paddingHorizontal: 20,
-  },
-  chartCard: {
-    backgroundColor: COLORS.surface,
-    borderWidth: 1,
-    borderColor: COLORS.borderSubtle,
-    borderRadius: 10,
-    padding: 16,
+  tabs: {
     marginBottom: 12,
   },
+  tabHost: {
+    flex: 1,
+  },
+  tabContent: {
+    paddingBottom: 24,
+    gap: 12,
+  },
+  controlRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 10,
+  },
+  controlRowEnd: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+  },
+  chartPanel: {
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 10,
+  },
   chartTitle: {
-    fontSize: 11,
+    fontSize: 13,
     fontWeight: "500",
-    color: COLORS.textMuted,
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
-    marginBottom: 10,
+    color: COLORS.text,
+    marginBottom: 12,
+  },
+  donutRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 16,
   },
   legend: {
-    marginTop: 12,
+    flex: 1,
     gap: 8,
   },
   legendItem: {
@@ -478,18 +524,18 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   legendSwatch: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
+    width: 8,
+    height: 8,
+    borderRadius: 2,
   },
   legendLabel: {
     flex: 1,
-    fontSize: 13,
+    fontSize: 12.5,
     color: COLORS.text,
   },
   legendValue: {
-    fontSize: 13,
-    fontWeight: "600",
+    fontSize: 12.5,
     color: COLORS.textLight,
+    fontVariant: ["tabular-nums"],
   },
 });
