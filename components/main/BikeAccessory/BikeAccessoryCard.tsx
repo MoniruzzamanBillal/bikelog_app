@@ -182,14 +182,15 @@ export function BikeAccessoryCard({
               }
             >
               {accessory.price !== undefined
-                ? formatTaka(accessory.price)
+                ? formatTaka(accessory?.price ?? 0)
                 : "No price"}
             </Text>
           </View>
 
           {accessory.status === "purchased" && accessory.purchaseDate ? (
             <Text style={styles.purchased}>
-              Purchased {format(new Date(accessory.purchaseDate), "dd MMM yyyy")}
+              Purchased{" "}
+              {format(new Date(accessory.purchaseDate), "dd MMM yyyy")}
             </Text>
           ) : null}
         </View>
