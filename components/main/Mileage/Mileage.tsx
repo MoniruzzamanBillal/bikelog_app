@@ -49,6 +49,7 @@ export function Mileage() {
           value={activeTab}
           onChange={setActiveTab}
           options={TABS}
+          fill
         />
 
         {activeTab === "history" && <MileageHistoryTab bikeId={bikeId} />}

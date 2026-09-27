@@ -31,6 +31,9 @@ export function YearlyMileageTab({ bikeId }: YearlyMileageTabProps) {
 
   const yearly = data?.data;
   const months = yearly?.monthlySummary ?? [];
+  // The backend always returns all 12 months (zero-filled), so emptiness is
+  // "no fuel logs in any month", not an empty array.
+  const hasData = months.some((m) => m.fuelLogCount > 0);
 
   const barData = months.map((m) => ({
     value: m.totalDistanceKm,
@@ -46,7 +49,7 @@ export function YearlyMileageTab({ bikeId }: YearlyMileageTabProps) {
         <SectionLoading count={3} />
       ) : isError ? (
         <ErrorState title="Couldn’t load mileage" onRetry={refetch} />
-      ) : months.length === 0 ? (
+      ) : !hasData ? (
         <EmptyState
           icon="speedometer-medium"
           title={`Nothing logged in ${year}`}

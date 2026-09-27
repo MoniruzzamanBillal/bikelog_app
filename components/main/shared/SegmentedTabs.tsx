@@ -7,6 +7,12 @@ interface SegmentedTabsProps<T extends string> {
   onChange: (value: T) => void;
   options: { value: T; label: string }[];
   style?: StyleProp<ViewStyle>;
+  /**
+   * Stretch to the full width and split it equally between the segments
+   * instead of shrink-wrapping inside a horizontal scroller. Use it when there
+   * are too many options to fit at their natural width (e.g. Mileage's five).
+   */
+  fill?: boolean;
 }
 
 /**
@@ -18,7 +24,42 @@ export function SegmentedTabs<T extends string>({
   onChange,
   options,
   style,
+  fill = false,
 }: SegmentedTabsProps<T>) {
+  const segments = options.map((opt, i) => {
+    const active = opt.value === value;
+    return (
+      <TouchableOpacity
+        key={opt.value}
+        onPress={() => onChange(opt.value)}
+        activeOpacity={0.7}
+        style={[
+          styles.segment,
+          fill && styles.segmentFill,
+          i > 0 && styles.segmentDivider,
+          active && styles.segmentActive,
+        ]}
+      >
+        <Text
+          style={[styles.label, active && styles.labelActive]}
+          numberOfLines={1}
+          adjustsFontSizeToFit={fill}
+          minimumFontScale={0.8}
+        >
+          {opt.label}
+        </Text>
+      </TouchableOpacity>
+    );
+  });
+
+  if (fill) {
+    return (
+      <View style={[styles.outline, styles.outlineFill, style]}>
+        {segments}
+      </View>
+    );
+  }
+
   return (
     <View style={[styles.outline, style]}>
       <ScrollView
@@ -26,28 +67,7 @@ export function SegmentedTabs<T extends string>({
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.track}
       >
-        {options.map((opt, i) => {
-          const active = opt.value === value;
-          return (
-            <TouchableOpacity
-              key={opt.value}
-              onPress={() => onChange(opt.value)}
-              activeOpacity={0.7}
-              style={[
-                styles.segment,
-                i > 0 && styles.segmentDivider,
-                active && styles.segmentActive,
-              ]}
-            >
-              <Text
-                style={[styles.label, active && styles.labelActive]}
-                numberOfLines={1}
-              >
-                {opt.label}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
+        {segments}
       </ScrollView>
     </View>
   );
@@ -62,6 +82,10 @@ const styles = StyleSheet.create({
     alignSelf: "flex-start",
     maxWidth: "100%",
   },
+  outlineFill: {
+    alignSelf: "stretch",
+    flexDirection: "row",
+  },
   track: {
     flexDirection: "row",
   },
@@ -69,6 +93,11 @@ const styles = StyleSheet.create({
     paddingVertical: 7,
     paddingHorizontal: 12,
     justifyContent: "center",
+  },
+  segmentFill: {
+    flex: 1,
+    paddingHorizontal: 4,
+    alignItems: "center",
   },
   segmentDivider: {
     borderLeftWidth: 1,

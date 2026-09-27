@@ -457,6 +457,7 @@ export function Spending() {
           onChange={setActiveTab}
           options={TABS}
           style={styles.tabs}
+          fill
         />
 
         <View style={styles.tabHost}>
