@@ -3,6 +3,7 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { ReactNode } from "react";
 import { StyleSheet, TouchableOpacity, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Text } from "react-native-paper";
 
 interface AuthLayoutProps {
@@ -23,10 +24,12 @@ export function AuthLayout({
   switchLabel,
   onSwitch,
 }: AuthLayoutProps) {
+  const insets = useSafeAreaInsets();
+
   return (
     <KeyboardAwareScrollView
       style={styles.screen}
-      contentContainerStyle={styles.content}
+      contentContainerStyle={[styles.content, { paddingBottom: insets.bottom }]}
       bottomOffset={30}
       extraKeyboardSpace={10}
       showsVerticalScrollIndicator={false}

@@ -150,7 +150,7 @@ export function AiAssistant() {
 
       <KeyboardStickyView
         style={styles.composerWrap}
-        offset={{ closed: -insets.bottom, opened: 0 }}
+        offset={{ closed: 0, opened: insets.bottom }}
       >
         <Panel glow={messages.length === 0} style={styles.composer}>
           <TextInput
