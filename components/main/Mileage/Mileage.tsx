@@ -1,7 +1,7 @@
 import { ScreenHeader } from "@/components/main/shared";
 import { useFetchData } from "@/hooks/useApi";
 import { TBike } from "@/types/bike.types";
-import { COLORS } from "@/utils/colors";
+import { COLORS, tint } from "@/utils/colors";
 import { useLocalSearchParams } from "expo-router";
 import { useState } from "react";
 import { ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
@@ -97,7 +97,7 @@ const styles = StyleSheet.create({
     backgroundColor: "transparent",
   },
   tabActive: {
-    backgroundColor: "rgba(145,132,217,0.12)",
+    backgroundColor: tint(COLORS.accent, 0.12),
   },
   tabText: {
     fontSize: 12,

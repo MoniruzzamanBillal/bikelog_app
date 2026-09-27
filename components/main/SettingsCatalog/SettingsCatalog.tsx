@@ -14,7 +14,7 @@ import {
 } from "@/components/main/shared";
 import { useFetchData, usePatch, usePost } from "@/hooks/useApi";
 import { useUserContext } from "@/context/user.context";
-import { COLORS } from "@/utils/colors";
+import { COLORS, tint } from "@/utils/colors";
 import {
   TMaintenanceType,
   TEngineOilType,
@@ -596,9 +596,9 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
   logoutButton: {
-    backgroundColor: "rgba(248,113,113,0.1)",
+    backgroundColor: tint(COLORS.danger, 0.15),
     borderWidth: 1,
-    borderColor: "rgba(248,113,113,0.3)",
+    borderColor: tint(COLORS.danger, 0.4),
     borderRadius: 8,
     paddingVertical: 10,
     alignItems: "center",

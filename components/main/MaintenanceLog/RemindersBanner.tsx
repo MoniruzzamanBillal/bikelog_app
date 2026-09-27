@@ -2,7 +2,7 @@ import { StyleSheet, View } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { Text } from "react-native-paper";
 import { useFetchData } from "@/hooks/useApi";
-import { COLORS } from "@/utils/colors";
+import { COLORS, tint } from "@/utils/colors";
 import { TMaintenanceType } from "@/types/catalog.types";
 import { TReminder } from "@/types/maintenance-log.types";
 
@@ -73,9 +73,9 @@ export function RemindersBanner({
 
 const styles = StyleSheet.create({
   reminder: {
-    backgroundColor: "rgba(251,191,36,0.07)",
+    backgroundColor: tint(COLORS.warning, 0.08),
     borderWidth: 1,
-    borderColor: "rgba(251,191,36,0.2)",
+    borderColor: tint(COLORS.warning, 0.4),
     borderRadius: 10,
     padding: 10,
     flexDirection: "row",
@@ -86,7 +86,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 12,
     lineHeight: 16,
-    color: "#fde68a",
+    color: COLORS.warning,
   },
   bold: {
     fontWeight: "700",

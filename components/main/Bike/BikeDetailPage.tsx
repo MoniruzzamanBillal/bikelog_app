@@ -5,7 +5,7 @@ import { EfficiencyAlertBanner } from "@/components/main/Mileage/EfficiencyAlert
 import { useDelete, useFetchData } from "@/hooks/useApi";
 import { TMaintenanceType } from "@/types/catalog.types";
 import { TBike } from "@/types/bike.types";
-import { COLORS } from "@/utils/colors";
+import { COLORS, tint } from "@/utils/colors";
 import { formatApiDate } from "@/utils/formatApiDate";
 import { setLastUsedBike } from "@/utils/lastUsedBike";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
@@ -189,7 +189,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     padding: 16,
-    backgroundColor: "rgba(30,32,48,0.5)",
+    backgroundColor: tint(COLORS.card, 0.5),
     borderBottomWidth: 1,
     borderBottomColor: COLORS.borderSubtle,
   },
@@ -244,7 +244,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 8,
-    backgroundColor: "rgba(145,132,217,0.12)",
+    backgroundColor: tint(COLORS.accent, 0.12),
     alignItems: "center",
     justifyContent: "center",
   },
@@ -258,9 +258,9 @@ const styles = StyleSheet.create({
     paddingBottom: 24,
   },
   deleteButton: {
-    backgroundColor: "rgba(248,113,113,0.1)",
+    backgroundColor: tint(COLORS.danger, 0.15),
     borderWidth: 1,
-    borderColor: "rgba(248,113,113,0.3)",
+    borderColor: tint(COLORS.danger, 0.4),
     borderRadius: 8,
     paddingVertical: 11,
     alignItems: "center",

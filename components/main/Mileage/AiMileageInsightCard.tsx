@@ -1,6 +1,6 @@
 import { StyleSheet, Text, View } from "react-native";
 import { useFetchData } from "@/hooks/useApi";
-import { COLORS } from "@/utils/colors";
+import { COLORS, tint } from "@/utils/colors";
 import { TMileageInsight } from "@/types/mileage.types";
 
 interface AiMileageInsightCardProps {
@@ -30,7 +30,7 @@ export function AiMileageInsightCard({ bikeId }: AiMileageInsightCardProps) {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: "rgba(145,132,217,0.06)",
+    backgroundColor: tint(COLORS.accent, 0.06),
     borderLeftWidth: 2,
     borderLeftColor: COLORS.accent,
     borderRadius: 8,

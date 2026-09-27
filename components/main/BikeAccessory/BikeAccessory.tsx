@@ -18,7 +18,7 @@ import {
   SectionLoading,
 } from "@/components/main/shared";
 import { useFetchData } from "@/hooks/useApi";
-import { COLORS } from "@/utils/colors";
+import { COLORS, tint } from "@/utils/colors";
 import { TBike } from "@/types/bike.types";
 import {
   TAccessoryStatus,
@@ -280,7 +280,7 @@ const styles = StyleSheet.create({
     backgroundColor: "transparent",
   },
   chipActive: {
-    backgroundColor: "rgba(145,132,217,0.15)",
+    backgroundColor: tint(COLORS.accent, 0.15),
     borderColor: COLORS.accent,
   },
   chipText: {

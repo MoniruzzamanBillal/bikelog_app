@@ -2,7 +2,7 @@ import { ImagePickerField, TPickedImageFile } from "@/components/main/shared";
 import { confirmDelete } from "@/components/main/shared/ConfirmDelete";
 import { useDelete, usePut } from "@/hooks/useApi";
 import { TFuelLog } from "@/types/fuel-log.types";
-import { COLORS } from "@/utils/colors";
+import { COLORS, tint } from "@/utils/colors";
 import { formatApiDate } from "@/utils/formatApiDate";
 import { useRef, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
@@ -232,7 +232,7 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
     paddingHorizontal: 8,
     borderRadius: 20,
-    backgroundColor: "rgba(145,132,217,0.15)",
+    backgroundColor: tint(COLORS.accent, 0.15),
   },
   badgeText: {
     fontSize: 11,
@@ -240,7 +240,7 @@ const styles = StyleSheet.create({
     color: COLORS.accent,
   },
   mileageBadge: {
-    backgroundColor: "rgba(74,222,128,0.1)",
+    backgroundColor: tint(COLORS.success, 0.15),
   },
   mileageBadgeText: {
     color: COLORS.success,

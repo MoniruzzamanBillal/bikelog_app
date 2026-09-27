@@ -2,7 +2,7 @@ import { BikeFormModal } from "@/components/main/Bike/BikeFormModal";
 import { confirmDelete } from "@/components/main/shared/ConfirmDelete";
 import { useDelete } from "@/hooks/useApi";
 import { TBike } from "@/types/bike.types";
-import { COLORS } from "@/utils/colors";
+import { COLORS, tint } from "@/utils/colors";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useRef, useState } from "react";
@@ -78,7 +78,7 @@ export function BikeCard({ bike, openSwipeableRef }: BikeCardProps) {
           activeOpacity={0.85}
         >
           <LinearGradient
-            colors={[COLORS.surface, "rgba(46,49,80,0.5)"]}
+            colors={[COLORS.surface, tint(COLORS.surface3, 0.5)]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.header}

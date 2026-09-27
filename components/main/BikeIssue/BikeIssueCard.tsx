@@ -2,7 +2,7 @@ import { MultiImagePickerField, TPickedImageFile } from "@/components/main/share
 import { confirmDelete } from "@/components/main/shared/ConfirmDelete";
 import { useDelete, usePatch, usePost } from "@/hooks/useApi";
 import { TBikeIssue } from "@/types/bike-issue.types";
-import { COLORS } from "@/utils/colors";
+import { COLORS, tint } from "@/utils/colors";
 import { formatApiDate } from "@/utils/formatApiDate";
 import { useRef, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
@@ -228,10 +228,10 @@ const styles = StyleSheet.create({
     flexShrink: 0,
   },
   badgeErr: {
-    backgroundColor: "rgba(248,113,113,0.1)",
+    backgroundColor: tint(COLORS.danger, 0.15),
   },
   badgeOk: {
-    backgroundColor: "rgba(74,222,128,0.1)",
+    backgroundColor: tint(COLORS.success, 0.15),
   },
   badgeText: {
     fontSize: 11,

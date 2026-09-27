@@ -4,7 +4,7 @@ import { ScrollView } from "react-native-gesture-handler";
 import { BarChart } from "react-native-gifted-charts";
 import { ErrorState, SectionLoading } from "@/components/main/shared";
 import { useFetchData } from "@/hooks/useApi";
-import { COLORS } from "@/utils/colors";
+import { COLORS, tint } from "@/utils/colors";
 import { TMileageTrend } from "@/types/mileage.types";
 
 interface MileageTrendTabProps {
@@ -24,7 +24,7 @@ export function MileageTrendTab({ bikeId }: MileageTrendTabProps) {
     value: m.totalDistanceKm,
     label: format(parse(m.targetMonth, "yyyy-MM", new Date()), "MMM"),
     frontColor:
-      i === monthlySummary.length - 1 ? COLORS.accent : "rgba(145,132,217,0.3)",
+      i === monthlySummary.length - 1 ? COLORS.accent : tint(COLORS.accent, 0.3),
   }));
 
   if (isLoading) {

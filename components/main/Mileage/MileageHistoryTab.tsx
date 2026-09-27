@@ -2,7 +2,7 @@ import { StyleSheet, Text, View } from "react-native";
 import { ScrollView } from "react-native-gesture-handler";
 import { EmptyState, ErrorState, SectionLoading } from "@/components/main/shared";
 import { useFetchData } from "@/hooks/useApi";
-import { COLORS } from "@/utils/colors";
+import { COLORS, tint } from "@/utils/colors";
 import { formatApiDate } from "@/utils/formatApiDate";
 import { TLifetimeMileage, TMileageHistoryResponse } from "@/types/mileage.types";
 
@@ -207,10 +207,10 @@ const styles = StyleSheet.create({
     flexShrink: 0,
   },
   badgeOk: {
-    backgroundColor: "rgba(74,222,128,0.1)",
+    backgroundColor: tint(COLORS.success, 0.15),
   },
   badgeWarn: {
-    backgroundColor: "rgba(251,191,36,0.1)",
+    backgroundColor: tint(COLORS.warning, 0.15),
   },
   badgeText: {
     fontSize: 11,

@@ -15,7 +15,7 @@ import {
   TSpendingTrend,
 } from "@/types/spending.types";
 import { apiGet } from "@/utils/api";
-import { CHART_COLORS, COLORS } from "@/utils/colors";
+import { CHART_COLORS, COLORS, tint } from "@/utils/colors";
 import { generateSpendingPdf } from "@/utils/generateSpendingPdf";
 import { format, getDate, getDaysInMonth, isSameMonth, parse } from "date-fns";
 import { useLocalSearchParams } from "expo-router";
@@ -271,7 +271,7 @@ function TrendTab({ bikeId }: { bikeId: string }) {
     value: m.totalSpending,
     label: format(parse(m.targetMonth, "yyyy-MM", new Date()), "MMM"),
     frontColor:
-      i === monthlySummary.length - 1 ? COLORS.accent : "rgba(145,132,217,0.3)",
+      i === monthlySummary.length - 1 ? COLORS.accent : tint(COLORS.accent, 0.3),
   }));
 
   const pieData = latestBreakdown.map((c, i) => ({

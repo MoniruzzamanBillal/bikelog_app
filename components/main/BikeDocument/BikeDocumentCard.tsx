@@ -3,7 +3,7 @@ import { confirmDelete } from "@/components/main/shared/ConfirmDelete";
 import { useDelete, usePost } from "@/hooks/useApi";
 import { IBikeDocument } from "@/types/bike-document.types";
 import { TPickedFile } from "@/types/document-file.types";
-import { COLORS } from "@/utils/colors";
+import { COLORS, tint } from "@/utils/colors";
 import { formatApiDate, parseApiDate } from "@/utils/formatApiDate";
 import { differenceInCalendarDays } from "date-fns";
 import { useRef, useState } from "react";
@@ -29,16 +29,16 @@ function getExpiryBadge(expiryDate?: string): TExpiryBadge | null {
   const daysUntil = differenceInCalendarDays(parseApiDate(expiryDate), new Date());
 
   if (daysUntil < 0) {
-    return { label: "Expired", bg: "rgba(248,113,113,0.1)", text: COLORS.danger };
+    return { label: "Expired", bg: tint(COLORS.danger, 0.15), text: COLORS.danger };
   }
   if (daysUntil <= 30) {
     return {
       label: `Expires in ${daysUntil} day${daysUntil === 1 ? "" : "s"}`,
-      bg: "rgba(251,191,36,0.1)",
+      bg: tint(COLORS.warning, 0.15),
       text: COLORS.warning,
     };
   }
-  return { label: "Valid", bg: "rgba(74,222,128,0.1)", text: COLORS.success };
+  return { label: "Valid", bg: tint(COLORS.success, 0.15), text: COLORS.success };
 }
 
 export function BikeDocumentCard({

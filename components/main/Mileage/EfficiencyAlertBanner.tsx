@@ -2,7 +2,7 @@ import { StyleSheet, View } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { Text } from "react-native-paper";
 import { useFetchData } from "@/hooks/useApi";
-import { COLORS } from "@/utils/colors";
+import { COLORS, tint } from "@/utils/colors";
 import { TMileageHistoryResponse } from "@/types/mileage.types";
 
 interface EfficiencyAlertBannerProps {
@@ -45,15 +45,15 @@ export function EfficiencyAlertBanner({
 
 const styles = StyleSheet.create({
   alertBanner: {
-    backgroundColor: "rgba(248,113,113,0.07)",
+    backgroundColor: tint(COLORS.danger, 0.08),
     borderWidth: 1,
-    borderColor: "rgba(248,113,113,0.2)",
+    borderColor: tint(COLORS.danger, 0.4),
     borderRadius: 10,
     padding: 10,
     flexDirection: "row",
     gap: 8,
     alignItems: "flex-start",
   },
-  text: { flex: 1, fontSize: 12, lineHeight: 16, color: "#fca5a5" },
+  text: { flex: 1, fontSize: 12, lineHeight: 16, color: COLORS.danger },
   bold: { fontWeight: "700" },
 });

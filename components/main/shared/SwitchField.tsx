@@ -1,6 +1,6 @@
 import { StyleSheet, TouchableOpacity, View } from "react-native";
 import { Text } from "react-native-paper";
-import { COLORS } from "@/utils/colors";
+import { COLORS, tint } from "@/utils/colors";
 
 interface SwitchFieldProps {
   label: string;
@@ -60,9 +60,9 @@ const styles = StyleSheet.create({
     width: 44,
     height: 26,
     borderRadius: 13,
-    backgroundColor: "rgba(145,132,217,0.2)",
+    backgroundColor: tint(COLORS.accent, 0.2),
     borderWidth: 1,
-    borderColor: "rgba(145,132,217,0.3)",
+    borderColor: tint(COLORS.accent, 0.3),
     justifyContent: "center",
   },
   trackOn: {

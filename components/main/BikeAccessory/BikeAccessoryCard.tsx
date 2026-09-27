@@ -2,7 +2,7 @@ import { ImagePickerField, TPickedImageFile } from "@/components/main/shared";
 import { confirmDelete } from "@/components/main/shared/ConfirmDelete";
 import { useDelete, usePatch, usePut } from "@/hooks/useApi";
 import { TBikeAccessory } from "@/types/bike-accessory.types";
-import { COLORS } from "@/utils/colors";
+import { COLORS, tint } from "@/utils/colors";
 import { format } from "date-fns";
 import { useRef, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
@@ -30,17 +30,17 @@ const STATUS_BADGE: Record<
   { bg: string; text: string; label: string }
 > = {
   pending: {
-    bg: "rgba(251,191,36,0.1)",
+    bg: tint(COLORS.warning, 0.15),
     text: COLORS.warning,
     label: "Pending",
   },
   purchased: {
-    bg: "rgba(74,222,128,0.1)",
+    bg: tint(COLORS.success, 0.15),
     text: COLORS.success,
     label: "Purchased",
   },
   cancelled: {
-    bg: "rgba(255,255,255,0.07)",
+    bg: COLORS.surface2,
     text: COLORS.textLight,
     label: "Cancelled",
   },

@@ -3,7 +3,7 @@ import { confirmDelete } from "@/components/main/shared/ConfirmDelete";
 import { useDelete, usePut } from "@/hooks/useApi";
 import { TEngineOilType, TMaintenanceType } from "@/types/catalog.types";
 import { TMaintenanceLog } from "@/types/maintenance-log.types";
-import { COLORS } from "@/utils/colors";
+import { COLORS, tint } from "@/utils/colors";
 import { formatApiDate } from "@/utils/formatApiDate";
 import { useRef, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
@@ -245,7 +245,7 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
     paddingHorizontal: 8,
     borderRadius: 20,
-    backgroundColor: "rgba(251,191,36,0.1)",
+    backgroundColor: tint(COLORS.warning, 0.15),
   },
   badgeText: {
     fontSize: 11,

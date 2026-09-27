@@ -2,7 +2,7 @@
 
 ## Status
 
-⛔ Not started. Spec written 2026-09-27 per direct user request, to be implemented in a **fresh session**. Everything that session needs is in this file. Read it top to bottom before touching code.
+🔄 In progress (started 2026-09-27). Spec written 2026-09-27 per direct user request. Everything needed is in this file. Read it top to bottom before touching code.
 
 ## Goal
 
@@ -15,13 +15,13 @@ Make `bikelog_app` look like the redesigned web client (`bikelog_client-web-`, i
 
 ## Decisions already made by the user (don't re-ask)
 
-| Question | Decision |
-|---|---|
-| Light theme + toggle like the web? | **No. Dark only.** Retune the existing dark palette to the web's `.dark` values. |
-| Adopt the web's in-bike bottom tab bar (Overview/Fuel/Service/Spend/More)? | **No. Keep the app's navigation.** The `(tabs)` Garage/Settings tab bar and the stacked `app/bikes/[bikeId]/*` screens with `ScreenHeader` + back stay as they are. No routing changes. |
-| Which repo / branch? | Only `bikelog_app/`. Stay on the **current branch `dev/monir`**, and never create or switch branches (a standing user preference). Don't touch `bikelog_client-web-/` or `bikelog_server/`. |
-| New features? | None. The web has a **Manual** screen and an **Admin** screen the app lacks. They're **out of scope**: they'd be features, not design. Leave them in Known Gaps. |
-| Android widget? | `widgets/QuickAddFuelWidget.tsx` is **untouched**. Spec 36 is still in progress, and the widget renders through its own native pipeline. |
+| Question                                                                   | Decision                                                                                                                                                                                    |
+| -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Light theme + toggle like the web?                                         | **No. Dark only.** Retune the existing dark palette to the web's `.dark` values.                                                                                                            |
+| Adopt the web's in-bike bottom tab bar (Overview/Fuel/Service/Spend/More)? | **No. Keep the app's navigation.** The `(tabs)` Garage/Settings tab bar and the stacked `app/bikes/[bikeId]/*` screens with `ScreenHeader` + back stay as they are. No routing changes.     |
+| Which repo / branch?                                                       | Only `bikelog_app/`. Stay on the **current branch `dev/monir`**, and never create or switch branches (a standing user preference). Don't touch `bikelog_client-web-/` or `bikelog_server/`. |
+| New features?                                                              | None. The web has a **Manual** screen and an **Admin** screen the app lacks. They're **out of scope**: they'd be features, not design. Leave them in Known Gaps.                            |
+| Android widget?                                                            | `widgets/QuickAddFuelWidget.tsx` is **untouched**. Spec 36 is still in progress, and the widget renders through its own native pipeline.                                                    |
 
 ## Background (for a session with no memory of this)
 
@@ -61,29 +61,31 @@ Make `bikelog_app` look like the redesigned web client (`bikelog_client-web-`, i
 
 Retune the `nocturne` object to the web's `.dark` values:
 
-| Key | Current | Target (web `.dark`) | Notes |
-|---|---|---|---|
-| `background` | `#161826` | `#161826` | unchanged |
-| `surface` / `card` | `#1e2030` | `#232532` | web `--card` |
-| `surface2` | `#252840` | `#1f2130` | web `--muted` (skeletons, bar tracks, file chips) |
-| `surface3` | `#2e3150` | `#2b2741` | web `--accent` (accent-tinted bg: user chat bubble, image thumbs, active nav) |
-| `accent` / `primary` | `#9184d9` | `#9184d9` | unchanged |
-| **new** `accentForeground` | — | `#d2cefd` | text on `surface3` |
-| `text` | `#e9e9ed` | `#e9e9ed` | unchanged |
-| `textLight` | `#a0a3b8` | `#9397ab` | web `--muted-foreground` |
-| `textMuted` | `#6b6f8a` | `#75798c` | |
-| `placeholder` | `#4a4e6a` | `#595d6c` | |
-| `border` | `rgba(255,255,255,0.1)` | `rgba(233,233,237,0.14)` | web `--border` |
-| `borderSubtle` | `rgba(255,255,255,0.06)` | `rgba(233,233,237,0.10)` | |
-| **new** `edge` | — | `#3f424d` | hairline card elevation (web `--elev-sm`) |
-| `success` | `#4ade80` | `#7cbf8e` | |
-| `warning` | `#fbbf24` | `#d8a657` | |
-| `danger` | `#f87171` | `#e0786e` | |
+| Key                        | Current                  | Target (web `.dark`)     | Notes                                                                         |
+| -------------------------- | ------------------------ | ------------------------ | ----------------------------------------------------------------------------- |
+| `background`               | `#161826`                | `#161826`                | unchanged                                                                     |
+| `surface` / `card`         | `#1e2030`                | `#232532`                | web `--card`                                                                  |
+| `surface2`                 | `#252840`                | `#1f2130`                | web `--muted` (skeletons, bar tracks, file chips)                             |
+| `surface3`                 | `#2e3150`                | `#2b2741`                | web `--accent` (accent-tinted bg: user chat bubble, image thumbs, active nav) |
+| `accent` / `primary`       | `#9184d9`                | `#9184d9`                | unchanged                                                                     |
+| **new** `accentForeground` | —                        | `#d2cefd`                | text on `surface3`                                                            |
+| `text`                     | `#e9e9ed`                | `#e9e9ed`                | unchanged                                                                     |
+| `textLight`                | `#a0a3b8`                | `#9397ab`                | web `--muted-foreground`                                                      |
+| `textMuted`                | `#6b6f8a`                | `#75798c`                |                                                                               |
+| `placeholder`              | `#4a4e6a`                | `#595d6c`                |                                                                               |
+| `border`                   | `rgba(255,255,255,0.1)`  | `rgba(233,233,237,0.14)` | web `--border`                                                                |
+| `borderSubtle`             | `rgba(255,255,255,0.06)` | `rgba(233,233,237,0.10)` |                                                                               |
+| **new** `edge`             | —                        | `#3f424d`                | hairline card elevation (web `--elev-sm`)                                     |
+| `success`                  | `#4ade80`                | `#7cbf8e`                |                                                                               |
+| `warning`                  | `#fbbf24`                | `#d8a657`                |                                                                               |
+| `danger`                   | `#f87171`                | `#e0786e`                |                                                                               |
 
 - `CHART_COLORS`: set it to the web ramp `["#968ae0", "#d2cefd", "#75798c", "#5d5294", "#b2b6ca"]`. Categories use index `min(i, 4)`, like the web.
 - Add a helper to `utils/colors.ts`:
   ```ts
-  export const tint = (hex: string, alpha: number) => { /* #rrggbb → rgba(r,g,b,alpha) */ };
+  export const tint = (hex: string, alpha: number) => {
+    /* #rrggbb → rgba(r,g,b,alpha) */
+  };
   ```
   Then **replace every hard-coded old-status literal** with `tint(COLORS.x, a)`. The old literals are the `rgba(74,222,128,…)`, `rgba(251,191,36,…)`, `rgba(248,113,113,…)`, `rgba(145,132,217,…)`, `rgba(30,32,48,…)` and `rgba(46,49,80,…)` values, plus the hex text colours `#fde68a` (`RemindersBanner.tsx:89`) and `#fca5a5` (`EfficiencyAlertBanner.tsx:57`). Those two become `COLORS.warning` and `COLORS.danger`.
   - Find them all with `grep -rn "rgba(\|#f[cd]" components app --include=*.tsx`. As of writing there are ~37 hits across ~22 files: BikeDetailPage, BikeCard, cards for Issue/Accessory/Document/FuelLog/MaintenanceLog, RemindersBanner, EfficiencyAlertBanner, the Mileage and Spending files, the AI cards, SettingsCatalog, and shared `SwitchField`/`ImagePickerField`/`ImageViewerModal`.
@@ -92,20 +94,20 @@ Retune the `nocturne` object to the web's `.dark` values:
 
 ### B. Design rules translated to React Native
 
-| Web concept | RN implementation |
-|---|---|
-| `panel` card | `backgroundColor: COLORS.card, borderRadius: 10, borderWidth: 1, borderColor: COLORS.edge`. Put this in a shared `Panel` component or a `panelStyle` constant. |
-| `shadow-glow` (highlighted card) | `borderColor: COLORS.accent` + `shadowColor: COLORS.accent, shadowOpacity: 0.45, shadowRadius: 12, shadowOffset {0,0}` + `elevation: 6` on Android. Used for: the first bike card, rolling average, spending total, empty-state icon chip, AI composer when empty, active pager number. |
-| Tone-tinted outline (reminders, errors) | `borderColor: tint(COLORS.warning or COLORS.danger, 0.4)`, `borderWidth: 1` |
-| `.rule-fade` divider | `expo-linear-gradient` horizontal: `[transparent, COLORS.border, COLORS.border, transparent]` with `locations={[0, 0.15, 0.85, 1]}`, height 1 |
-| Radii | cards 10, controls/buttons/inputs 8, tags 6, modals 14, pills/segment 8 |
-| Type scale | page/hero numbers 30 (odometer), 24 (card hero), 18 (cost), 17 (card title), 15 (header title), 13.5 (body), 13, 12 (meta), 11 (tag, kicker). Kickers: `fontSize: 11, letterSpacing: 0.9, textTransform: "uppercase", color: COLORS.textLight`. Headings use `fontWeight: "500"`, not bold. |
-| Numbers | `fontVariant: ["tabular-nums"]` on every odometer, money, liter and km/l value |
-| Primary button | **Accent outline**: `borderWidth: 1, borderColor: COLORS.accent`, label `COLORS.accent`, weight 500, height 40–44, radius 8. Pressed state: bg `tint(accent, 0.12)`. |
-| Secondary button | `borderColor: COLORS.border`, label `COLORS.text` |
-| Destructive button | `borderColor: COLORS.border`, label `COLORS.danger` |
-| Tag / status pill | `paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6, fontSize: 11`. Tones: neutral = bg `COLORS.surface2` / text `COLORS.text`; accent = `surface3` / `accentForeground`; success/warning/danger = bg `tint(c, 0.15)` / text `c`. |
-| Money | `৳` prefix. Whole taka unless the value has decimals (web's `formatTaka`). |
+| Web concept                             | RN implementation                                                                                                                                                                                                                                                                           |
+| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `panel` card                            | `backgroundColor: COLORS.card, borderRadius: 10, borderWidth: 1, borderColor: COLORS.edge`. Put this in a shared `Panel` component or a `panelStyle` constant.                                                                                                                              |
+| `shadow-glow` (highlighted card)        | `borderColor: COLORS.accent` + `shadowColor: COLORS.accent, shadowOpacity: 0.45, shadowRadius: 12, shadowOffset {0,0}` + `elevation: 6` on Android. Used for: the first bike card, rolling average, spending total, empty-state icon chip, AI composer when empty, active pager number.     |
+| Tone-tinted outline (reminders, errors) | `borderColor: tint(COLORS.warning or COLORS.danger, 0.4)`, `borderWidth: 1`                                                                                                                                                                                                                 |
+| `.rule-fade` divider                    | `expo-linear-gradient` horizontal: `[transparent, COLORS.border, COLORS.border, transparent]` with `locations={[0, 0.15, 0.85, 1]}`, height 1                                                                                                                                               |
+| Radii                                   | cards 10, controls/buttons/inputs 8, tags 6, modals 14, pills/segment 8                                                                                                                                                                                                                     |
+| Type scale                              | page/hero numbers 30 (odometer), 24 (card hero), 18 (cost), 17 (card title), 15 (header title), 13.5 (body), 13, 12 (meta), 11 (tag, kicker). Kickers: `fontSize: 11, letterSpacing: 0.9, textTransform: "uppercase", color: COLORS.textLight`. Headings use `fontWeight: "500"`, not bold. |
+| Numbers                                 | `fontVariant: ["tabular-nums"]` on every odometer, money, liter and km/l value                                                                                                                                                                                                              |
+| Primary button                          | **Accent outline**: `borderWidth: 1, borderColor: COLORS.accent`, label `COLORS.accent`, weight 500, height 40–44, radius 8. Pressed state: bg `tint(accent, 0.12)`.                                                                                                                        |
+| Secondary button                        | `borderColor: COLORS.border`, label `COLORS.text`                                                                                                                                                                                                                                           |
+| Destructive button                      | `borderColor: COLORS.border`, label `COLORS.danger`                                                                                                                                                                                                                                         |
+| Tag / status pill                       | `paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6, fontSize: 11`. Tones: neutral = bg `COLORS.surface2` / text `COLORS.text`; accent = `surface3` / `accentForeground`; success/warning/danger = bg `tint(c, 0.15)` / text `c`.                                                    |
+| Money                                   | `৳` prefix. Whole taka unless the value has decimals (web's `formatTaka`).                                                                                                                                                                                                                  |
 
 ### C. Shared components (`components/main/shared/`)
 
@@ -154,6 +156,7 @@ Restyle these to rules B. New props are optional.
 ### D. Screens
 
 Each screen keeps its hooks and handlers. Only JSX layout and `StyleSheet` values change. Every screen needs:
+
 - **loading**: `SectionLoading` shaped like the content
 - **error**: `ErrorState` with `onRetry={refetch}`
 - **empty**: `EmptyState` with the web's copy (quoted below)

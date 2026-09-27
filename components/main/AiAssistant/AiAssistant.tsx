@@ -9,7 +9,7 @@ import { ActivityIndicator, Text, TextInput } from "react-native-paper";
 import Toast from "react-native-toast-message";
 import { ScreenHeader } from "@/components/main/shared";
 import { useFetchData, usePost } from "@/hooks/useApi";
-import { COLORS } from "@/utils/colors";
+import { COLORS, tint } from "@/utils/colors";
 import { TBike } from "@/types/bike.types";
 import { TBikeChatResponse, TChatMessage } from "@/types/ai-assistant.types";
 
@@ -240,7 +240,7 @@ const styles = StyleSheet.create({
   groundedPill: {
     fontSize: 11,
     color: COLORS.placeholder,
-    backgroundColor: "rgba(30,32,48,0.6)",
+    backgroundColor: tint(COLORS.card, 0.6),
     paddingVertical: 4,
     paddingHorizontal: 10,
     borderRadius: 20,

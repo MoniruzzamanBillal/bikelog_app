@@ -11,7 +11,7 @@ import {
   TBikeIssueStatus,
   TBikeIssuesApiResponse,
 } from "@/types/bike-issue.types";
-import { COLORS } from "@/utils/colors";
+import { COLORS, tint } from "@/utils/colors";
 import { useLocalSearchParams } from "expo-router";
 import { useRef, useState } from "react";
 import { RefreshControl, ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
@@ -178,7 +178,7 @@ const styles = StyleSheet.create({
     borderBottomColor: "transparent",
   },
   tabActive: {
-    backgroundColor: "rgba(145,132,217,0.12)",
+    backgroundColor: tint(COLORS.accent, 0.12),
     borderBottomColor: COLORS.accent,
   },
   tabText: {
