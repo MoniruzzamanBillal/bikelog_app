@@ -19,6 +19,12 @@ interface ImagePickerFieldProps {
   onDelete: () => void;
   uploading: boolean;
   disabled?: boolean;
+  /**
+   * Tile edge length. Defaults to the original 64. Below `COMPACT_BELOW` (64) the
+   * floating pencil/close badges have no room, so view/replace/delete move into
+   * one native action sheet instead — same actions, just not as badges.
+   */
+  size?: number;
 }
 
 function assetToFile(asset: ImagePicker.ImagePickerAsset): TPickedImageFile {
@@ -36,8 +42,10 @@ export function ImagePickerField({
   onDelete,
   uploading,
   disabled,
+  size = SIZE,
 }: ImagePickerFieldProps) {
   const [viewerOpen, setViewerOpen] = useState(false);
+  const compact = size < COMPACT_BELOW;
 
   const takePhoto = async () => {
     const permission = await ImagePicker.requestCameraPermissionsAsync();
@@ -87,8 +95,28 @@ export function ImagePickerField({
     ]);
   };
 
+  const handleDelete = () => {
+    Alert.alert(
+      "Delete?",
+      `Are you sure you want to delete this ${label.toLowerCase()}?`,
+      [
+        { text: "Cancel", style: "cancel" },
+        { text: "Delete", style: "destructive", onPress: onDelete },
+      ],
+    );
+  };
+
   const handlePress = () => {
     if (uploading || disabled) return;
+    if (compact && value) {
+      Alert.alert(label, undefined, [
+        { text: "View", onPress: () => setViewerOpen(true) },
+        { text: "Replace", onPress: openActionSheet },
+        { text: "Delete", style: "destructive", onPress: handleDelete },
+        { text: "Cancel", style: "cancel" },
+      ]);
+      return;
+    }
     // With a value already set, tapping the tile views it full-screen —
     // "replace" moved to its own pencil badge. With no value, there's
     // nothing to view yet, so tapping still opens the action sheet.
@@ -104,24 +132,21 @@ export function ImagePickerField({
     openActionSheet();
   };
 
-  const handleDelete = () => {
-    Alert.alert(
-      "Delete?",
-      `Are you sure you want to delete this ${label.toLowerCase()}?`,
-      [
-        { text: "Cancel", style: "cancel" },
-        { text: "Delete", style: "destructive", onPress: onDelete },
-      ],
-    );
-  };
-
   return (
-    <View style={styles.wrapper}>
-      <View style={styles.tile}>
+    <View style={[styles.wrapper, { width: size, height: size }]}>
+      <View
+        style={[
+          styles.tile,
+          { width: size, height: size },
+          !value && styles.tileEmpty,
+        ]}
+      >
         <TouchableOpacity
           onPress={handlePress}
           disabled={uploading || disabled}
-          style={styles.touchable}
+          // Explicit size, not 100%: RNGH wraps the touchable in its own container,
+          // so a percentage collapses on web and hides the image (spec 38a).
+          style={[styles.touchable, { width: size, height: size }]}
         >
           {value ? (
             <Image
@@ -132,8 +157,8 @@ export function ImagePickerField({
           ) : (
             <View style={styles.placeholder}>
               <MaterialCommunityIcons
-                name="camera-plus-outline"
-                size={20}
+                name={compact ? "plus" : "camera-plus-outline"}
+                size={compact ? 14 : 20}
                 color={COLORS.textLight}
               />
             </View>
@@ -147,7 +172,7 @@ export function ImagePickerField({
         )}
       </View>
 
-      {!!value && !uploading && !disabled && (
+      {!!value && !uploading && !disabled && !compact && (
         <TouchableOpacity
           onPress={handleReplace}
           style={styles.editBadge}
@@ -161,7 +186,7 @@ export function ImagePickerField({
         </TouchableOpacity>
       )}
 
-      {!!value && !uploading && (
+      {!!value && !uploading && !compact && (
         <TouchableOpacity
           onPress={handleDelete}
           style={styles.deleteBadge}
@@ -184,25 +209,27 @@ export function ImagePickerField({
 }
 
 const SIZE = 64;
+// ! Any non-default size uses the action sheet: the badges' fixed `top: -75` is
+// ! tuned (and device-verified, spec 29) for the 64pt tile only. See spec 38a.
+const COMPACT_BELOW = 64;
 
 const styles = StyleSheet.create({
   wrapper: {
     position: "relative",
-    width: SIZE,
-    height: SIZE,
   },
   tile: {
-    width: SIZE,
-    height: SIZE,
-    borderRadius: 6,
+    borderRadius: 8,
     overflow: "hidden",
     borderWidth: 1,
     borderColor: COLORS.border,
-    backgroundColor: COLORS.background,
+    backgroundColor: COLORS.surface3,
+  },
+  tileEmpty: {
+    backgroundColor: "transparent",
   },
   touchable: {
-    width: "100%",
-    height: "100%",
+    alignItems: "center",
+    justifyContent: "center",
   },
   image: {
     width: "100%",

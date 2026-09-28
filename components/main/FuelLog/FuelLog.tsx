@@ -1,9 +1,3 @@
-import { useRef, useState } from "react";
-import { RefreshControl, ScrollView, StyleSheet, View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Text } from "react-native-paper";
-import { useLocalSearchParams } from "expo-router";
-import { SwipeableMethods } from "react-native-gesture-handler/ReanimatedSwipeable";
 import {
   EmptyState,
   ErrorState,
@@ -12,15 +6,22 @@ import {
   SectionLoading,
 } from "@/components/main/shared";
 import { useFetchData } from "@/hooks/useApi";
-import { COLORS } from "@/utils/colors";
 import { TBike } from "@/types/bike.types";
 import { TFuelLog, TFuelLogsApiResponse } from "@/types/fuel-log.types";
+import { TMileageHistoryResponse, TMileageRecord } from "@/types/mileage.types";
+import { COLORS } from "@/utils/colors";
+import { formatApiDate } from "@/utils/formatApiDate";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { useLocalSearchParams } from "expo-router";
+import { useState } from "react";
 import {
-  TLifetimeMileage,
-  TMileageHistoryResponse,
-  TMileageRecord,
-} from "@/types/mileage.types";
-import { isSameMonth, parseISO } from "date-fns";
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { Text } from "react-native-paper";
 import { FuelLogCard } from "./FuelLogCard";
 import { FuelLogFormModal } from "./FuelLogFormModal";
 
@@ -37,13 +38,30 @@ function findMileageForLog(
     ?.mileageKmPerLiter;
 }
 
+/**
+ * Logs belonging to a closed mileage period can't be edited or deleted — the
+ * server rejects it ("part of a closed mileage record"), so the UI says so
+ * up front instead of letting the request fail.
+ */
+function buildLockMap(records: TMileageRecord[]): Map<string, string> {
+  const locks = new Map<string, string>();
+  records.forEach((record) => {
+    const period = `${formatApiDate(record.periodStartDate, "d MMM")} → ${formatApiDate(
+      record.periodEndDate,
+      "d MMM",
+    )}`;
+    record.fuelLogIds?.forEach((id) => {
+      locks.set(id, `Locked — part of a closed mileage period (${period})`);
+    });
+  });
+  return locks;
+}
+
 export function FuelLog() {
-  const insets = useSafeAreaInsets();
   const { bikeId } = useLocalSearchParams<{ bikeId: string }>();
   const [page, setPage] = useState(1);
   const [modalOpen, setModalOpen] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const openSwipeableRef = useRef<SwipeableMethods | null>(null);
 
   const { data: bikeData } = useFetchData<TBike>(
     ["bikes", bikeId],
@@ -52,22 +70,12 @@ export function FuelLog() {
   );
   const bike = bikeData?.data;
 
-  const { data, isLoading, isError, refetch } = useFetchData<TFuelLogsApiResponse>(
-    ["fuelLogs", bikeId, page.toString()],
-    `/bikes/${bikeId}/fuel-logs?page=${page}&limit=${LIMIT}&sort=-date`,
-    { enabled: !!bikeId },
-  );
-
-  const { data: lifetimeData } = useFetchData<TLifetimeMileage>(
-    ["mileage", "lifetime", bikeId],
-    `/bikes/${bikeId}/mileage/lifetime`,
-    { enabled: !!bikeId },
-  );
-  const lifetime = lifetimeData?.data;
-  const avgMileage =
-    lifetime && lifetime.totalLitersConsumed > 0
-      ? (lifetime.totalDistanceKm / lifetime.totalLitersConsumed).toFixed(1)
-      : "—";
+  const { data, isLoading, isError, refetch } =
+    useFetchData<TFuelLogsApiResponse>(
+      ["fuelLogs", bikeId, page.toString()],
+      `/bikes/${bikeId}/fuel-logs?page=${page}&limit=${LIMIT}&sort=-date`,
+      { enabled: !!bikeId },
+    );
 
   const { data: mileageHistoryData } = useFetchData<TMileageHistoryResponse>(
     ["mileage", "history", bikeId],
@@ -75,15 +83,13 @@ export function FuelLog() {
     { enabled: !!bikeId },
   );
   const mileageRecords = mileageHistoryData?.data?.exactRecords ?? [];
+  const lockMap = buildLockMap(mileageRecords);
 
   const fuelLogs = data?.data?.result ?? [];
   const totalCount = data?.data?.meta ?? 0;
   const totalPages = Math.ceil(totalCount / LIMIT) || 1;
-
-  const now = new Date();
-  const thisMonthTotal = fuelLogs
-    .filter((log) => isSameMonth(parseISO(log.date), now))
-    .reduce((sum, log) => sum + log.litersAdded * log.pricePerLiter, 0);
+  const firstOnPage = (page - 1) * LIMIT + 1;
+  const lastOnPage = (page - 1) * LIMIT + fuelLogs.length;
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -91,98 +97,111 @@ export function FuelLog() {
     setRefreshing(false);
   };
 
+  const addButton = (
+    <PrimaryButton onPress={() => setModalOpen(true)} icon="plus" compact>
+      Add
+    </PrimaryButton>
+  );
+
   return (
     <View style={styles.screen}>
       <ScreenHeader
-        title="Fuel Logs"
+        title="Fuel logs"
+        subtitle={bike?.nickname}
         backLabel={bike?.nickname ?? "Back"}
-        rightIcon="plus"
-        onRightPress={() => setModalOpen(true)}
       />
 
-      <View style={styles.statsRow}>
-        <View style={styles.statCard}>
-          <Text style={styles.statVal}>৳{thisMonthTotal.toFixed(0)}</Text>
-          <Text style={styles.statKey}>This month</Text>
+      <ScrollView
+        contentContainerStyle={styles.page}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            tintColor={COLORS.accent}
+          />
+        }
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.topRow}>
+          <Text style={styles.count}>
+            {isLoading ? "" : `${totalCount} fill-ups`}
+          </Text>
+          {addButton}
         </View>
-        <View style={styles.statCard}>
-          <Text style={styles.statVal}>{avgMileage}</Text>
-          <Text style={styles.statKey}>km/L avg</Text>
-        </View>
-        <View style={styles.statCard}>
-          <Text style={styles.statVal}>{totalCount}</Text>
-          <Text style={styles.statKey}>Fill-ups</Text>
-        </View>
-      </View>
 
-      {isLoading ? (
-        <View style={styles.pad}>
+        {isLoading ? (
           <SectionLoading count={5} />
-        </View>
-      ) : isError ? (
-        <ErrorState onRetry={refetch} />
-      ) : fuelLogs.length === 0 ? (
-        <View style={styles.emptyWrap}>
-          <EmptyState label="No fill-ups yet. Log your first fuel fill-up to start tracking mileage and spending." />
-          <PrimaryButton onPress={() => setModalOpen(true)} style={styles.emptyButton}>
-            Add Fill-up
-          </PrimaryButton>
-        </View>
-      ) : (
-        <>
-          <ScrollView
-            contentContainerStyle={styles.pad}
-            refreshControl={
-              <RefreshControl
-                refreshing={refreshing}
-                onRefresh={handleRefresh}
-                tintColor={COLORS.accent}
-              />
+        ) : isError ? (
+          <ErrorState title="Couldn’t load fuel logs" onRetry={refetch} />
+        ) : fuelLogs.length === 0 ? (
+          <EmptyState
+            icon="gas-station"
+            title="No fill-ups yet"
+            message="Mark full-tank fills so Bike Log can work out exact km/l."
+            action={
+              <PrimaryButton
+                onPress={() => setModalOpen(true)}
+                icon="plus"
+                compact
+              >
+                Add fuel log
+              </PrimaryButton>
             }
-            showsVerticalScrollIndicator={false}
-          >
-            <View style={styles.listCard}>
-              {fuelLogs.map((log, i) => (
+          />
+        ) : (
+          <>
+            <View style={styles.list}>
+              {fuelLogs.map((log) => (
                 <FuelLogCard
                   key={log._id}
                   fuelLog={log}
                   bikeId={bikeId}
-                  openSwipeableRef={openSwipeableRef}
-                  isLast={i === fuelLogs.length - 1}
                   mileageKmPerLiter={findMileageForLog(log, mileageRecords)}
+                  lockedNote={lockMap.get(log._id)}
                 />
               ))}
             </View>
-            <Text style={styles.resultsCaption}>
-              — {fuelLogs.length} of {totalCount} results —
-            </Text>
-          </ScrollView>
 
-          {totalPages > 1 && (
-            <View style={[styles.pagination, { paddingBottom: 16 + insets.bottom }]}>
-              <Text style={styles.pageInfo}>
-                Page {page} of {totalPages}
-              </Text>
-              <View style={styles.pageButtons}>
-                <PrimaryButton
-                  disabled={page === 1}
-                  onPress={() => setPage((p) => p - 1)}
-                  style={styles.pageButton}
-                >
-                  Previous
-                </PrimaryButton>
-                <PrimaryButton
-                  disabled={page === totalPages}
-                  onPress={() => setPage((p) => p + 1)}
-                  style={styles.pageButton}
-                >
-                  Next
-                </PrimaryButton>
+            {totalPages > 1 && (
+              <View style={styles.pager}>
+                <Text style={styles.pagerRange}>
+                  {firstOnPage}–{lastOnPage} of {totalCount}
+                </Text>
+                <View style={styles.pagerControls}>
+                  <TouchableOpacity
+                    disabled={page === 1}
+                    onPress={() => setPage((p) => p - 1)}
+                    style={[styles.pagerBtn, page === 1 && styles.pagerBtnOff]}
+                  >
+                    <MaterialCommunityIcons
+                      name="chevron-left"
+                      size={16}
+                      color={COLORS.text}
+                    />
+                  </TouchableOpacity>
+                  <Text style={styles.pagerPage}>
+                    {page} / {totalPages}
+                  </Text>
+                  <TouchableOpacity
+                    disabled={page === totalPages}
+                    onPress={() => setPage((p) => p + 1)}
+                    style={[
+                      styles.pagerBtn,
+                      page === totalPages && styles.pagerBtnOff,
+                    ]}
+                  >
+                    <MaterialCommunityIcons
+                      name="chevron-right"
+                      size={16}
+                      color={COLORS.text}
+                    />
+                  </TouchableOpacity>
+                </View>
               </View>
-            </View>
-          )}
-        </>
-      )}
+            )}
+          </>
+        )}
+      </ScrollView>
 
       <FuelLogFormModal
         open={modalOpen}
@@ -198,72 +217,58 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.background,
   },
-  statsRow: {
+  page: {
+    paddingHorizontal: 16,
+    paddingTop: 14,
+    paddingBottom: 24,
+    gap: 10,
+  },
+  topRow: {
     flexDirection: "row",
-    gap: 8,
-    padding: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.borderSubtle,
-  },
-  statCard: {
-    flex: 1,
-    backgroundColor: COLORS.surface,
-    borderWidth: 1,
-    borderColor: COLORS.borderSubtle,
-    borderRadius: 10,
-    padding: 12,
     alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
   },
-  statVal: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: COLORS.text,
+  count: {
+    fontSize: 13,
+    color: COLORS.textLight,
   },
-  statKey: {
-    fontSize: 11,
-    color: COLORS.textMuted,
-    marginTop: 3,
+  list: {
+    gap: 10,
   },
-  pad: {
-    padding: 16,
+  pager: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 2,
+    paddingVertical: 4,
   },
-  listCard: {
-    backgroundColor: COLORS.surface,
+  pagerRange: {
+    fontSize: 12.5,
+    color: COLORS.textLight,
+    fontVariant: ["tabular-nums"],
+  },
+  pagerControls: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  pagerBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 8,
     borderWidth: 1,
-    borderColor: COLORS.borderSubtle,
-    borderRadius: 10,
-  },
-  resultsCaption: {
-    textAlign: "center",
-    fontSize: 12,
-    color: COLORS.textMuted,
-    marginTop: 12,
-  },
-  emptyWrap: {
-    flex: 1,
+    borderColor: COLORS.border,
     alignItems: "center",
     justifyContent: "center",
   },
-  emptyButton: {
-    width: "auto",
-    paddingHorizontal: 24,
-    marginTop: 8,
+  pagerBtnOff: {
+    opacity: 0.45,
   },
-  pagination: {
-    padding: 16,
-    alignItems: "center",
-  },
-  pageInfo: {
-    fontSize: 13,
-    color: COLORS.textLight,
-    marginBottom: 8,
-  },
-  pageButtons: {
-    flexDirection: "row",
-    gap: 12,
-    width: "100%",
-  },
-  pageButton: {
-    flex: 1,
+  pagerPage: {
+    fontSize: 12.5,
+    color: COLORS.text,
+    paddingHorizontal: 6,
+    fontVariant: ["tabular-nums"],
   },
 });

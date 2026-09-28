@@ -47,22 +47,21 @@ const styles = StyleSheet.create({
     paddingRight: 12,
   },
   label: {
-    fontSize: 14,
-    fontWeight: "500",
+    fontSize: 13.5,
     color: COLORS.text,
   },
   description: {
-    fontSize: 11,
-    color: COLORS.textMuted,
+    fontSize: 12,
+    color: COLORS.textLight,
     marginTop: 2,
   },
   track: {
     width: 44,
     height: 26,
     borderRadius: 13,
-    backgroundColor: "rgba(145,132,217,0.2)",
+    backgroundColor: COLORS.surface2,
     borderWidth: 1,
-    borderColor: "rgba(145,132,217,0.3)",
+    borderColor: COLORS.border,
     justifyContent: "center",
   },
   trackOn: {

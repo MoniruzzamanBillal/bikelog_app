@@ -1,10 +1,19 @@
-import { useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
-import { ScrollView } from "react-native-gesture-handler";
-import { ErrorState, SectionLoading, YearStepper } from "@/components/main/shared";
+import {
+  EmptyState,
+  ErrorState,
+  Panel,
+  RuleFade,
+  SectionLoading,
+  YearStepper,
+} from "@/components/main/shared";
 import { useFetchData } from "@/hooks/useApi";
-import { COLORS } from "@/utils/colors";
 import { TYearlyMileage } from "@/types/mileage.types";
+import { CHART_COLORS, COLORS } from "@/utils/colors";
+import { format, parse } from "date-fns";
+import { useState } from "react";
+import { StyleSheet, View } from "react-native";
+import { BarChart } from "react-native-gifted-charts";
+import { Text } from "react-native-paper";
 
 interface YearlyMileageTabProps {
   bikeId: string;
@@ -21,100 +30,124 @@ export function YearlyMileageTab({ bikeId }: YearlyMileageTabProps) {
   );
 
   const yearly = data?.data;
+  const months = yearly?.monthlySummary ?? [];
+  // The backend always returns all 12 months (zero-filled), so emptiness is
+  // "no fuel logs in any month", not an empty array.
+  const hasData = months.some((m) => m.fuelLogCount > 0);
 
-  if (isLoading) {
-    return <SectionLoading count={4} />;
-  }
+  const barData = months.map((m) => ({
+    value: m.totalDistanceKm,
+    label: format(parse(m.targetMonth, "yyyy-MM", new Date()), "MMM"),
+    frontColor: CHART_COLORS[0],
+  }));
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+    <View style={styles.stack}>
       <YearStepper year={year} onChange={setYear} />
 
-      {isError ? (
-        <ErrorState onRetry={refetch} />
-      ) : yearly?.monthlySummary && yearly.monthlySummary.length > 0 ? (
-        <View style={styles.listCard}>
-          {yearly.monthlySummary.map((m, i) => {
-            const avg =
-              m.totalLitersConsumed > 0
-                ? (m.totalDistanceKm / m.totalLitersConsumed).toFixed(1)
-                : "—";
-            const monthIndex = Number(m.targetMonth.split("-")[1]) - 1;
-            const monthName = new Date(Number(year), monthIndex).toLocaleString(
-              "default",
-              { month: "long" },
-            );
-            return (
-              <View
-                key={m.targetMonth}
-                style={[
-                  styles.row,
-                  i === yearly.monthlySummary.length - 1 && styles.rowLast,
-                ]}
-              >
-                <View style={styles.rowLeft}>
-                  <Text style={styles.monthName}>{monthName}</Text>
-                  <Text style={styles.monthDetail}>
-                    {m.totalDistanceKm.toLocaleString()} km ·{" "}
-                    {m.totalLitersConsumed.toFixed(1)} L · {m.fuelLogCount} logs
-                  </Text>
-                </View>
-                <Text style={styles.monthAvg}>{avg} km/L</Text>
-              </View>
-            );
-          })}
-        </View>
+      {isLoading ? (
+        <SectionLoading count={3} />
+      ) : isError ? (
+        <ErrorState title="Couldn’t load mileage" onRetry={refetch} />
+      ) : !hasData ? (
+        <EmptyState
+          icon="speedometer-medium"
+          title={`Nothing logged in ${year}`}
+          message="Fuel logs dated in this year will show up here."
+        />
       ) : (
-        <Text style={styles.emptyText}>No fuel logs for {year}.</Text>
+        <>
+          <Panel style={styles.chartPanel}>
+            <Text style={styles.chartTitle}>Distance by month</Text>
+            <BarChart
+              data={barData}
+              barWidth={12}
+              spacing={9}
+              initialSpacing={8}
+              endSpacing={8}
+              yAxisLabelWidth={34}
+              roundedTop
+              height={140}
+              yAxisThickness={0}
+              xAxisThickness={0}
+              hideRules
+              yAxisTextStyle={{ color: COLORS.textLight, fontSize: 10 }}
+              xAxisLabelTextStyle={{ color: COLORS.textLight, fontSize: 10 }}
+              noOfSections={4}
+            />
+          </Panel>
+
+          <Panel style={styles.listPanel}>
+            {months.map((m, i) => {
+              const monthLabel = format(
+                parse(m.targetMonth, "yyyy-MM", new Date()),
+                "MMMM",
+              );
+              return (
+                <View key={m.targetMonth}>
+                  <View style={styles.row}>
+                    <Text style={styles.month}>{monthLabel}</Text>
+                    <Text style={styles.rowValue}>
+                      {m.totalDistanceKm.toLocaleString()} km
+                    </Text>
+                    <Text style={styles.rowValue}>
+                      {m.totalLitersConsumed.toFixed(2)} L
+                    </Text>
+                    <Text style={styles.rowCount}>{m.fuelLogCount}</Text>
+                  </View>
+                  {i < months.length - 1 ? <RuleFade /> : null}
+                </View>
+              );
+            })}
+          </Panel>
+        </>
       )}
-    </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
+  stack: {
+    gap: 12,
   },
-  listCard: {
-    backgroundColor: COLORS.surface,
-    borderWidth: 1,
-    borderColor: COLORS.borderSubtle,
-    borderRadius: 10,
+  chartPanel: {
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 10,
+  },
+  chartTitle: {
+    fontSize: 13,
+    fontWeight: "500",
+    color: COLORS.text,
+    marginBottom: 10,
+  },
+  listPanel: {
+    paddingVertical: 2,
   },
   row: {
+    height: 44,
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
-    padding: 13,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.borderSubtle,
+    paddingHorizontal: 16,
+    gap: 8,
   },
-  rowLast: {
-    borderBottomWidth: 0,
-  },
-  rowLeft: {
+  month: {
     flex: 1,
-  },
-  monthName: {
-    fontSize: 14,
-    fontWeight: "600",
+    fontSize: 13,
     color: COLORS.text,
   },
-  monthAvg: {
-    fontSize: 14,
-    fontWeight: "700",
-    color: COLORS.text,
-    fontFamily: "monospace",
-  },
-  monthDetail: {
-    fontSize: 12,
-    color: COLORS.textMuted,
-    marginTop: 2,
-  },
-  emptyText: {
+  rowValue: {
     fontSize: 13,
     color: COLORS.textLight,
-    textAlign: "center",
-    marginTop: 40,
+    fontVariant: ["tabular-nums"],
+    textAlign: "right",
+    minWidth: 68,
+  },
+  rowCount: {
+    fontSize: 13,
+    color: COLORS.textLight,
+    fontVariant: ["tabular-nums"],
+    textAlign: "right",
+    minWidth: 20,
   },
 });

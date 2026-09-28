@@ -1,27 +1,43 @@
 import { BikeFormModal } from "@/components/main/Bike/BikeFormModal";
 import { confirmDelete } from "@/components/main/shared/ConfirmDelete";
+import { glowStyle, panelStyle } from "@/components/main/shared/Panel";
+import { toneStyle } from "@/components/main/shared/StatusBadge";
 import { useDelete } from "@/hooks/useApi";
 import { TBike } from "@/types/bike.types";
-import { COLORS } from "@/utils/colors";
-import { LinearGradient } from "expo-linear-gradient";
+import { COLORS, tint } from "@/utils/colors";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { format } from "date-fns";
 import { useRouter } from "expo-router";
 import { useRef, useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 import { TouchableOpacity } from "react-native-gesture-handler";
 import Swipeable, {
   SwipeableMethods,
 } from "react-native-gesture-handler/ReanimatedSwipeable";
+import { Text } from "react-native-paper";
+
 interface BikeCardProps {
   bike: TBike;
+  /** The first card carries the accent glow, like the web's `highlight`. */
+  highlight?: boolean;
   openSwipeableRef: React.MutableRefObject<SwipeableMethods | null>;
 }
 
-export function BikeCard({ bike, openSwipeableRef }: BikeCardProps) {
+export function BikeCard({
+  bike,
+  highlight,
+  openSwipeableRef,
+}: BikeCardProps) {
   const router = useRouter();
   const [editOpen, setEditOpen] = useState(false);
   const swipeableRef = useRef<SwipeableMethods>(null);
 
   const deleteMutation = useDelete([["bikes"]]);
+
+  const logged = bike.currentOdometer - (bike.initialOdometer ?? 0);
+  const since = bike.purchaseDate
+    ? format(new Date(bike.purchaseDate), "MMM yyyy")
+    : "—";
 
   const handleSwipeableWillOpen = () => {
     if (
@@ -55,7 +71,14 @@ export function BikeCard({ bike, openSwipeableRef }: BikeCardProps) {
             onPress={handleEdit}
             style={[styles.action, styles.editAction]}
           >
-            <Text style={styles.actionText}>Edit</Text>
+            <MaterialCommunityIcons
+              name="pencil-outline"
+              size={18}
+              color={COLORS.success}
+            />
+            <Text style={[styles.actionText, { color: COLORS.success }]}>
+              Edit
+            </Text>
           </TouchableOpacity>
         )}
         renderRightActions={() => (
@@ -63,7 +86,14 @@ export function BikeCard({ bike, openSwipeableRef }: BikeCardProps) {
             onPress={handleDelete}
             style={[styles.action, styles.deleteAction]}
           >
-            <Text style={styles.actionText}>Delete</Text>
+            <MaterialCommunityIcons
+              name="trash-can-outline"
+              size={18}
+              color={COLORS.danger}
+            />
+            <Text style={[styles.actionText, { color: COLORS.danger }]}>
+              Delete
+            </Text>
           </TouchableOpacity>
         )}
       >
@@ -74,43 +104,43 @@ export function BikeCard({ bike, openSwipeableRef }: BikeCardProps) {
               params: { bikeId: bike._id },
             })
           }
-          style={styles.card}
+          style={[styles.card, highlight && styles.cardGlow]}
           activeOpacity={0.85}
         >
-          <LinearGradient
-            colors={[COLORS.surface, "rgba(46,49,80,0.5)"]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.header}
-          >
-            <View style={styles.headerText}>
-              <Text style={styles.nickname}>{bike.nickname}</Text>
-              <Text style={styles.details}>
+          <View style={styles.titleRow}>
+            <View style={styles.titleCol}>
+              <Text style={styles.nickname} numberOfLines={1}>
+                {bike.nickname}
+              </Text>
+              <Text style={styles.model} numberOfLines={1}>
                 {bike.brand} {bike.model}
               </Text>
             </View>
-          </LinearGradient>
+            <MaterialCommunityIcons
+              name="chevron-right"
+              size={18}
+              color={COLORS.textLight}
+            />
+          </View>
 
-          <View style={styles.statsRow}>
-            <View>
-              <Text style={styles.statLabel}>Reg No.</Text>
-              <Text style={styles.statValueMono}>
+          <View style={styles.odoRow}>
+            <View style={styles.odoValue}>
+              <Text style={styles.odometer}>
+                {bike.currentOdometer.toLocaleString()}
+              </Text>
+              <Text style={styles.odometerUnit}>km</Text>
+            </View>
+            <View style={styles.regTag}>
+              <Text style={styles.regTagText} numberOfLines={1}>
                 {bike.registrationNumber}
               </Text>
             </View>
-            <View style={styles.statCenter}>
-              <Text style={styles.statLabel}>Odometer</Text>
-              <Text style={styles.statValueOdo}>
-                {bike.currentOdometer.toLocaleString()} km
-              </Text>
-            </View>
-            <View style={styles.statRight}>
-              <Text style={styles.statLabel}>Tank</Text>
-              <Text style={styles.statValue}>
-                {bike.fuelTankCapacityLiters}L
-              </Text>
-            </View>
           </View>
+
+          <Text style={styles.meta} numberOfLines={1}>
+            {logged.toLocaleString()} km logged · {bike.fuelTankCapacityLiters} L
+            tank · Since {since}
+          </Text>
         </TouchableOpacity>
       </Swipeable>
 
@@ -125,81 +155,86 @@ export function BikeCard({ bike, openSwipeableRef }: BikeCardProps) {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: COLORS.surface,
-    borderWidth: 1,
-    borderColor: COLORS.borderSubtle,
-    borderRadius: 10,
-    marginBottom: 10,
-    overflow: "hidden",
+    ...panelStyle,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    gap: 10,
   },
-  header: {
-    height: 96,
-    justifyContent: "flex-end",
-    padding: 14,
+  cardGlow: glowStyle,
+  titleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
   },
-  headerText: {
-    zIndex: 1,
+  titleCol: {
+    flex: 1,
   },
   nickname: {
-    fontSize: 18,
-    fontWeight: "700",
+    fontSize: 16,
+    fontWeight: "500",
     color: COLORS.text,
   },
-  details: {
+  model: {
+    fontSize: 12.5,
+    color: COLORS.textLight,
+  },
+  odoRow: {
+    flexDirection: "row",
+    alignItems: "baseline",
+    justifyContent: "space-between",
+    gap: 8,
+  },
+  odoValue: {
+    flexDirection: "row",
+    alignItems: "baseline",
+    gap: 4,
+  },
+  odometer: {
+    fontSize: 24,
+    fontWeight: "500",
+    color: COLORS.text,
+    fontVariant: ["tabular-nums"],
+  },
+  odometerUnit: {
     fontSize: 13,
     color: COLORS.textLight,
-    marginTop: 2,
   },
-  statsRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    padding: 14,
+  regTag: {
+    maxWidth: "45%",
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 6,
+    backgroundColor: toneStyle("neutral").bg,
   },
-  statCenter: {
-    alignItems: "center",
-  },
-  statRight: {
-    alignItems: "flex-end",
-  },
-  statLabel: {
+  regTagText: {
     fontSize: 11,
-    color: COLORS.textMuted,
+    color: toneStyle("neutral").text,
   },
-  statValueMono: {
+  meta: {
     fontSize: 12,
-    fontWeight: "500",
-    color: COLORS.text,
-    marginTop: 1,
-    fontFamily: "monospace",
-  },
-  statValueOdo: {
-    fontSize: 15,
-    fontWeight: "600",
-    color: COLORS.text,
-    marginTop: 1,
-    fontFamily: "monospace",
-  },
-  statValue: {
-    fontSize: 12,
-    fontWeight: "500",
-    color: COLORS.text,
-    marginTop: 1,
+    color: COLORS.textLight,
+    fontVariant: ["tabular-nums"],
   },
   action: {
     justifyContent: "center",
     alignItems: "center",
+    gap: 4,
     width: 80,
     borderRadius: 10,
-    height: "90%",
+    borderWidth: 1,
+    marginVertical: 2,
   },
   editAction: {
-    backgroundColor: COLORS.success,
+    backgroundColor: tint(COLORS.success, 0.12),
+    borderColor: tint(COLORS.success, 0.4),
   },
   deleteAction: {
-    backgroundColor: COLORS.danger,
+    backgroundColor: tint(COLORS.danger, 0.12),
+    borderColor: tint(COLORS.danger, 0.4),
   },
   actionText: {
-    color: COLORS.white,
-    fontWeight: "600",
+    fontSize: 12,
+    fontWeight: "500",
   },
 });

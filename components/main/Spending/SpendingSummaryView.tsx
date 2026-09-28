@@ -1,138 +1,199 @@
-import { StyleSheet, Text, View } from "react-native";
-import { COLORS } from "@/utils/colors";
+import { Panel } from "@/components/main/shared";
 import { TSpendingSummary } from "@/types/spending.types";
+import { CHART_COLORS, COLORS } from "@/utils/colors";
+import { formatTaka } from "@/utils/formatTaka";
+import { StyleSheet, View } from "react-native";
+import { Text } from "react-native-paper";
 
 interface SpendingSummaryViewProps {
   summary: TSpendingSummary;
+  periodLabel?: string;
   avgDailyExpense?: number;
   daysElapsed?: number;
 }
 
 export function SpendingSummaryView({
   summary,
+  periodLabel,
   avgDailyExpense,
   daysElapsed,
 }: SpendingSummaryViewProps) {
   const total = summary.totalSpending || 0;
-  const categories = summary.categoryBreakdown || [];
+  const categories = [...(summary.categoryBreakdown || [])].sort(
+    (a, b) => b.total - a.total,
+  );
+  const maxCategory = categories[0]?.total ?? 0;
+  const showAvgDaily =
+    avgDailyExpense !== undefined &&
+    daysElapsed !== undefined &&
+    daysElapsed > 0;
 
   return (
-    <View>
-      <View style={styles.totalWrap}>
-        <Text style={styles.totalLabel}>Total Spending</Text>
-        <Text style={styles.totalValue}>৳{total.toFixed(0)}</Text>
-        {avgDailyExpense !== undefined &&
-          daysElapsed !== undefined &&
-          daysElapsed > 0 && (
-            <Text style={styles.avgCaption}>
-              Avg daily: ৳{avgDailyExpense.toFixed(0)} · {daysElapsed} day
-              {daysElapsed === 1 ? "" : "s"}
-            </Text>
-          )}
-      </View>
+    <View style={styles.stack}>
+      <Panel glow style={styles.totalPanel}>
+        <View style={styles.totalLeft}>
+          <Text style={styles.totalLabel}>
+            {periodLabel ? `Total spending · ${periodLabel}` : "Total spending"}
+          </Text>
+          <Text style={styles.totalValue}>{formatTaka(total)}</Text>
+        </View>
 
-      <Text style={styles.categoriesTitle}>Category Breakdown</Text>
+        {showAvgDaily ? (
+          <View style={styles.avgCol}>
+            <Text style={styles.avgValue}>{formatTaka(avgDailyExpense)} / day</Text>
+            <Text style={styles.avgHint}>
+              over {daysElapsed} day{daysElapsed === 1 ? "" : "s"} this month
+            </Text>
+          </View>
+        ) : null}
+      </Panel>
+
+      <Text style={styles.kicker}>BY CATEGORY</Text>
+
       {categories.length === 0 ? (
         <Text style={styles.noData}>No category breakdown available</Text>
       ) : (
-        <View style={styles.listCard}>
+        <Panel style={styles.listPanel}>
           {categories.map((cat, i) => {
-            const percentage = total > 0 ? ((cat.total / total) * 100).toFixed(1) : "0.0";
+            const percentage =
+              total > 0 ? ((cat.total / total) * 100).toFixed(1) : "0.0";
+            const barWidth =
+              maxCategory > 0 ? (cat.total / maxCategory) * 100 : 0;
+            const color = CHART_COLORS[Math.min(i, 4)];
+
             return (
-              <View
-                key={cat.category}
-                style={[
-                  styles.categoryRow,
-                  i === categories.length - 1 && styles.categoryRowLast,
-                ]}
-              >
-                <Text style={styles.categoryName}>{cat.category}</Text>
-                <View style={styles.categoryRight}>
-                  <Text style={styles.categoryAmount}>৳{cat.total.toFixed(0)}</Text>
-                  <Text style={styles.categoryPercent}>{percentage}%</Text>
+              <View key={cat.category} style={styles.categoryRow}>
+                <View style={styles.categoryTop}>
+                  <View style={[styles.swatch, { backgroundColor: color }]} />
+                  <Text style={styles.categoryName} numberOfLines={1}>
+                    {cat.category}
+                  </Text>
+                  <Text style={styles.categoryAmount}>
+                    {formatTaka(cat.total)}
+                  </Text>
+                </View>
+
+                <View style={styles.categoryBottom}>
+                  <View style={styles.barTrack}>
+                    <View
+                      style={[
+                        styles.barFill,
+                        { width: `${barWidth}%`, backgroundColor: color },
+                      ]}
+                    />
+                  </View>
+                  <Text style={styles.percent}>{percentage}%</Text>
                 </View>
               </View>
             );
           })}
-        </View>
+        </Panel>
       )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  totalWrap: {
-    alignItems: "center",
-    marginBottom: 20,
+  stack: {
+    gap: 10,
+  },
+  totalPanel: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    gap: 12,
+    paddingHorizontal: 18,
+    paddingVertical: 16,
+  },
+  totalLeft: {
+    flex: 1,
+    minWidth: 0,
   },
   totalLabel: {
-    fontSize: 11,
-    fontWeight: "300",
-    color: COLORS.textMuted,
-    textTransform: "uppercase",
-    letterSpacing: 0.6,
-    marginBottom: 4,
+    fontSize: 12,
+    color: COLORS.textLight,
   },
   totalValue: {
-    fontSize: 36,
-    lineHeight: 40,
-    fontWeight: "700",
+    fontSize: 34,
+    fontWeight: "500",
     color: COLORS.text,
-    fontFamily: "monospace",
+    fontVariant: ["tabular-nums"],
   },
-  avgCaption: {
+  avgCol: {
+    alignItems: "flex-end",
+    maxWidth: "45%",
+  },
+  avgValue: {
+    fontSize: 13,
+    color: COLORS.text,
+    fontVariant: ["tabular-nums"],
+    textAlign: "right",
+  },
+  avgHint: {
     fontSize: 12,
-    color: COLORS.textMuted,
+    color: COLORS.textLight,
+    textAlign: "right",
+  },
+  kicker: {
+    fontSize: 11,
+    letterSpacing: 0.9,
+    textTransform: "uppercase",
+    color: COLORS.textLight,
     marginTop: 4,
   },
-  categoriesTitle: {
-    fontSize: 11,
-    fontWeight: "500",
-    color: COLORS.textMuted,
-    textTransform: "uppercase",
-    letterSpacing: 0.6,
-    marginBottom: 8,
+  noData: {
+    fontSize: 13,
+    color: COLORS.textLight,
   },
-  listCard: {
-    backgroundColor: COLORS.surface,
-    borderWidth: 1,
-    borderColor: COLORS.borderSubtle,
-    borderRadius: 10,
+  listPanel: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    gap: 12,
   },
   categoryRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    padding: 13,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.borderSubtle,
+    gap: 6,
   },
-  categoryRowLast: {
-    borderBottomWidth: 0,
+  categoryTop: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  swatch: {
+    width: 8,
+    height: 8,
+    borderRadius: 2,
   },
   categoryName: {
-    fontSize: 14,
-    fontWeight: "600",
+    flex: 1,
+    fontSize: 13,
     color: COLORS.text,
-  },
-  categoryRight: {
-    alignItems: "flex-end",
   },
   categoryAmount: {
-    fontSize: 14,
-    fontWeight: "600",
+    fontSize: 13,
     color: COLORS.text,
-    fontFamily: "monospace",
+    fontVariant: ["tabular-nums"],
   },
-  categoryPercent: {
+  categoryBottom: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  barTrack: {
+    flex: 1,
+    height: 3,
+    borderRadius: 3,
+    backgroundColor: COLORS.surface2,
+    overflow: "hidden",
+  },
+  barFill: {
+    height: 3,
+    borderRadius: 3,
+  },
+  percent: {
     fontSize: 11,
-    color: COLORS.textMuted,
-    marginTop: 1,
-  },
-  noData: {
-    fontSize: 14,
     color: COLORS.textLight,
-    textAlign: "center",
-    marginTop: 20,
+    fontVariant: ["tabular-nums"],
+    minWidth: 38,
+    textAlign: "right",
   },
 });

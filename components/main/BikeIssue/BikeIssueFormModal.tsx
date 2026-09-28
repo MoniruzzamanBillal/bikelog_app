@@ -4,7 +4,7 @@ import { format } from "date-fns";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { Modal, Portal, Text } from "react-native-paper";
 import Toast from "react-native-toast-message";
-import { DatePickerField, FormField, PrimaryButton } from "@/components/main/shared";
+import { DatePickerField, FormActions, FormField } from "@/components/main/shared";
 import { usePatch, usePost } from "@/hooks/useApi";
 import { COLORS } from "@/utils/colors";
 import {
@@ -122,13 +122,9 @@ export function BikeIssueFormModal({
             disabled={isPending}
           />
 
-          <PrimaryButton onPress={handleSubmit} loading={isPending} style={styles.button}>
+          <FormActions onSave={handleSubmit} onCancel={onClose} saving={isPending}>
             {initialIssue ? "Save Changes" : "Report Issue"}
-          </PrimaryButton>
-
-          <PrimaryButton onPress={onClose} disabled={isPending} style={styles.cancelButton}>
-            Cancel
-          </PrimaryButton>
+          </FormActions>
         </KeyboardAwareScrollView>
       </Modal>
     </Portal>
@@ -137,25 +133,18 @@ export function BikeIssueFormModal({
 
 const styles = StyleSheet.create({
   modal: {
-    backgroundColor: COLORS.background,
+    backgroundColor: COLORS.card,
     borderWidth: 1,
-    borderColor: COLORS.borderSubtle,
+    borderColor: COLORS.edge,
     marginHorizontal: 20,
     padding: 20,
-    borderRadius: 12,
+    borderRadius: 14,
     maxHeight: "85%",
   },
   title: {
-    fontSize: 18,
-    fontWeight: "600",
+    fontSize: 20,
+    fontWeight: "500",
     color: COLORS.text,
     marginBottom: 18,
-  },
-  button: {
-    marginTop: 10,
-  },
-  cancelButton: {
-    marginTop: 10,
-    borderColor: COLORS.borderSubtle,
   },
 });

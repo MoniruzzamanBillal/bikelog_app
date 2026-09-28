@@ -1,11 +1,10 @@
-import { ScreenHeader } from "@/components/main/shared";
+import { ScreenHeader, SegmentedTabs } from "@/components/main/shared";
 import { useFetchData } from "@/hooks/useApi";
 import { TBike } from "@/types/bike.types";
 import { COLORS } from "@/utils/colors";
 import { useLocalSearchParams } from "expo-router";
 import { useState } from "react";
-import { ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
-import { Text } from "react-native-paper";
+import { ScrollView, StyleSheet, View } from "react-native";
 import { AiMileageInsightCard } from "./AiMileageInsightCard";
 import { LifetimeMileageTab } from "./LifetimeMileageTab";
 import { MileageHistoryTab } from "./MileageHistoryTab";
@@ -15,12 +14,12 @@ import { YearlyMileageTab } from "./YearlyMileageTab";
 
 type TTab = "history" | "monthly" | "yearly" | "lifetime" | "trends";
 
-const TABS: { key: TTab; label: string }[] = [
-  { key: "history", label: "History" },
-  { key: "monthly", label: "Monthly" },
-  { key: "yearly", label: "Yearly" },
-  { key: "lifetime", label: "Lifetime" },
-  { key: "trends", label: "Trends" },
+const TABS: { value: TTab; label: string }[] = [
+  { value: "history", label: "History" },
+  { value: "monthly", label: "Monthly" },
+  { value: "yearly", label: "Yearly" },
+  { value: "lifetime", label: "Lifetime" },
+  { value: "trends", label: "Trends" },
 ];
 
 export function Mileage() {
@@ -36,39 +35,31 @@ export function Mileage() {
 
   return (
     <View style={styles.screen}>
-      <ScreenHeader title="Mileage" backLabel={bike?.nickname ?? "Back"} />
+      <ScreenHeader
+        title="Mileage"
+        subtitle={bike?.nickname}
+        backLabel={bike?.nickname ?? "Back"}
+      />
 
-      <View style={styles.body}>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.tabBarScroll}
-          contentContainerStyle={styles.tabBar}
-        >
-          {TABS.map(({ key, label }) => (
-            <TouchableOpacity
-              key={key}
-              style={[styles.tab, activeTab === key && styles.tabActive]}
-              onPress={() => setActiveTab(key)}
-            >
-              <Text
-                style={[styles.tabText, activeTab === key && styles.tabTextActive]}
-              >
-                {label}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
+      <ScrollView
+        contentContainerStyle={styles.page}
+        showsVerticalScrollIndicator={false}
+      >
+        <SegmentedTabs
+          value={activeTab}
+          onChange={setActiveTab}
+          options={TABS}
+          fill
+        />
 
-        <View style={styles.tabContent}>
-          <AiMileageInsightCard bikeId={bikeId} />
-          {activeTab === "history" && <MileageHistoryTab bikeId={bikeId} />}
-          {activeTab === "monthly" && <MonthlyMileageTab bikeId={bikeId} />}
-          {activeTab === "yearly" && <YearlyMileageTab bikeId={bikeId} />}
-          {activeTab === "lifetime" && <LifetimeMileageTab bikeId={bikeId} />}
-          {activeTab === "trends" && <MileageTrendTab bikeId={bikeId} />}
-        </View>
-      </View>
+        {activeTab === "history" && <MileageHistoryTab bikeId={bikeId} />}
+        {activeTab === "monthly" && <MonthlyMileageTab bikeId={bikeId} />}
+        {activeTab === "yearly" && <YearlyMileageTab bikeId={bikeId} />}
+        {activeTab === "lifetime" && <LifetimeMileageTab bikeId={bikeId} />}
+        {activeTab === "trends" && <MileageTrendTab bikeId={bikeId} />}
+
+        <AiMileageInsightCard bikeId={bikeId} />
+      </ScrollView>
     </View>
   );
 }
@@ -78,37 +69,10 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.background,
   },
-  body: {
-    flex: 1,
-    padding: 14,
-  },
-  tabBarScroll: {
-    flexGrow: 0,
-  },
-  tabBar: {
-    flexDirection: "row",
-    gap: 6,
-    marginBottom: 14,
-  },
-  tab: {
-    paddingVertical: 7,
+  page: {
     paddingHorizontal: 16,
-    borderRadius: 6,
-    backgroundColor: "transparent",
-  },
-  tabActive: {
-    backgroundColor: "rgba(145,132,217,0.12)",
-  },
-  tabText: {
-    fontSize: 12,
-    fontWeight: "500",
-    color: COLORS.textMuted,
-  },
-  tabTextActive: {
-    fontWeight: "600",
-    color: COLORS.accent,
-  },
-  tabContent: {
-    flex: 1,
+    paddingTop: 14,
+    paddingBottom: 24,
+    gap: 12,
   },
 });

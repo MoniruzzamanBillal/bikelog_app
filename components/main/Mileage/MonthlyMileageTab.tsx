@@ -1,11 +1,15 @@
-import { useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
-import { format } from "date-fns";
-import { ScrollView } from "react-native-gesture-handler";
-import { ErrorState, MonthStepper, SectionLoading } from "@/components/main/shared";
+import {
+  EmptyState,
+  ErrorState,
+  MonthStepper,
+  SectionLoading,
+  StatTile,
+} from "@/components/main/shared";
 import { useFetchData } from "@/hooks/useApi";
-import { COLORS } from "@/utils/colors";
 import { TMonthlyMileage } from "@/types/mileage.types";
+import { format } from "date-fns";
+import { useState } from "react";
+import { StyleSheet, View } from "react-native";
 
 interface MonthlyMileageTabProps {
   bikeId: string;
@@ -27,88 +31,61 @@ export function MonthlyMileageTab({ bikeId }: MonthlyMileageTabProps) {
   const avgMileage =
     totalLiters > 0 ? (totalDist / totalLiters).toFixed(2) : "—";
 
-  if (isLoading) {
-    return <SectionLoading count={3} />;
-  }
-
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+    <View style={styles.stack}>
       <MonthStepper targetMonth={targetMonth} onChange={setTargetMonth} />
 
-      {isError ? (
-        <ErrorState onRetry={refetch} />
+      {isLoading ? (
+        <SectionLoading count={2} />
+      ) : isError ? (
+        <ErrorState title="Couldn’t load mileage" onRetry={refetch} />
       ) : monthly && monthly.fuelLogCount > 0 ? (
-        <View style={styles.statsRow}>
-          <View style={styles.statCard}>
-            <Text style={styles.statLabel}>Avg Mileage</Text>
-            <Text style={styles.statValue}>{avgMileage}</Text>
-            <Text style={styles.statUnit}>km/L</Text>
-          </View>
-          <View style={styles.statCard}>
-            <Text style={styles.statLabel}>Distance</Text>
-            <Text style={styles.statValue}>{totalDist.toLocaleString()}</Text>
-            <Text style={styles.statUnit}>km</Text>
-          </View>
-          <View style={styles.statCard}>
-            <Text style={styles.statLabel}>Fuel</Text>
-            <Text style={styles.statValue}>{totalLiters.toFixed(1)}</Text>
-            <Text style={styles.statUnit}>L</Text>
-          </View>
+        <View style={styles.grid}>
+          <StatTile
+            label="Distance"
+            value={totalDist.toLocaleString()}
+            unit="km"
+            style={styles.tile}
+          />
+          <StatTile
+            label="Fuel used"
+            value={totalLiters.toFixed(2)}
+            unit="L"
+            style={styles.tile}
+          />
+          <StatTile
+            label="Fill-ups"
+            value={monthly.fuelLogCount}
+            style={styles.tile}
+          />
+          <StatTile
+            label="Average"
+            value={avgMileage}
+            unit={avgMileage === "—" ? undefined : "km/l"}
+            style={styles.tile}
+          />
         </View>
       ) : (
-        <Text style={styles.emptyText}>No fuel logs for this month.</Text>
+        <EmptyState
+          icon="speedometer-medium"
+          title="Nothing logged this month"
+          message="Fuel logs dated in this month will show up here."
+        />
       )}
-
-      {monthly && monthly.fuelLogCount > 0 && (
-        <Text style={styles.logCount}>Fill-ups this month: {monthly.fuelLogCount}</Text>
-      )}
-    </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
+  stack: {
+    gap: 12,
   },
-  statsRow: {
+  grid: {
     flexDirection: "row",
-    gap: 8,
-    marginBottom: 12,
+    flexWrap: "wrap",
+    gap: 10,
   },
-  statCard: {
-    flex: 1,
-    backgroundColor: COLORS.surface,
-    borderWidth: 1,
-    borderColor: COLORS.borderSubtle,
-    borderRadius: 10,
-    padding: 12,
-    alignItems: "center",
-  },
-  statLabel: {
-    fontSize: 11,
-    color: COLORS.textMuted,
-  },
-  statValue: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: COLORS.text,
-    fontFamily: "monospace",
-    marginTop: 4,
-  },
-  statUnit: {
-    fontSize: 10,
-    color: COLORS.textLight,
-    marginTop: 1,
-  },
-  logCount: {
-    fontSize: 12,
-    color: COLORS.textMuted,
-    textAlign: "center",
-  },
-  emptyText: {
-    fontSize: 13,
-    color: COLORS.textLight,
-    textAlign: "center",
-    marginTop: 40,
+  tile: {
+    width: "48.3%",
   },
 });

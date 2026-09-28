@@ -1,5 +1,8 @@
-import { StyleSheet, Text, View } from "react-native";
-import { COLORS } from "@/utils/colors";
+import { StyleSheet, View } from "react-native";
+import { Text } from "react-native-paper";
+import { COLORS, tint } from "@/utils/colors";
+
+export type TStatusTone = "neutral" | "accent" | "success" | "warning" | "danger";
 
 interface StatusBadgeProps {
   label: string;
@@ -7,8 +10,24 @@ interface StatusBadgeProps {
   colors: Record<string, { bg: string; text: string }>;
 }
 
+/** Nocturne tone pill. Tones come from `toneStyle`, never a raw literal. */
+export const toneStyle = (tone: TStatusTone): { bg: string; text: string } => {
+  switch (tone) {
+    case "accent":
+      return { bg: COLORS.surface3, text: COLORS.accentForeground };
+    case "success":
+      return { bg: tint(COLORS.success, 0.15), text: COLORS.success };
+    case "warning":
+      return { bg: tint(COLORS.warning, 0.15), text: COLORS.warning };
+    case "danger":
+      return { bg: tint(COLORS.danger, 0.15), text: COLORS.danger };
+    default:
+      return { bg: COLORS.surface2, text: COLORS.text };
+  }
+};
+
 export function StatusBadge({ label, colorKey, colors }: StatusBadgeProps) {
-  const variant = colors[colorKey] ?? { bg: COLORS.textLight, text: COLORS.white };
+  const variant = colors[colorKey] ?? toneStyle("neutral");
 
   return (
     <View style={[styles.badge, { backgroundColor: variant.bg }]}>
@@ -18,31 +37,31 @@ export function StatusBadge({ label, colorKey, colors }: StatusBadgeProps) {
 }
 
 export const issueStatusColors: Record<string, { bg: string; text: string }> = {
-  open: { bg: COLORS.danger, text: COLORS.white },
-  resolved: { bg: COLORS.success, text: COLORS.white },
+  open: toneStyle("warning"),
+  resolved: toneStyle("success"),
 };
 
 export const accessoryStatusColors: Record<string, { bg: string; text: string }> = {
-  pending: { bg: COLORS.warning, text: COLORS.white },
-  purchased: { bg: COLORS.success, text: COLORS.white },
-  cancelled: { bg: COLORS.textLight, text: COLORS.white },
+  pending: toneStyle("neutral"),
+  purchased: toneStyle("success"),
+  cancelled: toneStyle("neutral"),
 };
 
 export const accessoryUrgencyColors: Record<string, { bg: string; text: string }> = {
-  immediate: { bg: COLORS.danger, text: COLORS.white },
-  medium: { bg: COLORS.warning, text: COLORS.white },
-  low: { bg: COLORS.success, text: COLORS.white },
+  immediate: toneStyle("danger"),
+  medium: toneStyle("warning"),
+  low: toneStyle("neutral"),
 };
 
 const styles = StyleSheet.create({
   badge: {
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 9999,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 6,
     alignSelf: "flex-start",
   },
   text: {
-    fontSize: 12,
-    fontWeight: "600",
+    fontSize: 11,
+    letterSpacing: 0.2,
   },
 });

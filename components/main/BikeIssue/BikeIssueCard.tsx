@@ -1,31 +1,28 @@
-import { MultiImagePickerField, TPickedImageFile } from "@/components/main/shared";
+import {
+  MultiImagePickerField,
+  Panel,
+  TPickedImageFile,
+} from "@/components/main/shared";
 import { confirmDelete } from "@/components/main/shared/ConfirmDelete";
+import { toneStyle } from "@/components/main/shared/StatusBadge";
 import { useDelete, usePatch, usePost } from "@/hooks/useApi";
 import { TBikeIssue } from "@/types/bike-issue.types";
 import { COLORS } from "@/utils/colors";
 import { formatApiDate } from "@/utils/formatApiDate";
-import { useRef, useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
-import { TouchableOpacity } from "react-native-gesture-handler";
-import Swipeable, {
-  SwipeableMethods,
-} from "react-native-gesture-handler/ReanimatedSwipeable";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { useState } from "react";
+import { StyleSheet, TouchableOpacity, View } from "react-native";
+import { Text } from "react-native-paper";
 import Toast from "react-native-toast-message";
 import { BikeIssueFormModal } from "./BikeIssueFormModal";
 
 interface BikeIssueCardProps {
   issue: TBikeIssue;
   bikeId: string;
-  openSwipeableRef: React.MutableRefObject<SwipeableMethods | null>;
 }
 
-export function BikeIssueCard({
-  issue,
-  bikeId,
-  openSwipeableRef,
-}: BikeIssueCardProps) {
+export function BikeIssueCard({ issue, bikeId }: BikeIssueCardProps) {
   const [editOpen, setEditOpen] = useState(false);
-  const swipeableRef = useRef<SwipeableMethods>(null);
 
   const deleteMutation = useDelete([["issues", bikeId]]);
   const toggleStatusMutation = usePatch([["issues", bikeId]]);
@@ -69,18 +66,7 @@ export function BikeIssueCard({
     }
   };
 
-  const handleSwipeableWillOpen = () => {
-    if (
-      openSwipeableRef.current &&
-      openSwipeableRef.current !== swipeableRef.current
-    ) {
-      openSwipeableRef.current.close();
-    }
-    openSwipeableRef.current = swipeableRef.current;
-  };
-
   const handleDelete = () => {
-    swipeableRef.current?.close();
     confirmDelete("issue", async () => {
       await deleteMutation.mutateAsync({
         url: `/bikes/${bikeId}/issues/${issue._id}`,
@@ -88,11 +74,7 @@ export function BikeIssueCard({
     });
   };
 
-  const handleEdit = () => {
-    swipeableRef.current?.close();
-    setEditOpen(true);
-  };
-
+  // ! status changes only ever go through the dedicated /status route
   const handleToggleStatus = async () => {
     const newStatus = issue.status === "open" ? "resolved" : "open";
     try {
@@ -115,79 +97,76 @@ export function BikeIssueCard({
   };
 
   const isOpen = issue.status === "open";
+  const statusTone = toneStyle(isOpen ? "warning" : "success");
 
   return (
     <>
-      <Swipeable
-        ref={swipeableRef}
-        onSwipeableWillOpen={handleSwipeableWillOpen}
-        renderLeftActions={() => (
-          <TouchableOpacity
-            onPress={handleEdit}
-            style={[styles.action, styles.editAction]}
-          >
-            <Text style={styles.actionText}>Edit</Text>
-          </TouchableOpacity>
-        )}
-        renderRightActions={() => (
-          <TouchableOpacity
-            onPress={handleDelete}
-            style={[styles.action, styles.deleteAction]}
-          >
-            <Text style={styles.actionText}>Delete</Text>
-          </TouchableOpacity>
-        )}
-      >
-        <View style={styles.card}>
-          <View style={styles.titleRow}>
-            <Text style={styles.title}>{issue.title}</Text>
-            <View style={[styles.badge, isOpen ? styles.badgeErr : styles.badgeOk]}>
-              <Text
-                style={[styles.badgeText, isOpen ? styles.badgeErrText : styles.badgeOkText]}
-              >
-                {isOpen ? "Open" : "Resolved"}
+      <Panel style={styles.card}>
+        <View style={styles.titleRow}>
+          <View style={styles.titleCol}>
+            <View style={styles.titleLine}>
+              <Text style={styles.title} numberOfLines={2}>
+                {issue.title}
               </Text>
+              <View style={[styles.pill, { backgroundColor: statusTone.bg }]}>
+                <Text style={[styles.pillText, { color: statusTone.text }]}>
+                  {isOpen ? "Open" : "Resolved"}
+                </Text>
+              </View>
             </View>
-          </View>
-
-          {issue.description && (
-            <Text style={styles.description}>{issue.description}</Text>
-          )}
-
-          {(issue.images?.length ?? 0) > 0 && (
-            <View style={styles.imagesRow}>
-              <MultiImagePickerField
-                images={issue.images ?? []}
-                onAdd={handleAddImages}
-                onRemove={handleRemoveImage}
-                uploading={isAdding || isRemoving}
-              />
-            </View>
-          )}
-
-          <View style={styles.footerRow}>
             <Text style={styles.date}>
               Reported {formatApiDate(issue.dateReported, "dd MMM yyyy")}
             </Text>
-            <TouchableOpacity onPress={handleToggleStatus} hitSlop={8}>
-              <Text style={styles.updateLink}>
-                {isOpen ? "Mark Resolved" : "Reopen"} →
-              </Text>
-            </TouchableOpacity>
           </View>
 
-          {(issue.images?.length ?? 0) === 0 && (
-            <View style={styles.addImageRow}>
-              <MultiImagePickerField
-                images={[]}
-                onAdd={handleAddImages}
-                onRemove={handleRemoveImage}
-                uploading={isAdding || isRemoving}
+          <View style={styles.actions}>
+            <TouchableOpacity
+              onPress={() => setEditOpen(true)}
+              style={styles.iconButton}
+              hitSlop={6}
+            >
+              <MaterialCommunityIcons
+                name="pencil-outline"
+                size={16}
+                color={COLORS.textLight}
               />
-            </View>
-          )}
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={handleToggleStatus}
+              style={styles.iconButton}
+              hitSlop={6}
+            >
+              <MaterialCommunityIcons
+                name={isOpen ? "check" : "undo"}
+                size={16}
+                color={isOpen ? COLORS.success : COLORS.textLight}
+              />
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={handleDelete}
+              style={styles.iconButton}
+              hitSlop={6}
+            >
+              <MaterialCommunityIcons
+                name="trash-can-outline"
+                size={16}
+                color={COLORS.danger}
+              />
+            </TouchableOpacity>
+          </View>
         </View>
-      </Swipeable>
+
+        {issue.description ? (
+          <Text style={styles.description}>{issue.description}</Text>
+        ) : null}
+
+        <MultiImagePickerField
+          images={issue.images ?? []}
+          onAdd={handleAddImages}
+          onRemove={handleRemoveImage}
+          uploading={isAdding || isRemoving}
+        />
+      </Panel>
 
       <BikeIssueFormModal
         open={editOpen}
@@ -201,89 +180,56 @@ export function BikeIssueCard({
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: COLORS.surface,
-    borderWidth: 1,
-    borderColor: COLORS.borderSubtle,
-    borderRadius: 10,
     padding: 14,
-    marginBottom: 10,
+    gap: 10,
   },
   titleRow: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "flex-start",
-    marginBottom: 8,
     gap: 8,
+  },
+  titleCol: {
+    flex: 1,
+    minWidth: 0,
+    gap: 3,
+  },
+  titleLine: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    flexWrap: "wrap",
   },
   title: {
     fontSize: 14,
-    fontWeight: "600",
-    color: COLORS.text,
-    flex: 1,
-  },
-  badge: {
-    paddingVertical: 2,
-    paddingHorizontal: 8,
-    borderRadius: 20,
-    flexShrink: 0,
-  },
-  badgeErr: {
-    backgroundColor: "rgba(248,113,113,0.1)",
-  },
-  badgeOk: {
-    backgroundColor: "rgba(74,222,128,0.1)",
-  },
-  badgeText: {
-    fontSize: 11,
     fontWeight: "500",
+    color: COLORS.text,
+    flexShrink: 1,
   },
-  badgeErrText: {
-    color: COLORS.danger,
+  pill: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 6,
   },
-  badgeOkText: {
-    color: COLORS.success,
-  },
-  description: {
-    fontSize: 12,
-    lineHeight: 17,
-    color: COLORS.textLight,
-    marginBottom: 8,
-  },
-  imagesRow: {
-    marginBottom: 10,
-  },
-  addImageRow: {
-    marginTop: 10,
-  },
-  footerRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+  pillText: {
+    fontSize: 11,
   },
   date: {
-    fontSize: 11,
-    color: COLORS.textMuted,
-  },
-  updateLink: {
     fontSize: 12,
-    fontWeight: "500",
-    color: COLORS.accent,
+    color: COLORS.textLight,
   },
-  action: {
-    justifyContent: "center",
+  actions: {
+    flexDirection: "row",
+    gap: 2,
+  },
+  iconButton: {
+    width: 32,
+    height: 32,
     alignItems: "center",
-    width: 80,
-    borderRadius: 10,
-    height: "90%",
+    justifyContent: "center",
   },
-  editAction: {
-    backgroundColor: COLORS.success,
-  },
-  deleteAction: {
-    backgroundColor: COLORS.danger,
-  },
-  actionText: {
-    color: COLORS.white,
-    fontWeight: "600",
+  description: {
+    fontSize: 13,
+    lineHeight: 19,
+    color: COLORS.textLight,
   },
 });

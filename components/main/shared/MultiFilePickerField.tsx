@@ -2,7 +2,6 @@ import { TDocumentFile, TPickedFile } from "@/types/document-file.types";
 import { COLORS } from "@/utils/colors";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import * as DocumentPicker from "expo-document-picker";
-import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
 import { useState } from "react";
 import { Alert, Linking, StyleSheet, View } from "react-native";
@@ -139,72 +138,64 @@ export function MultiFilePickerField({
 
   return (
     <View style={styles.row}>
-      {files.map((file) => (
-        <View key={file._id} style={styles.item}>
-          <View style={styles.tileWrapper}>
-            {file.resourceType === "image" ? (
-              <TouchableOpacity
-                style={styles.tile}
-                onPress={() =>
-                  setViewerIndex(
-                    imageFiles.findIndex((f) => f._id === file._id),
-                  )
-                }
-                activeOpacity={0.8}
-              >
-                <Image
-                  source={{ uri: file.url }}
-                  style={styles.image}
-                  contentFit="cover"
-                />
-              </TouchableOpacity>
-            ) : (
-              <TouchableOpacity
-                style={[styles.tile, styles.rawTile]}
-                onPress={() => handleOpenRaw(file)}
-                activeOpacity={0.8}
-              >
-                <MaterialCommunityIcons
-                  name="file-document-outline"
-                  size={26}
-                  color={COLORS.primary}
-                />
-              </TouchableOpacity>
-            )}
+      {files.map((file) => {
+        const isImage = file.resourceType === "image";
+        return (
+          <View key={file._id} style={styles.chip}>
+            <TouchableOpacity
+              style={styles.chipMain}
+              activeOpacity={0.8}
+              onPress={() =>
+                isImage
+                  ? setViewerIndex(
+                      imageFiles.findIndex((f) => f._id === file._id),
+                    )
+                  : handleOpenRaw(file)
+              }
+            >
+              <MaterialCommunityIcons
+                name={isImage ? "image-outline" : "file-document-outline"}
+                size={16}
+                color={COLORS.accent}
+              />
+              <Text style={styles.chipLabel} numberOfLines={1}>
+                {file.originalName}
+              </Text>
+            </TouchableOpacity>
+
             <TouchableOpacity
               onPress={() => handleRemove(file._id)}
-              style={styles.deleteBadge}
-              hitSlop={8}
+              style={styles.chipRemove}
+              hitSlop={6}
             >
               <MaterialCommunityIcons
                 name="close"
-                size={12}
-                color={COLORS.white}
+                size={13}
+                color={COLORS.textLight}
               />
             </TouchableOpacity>
           </View>
-          {file.resourceType === "raw" && (
-            <Text style={styles.label} numberOfLines={2} ellipsizeMode="tail">
-              {file.originalName}
-            </Text>
-          )}
-        </View>
-      ))}
+        );
+      })}
 
       {remaining > 0 && (
         <TouchableOpacity
           onPress={handleAddPress}
           disabled={uploading}
-          style={[styles.tile, styles.addTile]}
+          style={styles.addChip}
+          activeOpacity={0.8}
         >
           {uploading ? (
-            <ActivityIndicator color={COLORS.primary} size="small" />
+            <ActivityIndicator color={COLORS.accent} size="small" />
           ) : (
-            <MaterialCommunityIcons
-              name="plus"
-              size={22}
-              color={COLORS.textLight}
-            />
+            <>
+              <MaterialCommunityIcons
+                name="paperclip"
+                size={15}
+                color={COLORS.textLight}
+              />
+              <Text style={styles.addChipLabel}>Attach</Text>
+            </>
           )}
         </TouchableOpacity>
       )}
@@ -219,59 +210,53 @@ export function MultiFilePickerField({
   );
 }
 
-const SIZE = 64;
-
 const styles = StyleSheet.create({
   row: {
     flexDirection: "row",
     flexWrap: "wrap",
     gap: 8,
   },
-  item: {
-    width: SIZE,
+  chip: {
+    height: 40,
+    maxWidth: "100%",
+    flexDirection: "row",
+    alignItems: "center",
+    paddingLeft: 10,
+    paddingRight: 4,
+    borderRadius: 8,
+    backgroundColor: COLORS.surface2,
   },
-  tileWrapper: {
-    position: "relative",
-    width: SIZE,
-    height: SIZE,
+  chipMain: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    flexShrink: 1,
+    minWidth: 0,
+    paddingVertical: 8,
   },
-  tile: {
-    width: SIZE,
-    height: SIZE,
-    borderRadius: 6,
-    overflow: "hidden",
+  chipLabel: {
+    fontSize: 12,
+    color: COLORS.text,
+    maxWidth: 150,
+  },
+  chipRemove: {
+    width: 28,
+    height: 28,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  addChip: {
+    height: 40,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 12,
+    borderRadius: 8,
     borderWidth: 1,
     borderColor: COLORS.border,
-    backgroundColor: COLORS.background,
   },
-  rawTile: {
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  addTile: {
-    borderStyle: "dashed",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  image: {
-    width: "100%",
-    height: "100%",
-  },
-  label: {
-    marginTop: 2,
-    fontSize: 9,
+  addChipLabel: {
+    fontSize: 12,
     color: COLORS.textLight,
-    textAlign: "center",
-  },
-  deleteBadge: {
-    position: "absolute",
-    top: -70,
-    right: -6,
-    width: 18,
-    height: 18,
-    borderRadius: 9,
-    backgroundColor: COLORS.danger,
-    alignItems: "center",
-    justifyContent: "center",
   },
 });

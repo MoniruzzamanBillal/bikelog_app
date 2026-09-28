@@ -1,30 +1,44 @@
-import { StyleSheet, View } from "react-native";
-import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { Text } from "react-native-paper";
+import { Panel } from "@/components/main/shared/Panel";
+import { toneStyle } from "@/components/main/shared/StatusBadge";
 import { useFetchData } from "@/hooks/useApi";
-import { COLORS } from "@/utils/colors";
+import { TBike } from "@/types/bike.types";
 import { TMaintenanceType } from "@/types/catalog.types";
 import { TReminder } from "@/types/maintenance-log.types";
+import { COLORS, tint } from "@/utils/colors";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { StyleProp, StyleSheet, View, ViewStyle } from "react-native";
+import { Text } from "react-native-paper";
 
 interface RemindersBannerProps {
   bikeId: string;
   maintenanceTypes: TMaintenanceType[];
-  style?: object;
+  style?: StyleProp<ViewStyle>;
 }
 
-function summarizeReminder(reminder: TReminder, typeName: string): string {
-  const isOverdue = reminder?.status === "overdue";
-  if (reminder?.kmRemaining !== undefined) {
+/**
+ * The reminder's distance/days line. Mirrors the web's `getDistanceLine`:
+ * ! the server clamps `kmRemaining` to 0 once overdue, so the real overshoot is
+ * ! derived from the bike's own odometer instead.
+ */
+function getDistanceLine(r: TReminder, currentOdometer?: number): string {
+  const isOverdue = r.status === "overdue";
+
+  if (r.nextDueOdometer != null) {
+    const km =
+      isOverdue && currentOdometer != null
+        ? currentOdometer - r.nextDueOdometer
+        : (r.kmRemaining ?? 0);
     return isOverdue
-      ? `${typeName} ${Math.abs(reminder?.kmRemaining)?.toLocaleString()} km overdue`
-      : `${typeName} in ${reminder?.kmRemaining?.toLocaleString()} km`;
+      ? `${Math.abs(km).toLocaleString()} km past due`
+      : `${km.toLocaleString()} km left`;
   }
-  if (reminder?.daysRemaining !== undefined) {
-    return isOverdue
-      ? `${typeName} ${Math.abs(reminder?.daysRemaining)} days overdue`
-      : `${typeName} in ${reminder?.daysRemaining} days`;
+
+  if (r.daysRemaining != null) {
+    const days = Math.abs(r.daysRemaining);
+    return isOverdue ? `${days} days past due` : `${days} days left`;
   }
-  return `${typeName} due`;
+
+  return isOverdue ? "Overdue" : "Upcoming";
 }
 
 export function RemindersBanner({
@@ -38,9 +52,18 @@ export function RemindersBanner({
     { enabled: !!bikeId },
   );
 
+  // Read-only reuse of the hub's own bike entry — needed for the real overshoot.
+  const { data: bikeData } = useFetchData<TBike>(
+    ["bikes", bikeId],
+    `/bikes/${bikeId}`,
+    { enabled: !!bikeId },
+  );
+
   const reminders = data?.data?.reminders ?? [];
 
   if (isLoading || reminders.length === 0) return null;
+
+  const currentOdometer = bikeData?.data?.currentOdometer;
 
   const getTypeName = (typeId: string) =>
     maintenanceTypes?.find((t) => t._id === typeId)?.name ?? "Maintenance";
@@ -48,47 +71,75 @@ export function RemindersBanner({
   const sorted = [...reminders].sort((a, b) =>
     a?.status === b?.status ? 0 : a.status === "overdue" ? -1 : 1,
   );
-  const summary = sorted
-    .slice(0, 2)
-    .map((r) => summarizeReminder(r, getTypeName(r?.maintenanceType)))
-    .join(" · ");
 
   return (
-    <View style={[styles.reminder, style]}>
-      <MaterialCommunityIcons
-        name="alert-outline"
-        size={16}
-        color={COLORS.warning}
-      />
-      <Text style={styles.text}>
-        <Text style={styles.bold}>
-          {reminders.length} reminder{reminders.length === 1 ? "" : "s"} due
-        </Text>
-        {" — "}
-        {summary}
-      </Text>
+    <View style={[styles.stack, style]}>
+      {sorted.map((reminder, i) => {
+        const isOverdue = reminder.status === "overdue";
+        const tone = isOverdue ? COLORS.danger : COLORS.warning;
+        const pill = toneStyle(isOverdue ? "danger" : "warning");
+
+        return (
+          <Panel
+            key={`${reminder.maintenanceType}-${i}`}
+            style={[styles.row, { borderColor: tint(tone, 0.4) }]}
+          >
+            <MaterialCommunityIcons
+              name={isOverdue ? "alert-outline" : "clock-outline"}
+              size={18}
+              color={tone}
+            />
+            <View style={styles.textCol}>
+              <Text style={styles.name} numberOfLines={1}>
+                {getTypeName(reminder.maintenanceType)}
+              </Text>
+              <Text style={styles.line} numberOfLines={1}>
+                {getDistanceLine(reminder, currentOdometer)}
+              </Text>
+            </View>
+            <View style={[styles.pill, { backgroundColor: pill.bg }]}>
+              <Text style={[styles.pillText, { color: pill.text }]}>
+                {isOverdue ? "Overdue" : "Upcoming"}
+              </Text>
+            </View>
+          </Panel>
+        );
+      })}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  reminder: {
-    backgroundColor: "rgba(251,191,36,0.07)",
-    borderWidth: 1,
-    borderColor: "rgba(251,191,36,0.2)",
-    borderRadius: 10,
-    padding: 10,
+  stack: {
+    gap: 10,
+  },
+  row: {
     flexDirection: "row",
-    gap: 8,
-    alignItems: "flex-start",
+    alignItems: "center",
+    gap: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 11,
   },
-  text: {
+  textCol: {
     flex: 1,
-    fontSize: 12,
-    lineHeight: 16,
-    color: "#fde68a",
+    minWidth: 0,
   },
-  bold: {
-    fontWeight: "700",
+  name: {
+    fontSize: 13.5,
+    fontWeight: "500",
+    color: COLORS.text,
+  },
+  line: {
+    fontSize: 12,
+    color: COLORS.textLight,
+    fontVariant: ["tabular-nums"],
+  },
+  pill: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  pillText: {
+    fontSize: 11,
   },
 });

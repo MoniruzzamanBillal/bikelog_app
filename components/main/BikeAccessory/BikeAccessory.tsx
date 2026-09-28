@@ -1,4 +1,22 @@
-import { useRef, useState } from "react";
+import {
+  EmptyState,
+  ErrorState,
+  PrimaryButton,
+  ScreenHeader,
+  SectionLoading,
+  SegmentedTabs,
+} from "@/components/main/shared";
+import { useFetchData } from "@/hooks/useApi";
+import {
+  TAccessoryStatus,
+  TAccessoryUrgency,
+  TBikeAccessoriesApiResponse,
+} from "@/types/bike-accessory.types";
+import { TBike } from "@/types/bike.types";
+import { COLORS, tint } from "@/utils/colors";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { useLocalSearchParams } from "expo-router";
+import { useState } from "react";
 import {
   RefreshControl,
   ScrollView,
@@ -6,25 +24,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Text } from "react-native-paper";
-import { useLocalSearchParams } from "expo-router";
-import { SwipeableMethods } from "react-native-gesture-handler/ReanimatedSwipeable";
-import {
-  EmptyState,
-  ErrorState,
-  PrimaryButton,
-  ScreenHeader,
-  SectionLoading,
-} from "@/components/main/shared";
-import { useFetchData } from "@/hooks/useApi";
-import { COLORS } from "@/utils/colors";
-import { TBike } from "@/types/bike.types";
-import {
-  TAccessoryStatus,
-  TAccessoryUrgency,
-  TBikeAccessoriesApiResponse,
-} from "@/types/bike-accessory.types";
 import { BikeAccessoryCard } from "./BikeAccessoryCard";
 import { BikeAccessoryFormModal } from "./BikeAccessoryFormModal";
 
@@ -37,18 +37,14 @@ const URGENCIES: { key: TAccessoryUrgency | null; label: string }[] = [
   { key: "low", label: "Low" },
 ];
 
-const STATUSES: {
-  key: TAccessoryStatus;
-  label: string;
-  sectionLabel: string;
-}[] = [
-  { key: "pending", label: "Pending", sectionLabel: "Pending / Wishlist" },
-  { key: "purchased", label: "Purchased", sectionLabel: "Purchased" },
-  { key: "cancelled", label: "Cancelled", sectionLabel: "Cancelled" },
+// Spec 32: Pending is the default and there is deliberately no "All" option.
+const STATUSES: { value: TAccessoryStatus; label: string }[] = [
+  { value: "pending", label: "Pending" },
+  { value: "purchased", label: "Purchased" },
+  { value: "cancelled", label: "Cancelled" },
 ];
 
 export function BikeAccessory() {
-  const insets = useSafeAreaInsets();
   const { bikeId } = useLocalSearchParams<{ bikeId: string }>();
   const [page, setPage] = useState(1);
   const [urgencyFilter, setUrgencyFilter] = useState<TAccessoryUrgency | null>(
@@ -57,7 +53,6 @@ export function BikeAccessory() {
   const [statusFilter, setStatusFilter] = useState<TAccessoryStatus>("pending");
   const [modalOpen, setModalOpen] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const openSwipeableRef = useRef<SwipeableMethods | null>(null);
 
   const { data: bikeData } = useFetchData<TBike>(
     ["bikes", bikeId],
@@ -87,9 +82,12 @@ export function BikeAccessory() {
     );
 
   const accessories = data?.data?.result ?? [];
-  const totalPages = Math.ceil((data?.data?.meta ?? 0) / LIMIT) || 1;
-  const sectionLabel =
-    STATUSES.find((s) => s.key === statusFilter)?.sectionLabel ?? "";
+  const totalCount = data?.data?.meta ?? 0;
+  const totalPages = Math.ceil(totalCount / LIMIT) || 1;
+  const firstOnPage = (page - 1) * LIMIT + 1;
+  const lastOnPage = (page - 1) * LIMIT + accessories.length;
+  const statusLabel =
+    STATUSES.find((s) => s.value === statusFilter)?.label ?? "";
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -107,33 +105,38 @@ export function BikeAccessory() {
     setPage(1);
   };
 
+  const addButton = (
+    <PrimaryButton onPress={() => setModalOpen(true)} icon="plus" compact>
+      Add
+    </PrimaryButton>
+  );
+
   return (
     <View style={styles.screen}>
       <ScreenHeader
         title="Accessories"
+        subtitle={bike?.nickname}
         backLabel={bike?.nickname ?? "Back"}
-        rightIcon="plus"
-        onRightPress={() => setModalOpen(true)}
       />
 
-      <View style={styles.filtersWrap}>
-        <View style={styles.tabRow}>
-          {STATUSES.map(({ key, label }) => (
-            <TouchableOpacity
-              key={key}
-              style={[styles.tab, statusFilter === key && styles.tabActive]}
-              onPress={() => handleStatusChange(key)}
-            >
-              <Text
-                style={[
-                  styles.tabText,
-                  statusFilter === key && styles.tabTextActive,
-                ]}
-              >
-                {label}
-              </Text>
-            </TouchableOpacity>
-          ))}
+      <ScrollView
+        contentContainerStyle={styles.page}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            tintColor={COLORS.accent}
+          />
+        }
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.topRow}>
+          <SegmentedTabs
+            value={statusFilter}
+            onChange={handleStatusChange}
+            options={STATUSES}
+          />
+          {addButton}
         </View>
 
         <ScrollView
@@ -158,67 +161,82 @@ export function BikeAccessory() {
             </TouchableOpacity>
           ))}
         </ScrollView>
-      </View>
 
-      {isLoading ? (
-        <View style={styles.pad}>
-          <SectionLoading count={5} />
-        </View>
-      ) : isError ? (
-        <ErrorState onRetry={refetch} />
-      ) : accessories.length === 0 ? (
-        <EmptyState label="No accessories on your wishlist yet." />
-      ) : (
-        <>
-          <ScrollView
-            contentContainerStyle={styles.pad}
-            refreshControl={
-              <RefreshControl
-                refreshing={refreshing}
-                onRefresh={handleRefresh}
-                tintColor={COLORS.accent}
-              />
+        {isLoading ? (
+          <SectionLoading count={4} />
+        ) : isError ? (
+          <ErrorState title="Couldn’t load accessories" onRetry={refetch} />
+        ) : accessories.length === 0 ? (
+          <EmptyState
+            icon="shopping-outline"
+            title="Wishlist is empty"
+            message="Track accessories you plan to buy. Marking one purchased adds its price to spending."
+            action={
+              <PrimaryButton
+                onPress={() => setModalOpen(true)}
+                icon="plus"
+                compact
+              >
+                Add accessory
+              </PrimaryButton>
             }
-            showsVerticalScrollIndicator={false}
-          >
-            <Text style={styles.sectionHeading}>{sectionLabel}</Text>
-            {accessories.map((acc) => (
-              <BikeAccessoryCard
-                key={acc._id}
-                accessory={acc}
-                bikeId={bikeId}
-                openSwipeableRef={openSwipeableRef}
-              />
-            ))}
-          </ScrollView>
+          />
+        ) : (
+          <>
+            <Text style={styles.kicker}>
+              {statusLabel.toUpperCase()} {totalCount}
+            </Text>
 
-          {totalPages > 1 && (
-            <View
-              style={[styles.pagination, { paddingBottom: 16 + insets.bottom }]}
-            >
-              <Text style={styles.pageInfo}>
-                Page {page} of {totalPages}
-              </Text>
-              <View style={styles.pageButtons}>
-                <PrimaryButton
-                  disabled={page === 1}
-                  onPress={() => setPage((p) => p - 1)}
-                  style={styles.pageButton}
-                >
-                  Previous
-                </PrimaryButton>
-                <PrimaryButton
-                  disabled={page === totalPages}
-                  onPress={() => setPage((p) => p + 1)}
-                  style={styles.pageButton}
-                >
-                  Next
-                </PrimaryButton>
-              </View>
+            <View style={styles.list}>
+              {accessories.map((acc) => (
+                <BikeAccessoryCard
+                  key={acc._id}
+                  accessory={acc}
+                  bikeId={bikeId}
+                />
+              ))}
             </View>
-          )}
-        </>
-      )}
+
+            {totalPages > 1 && (
+              <View style={styles.pager}>
+                <Text style={styles.pagerRange}>
+                  {firstOnPage}–{lastOnPage} of {totalCount}
+                </Text>
+                <View style={styles.pagerControls}>
+                  <TouchableOpacity
+                    disabled={page === 1}
+                    onPress={() => setPage((p) => p - 1)}
+                    style={[styles.pagerBtn, page === 1 && styles.pagerBtnOff]}
+                  >
+                    <MaterialCommunityIcons
+                      name="chevron-left"
+                      size={16}
+                      color={COLORS.text}
+                    />
+                  </TouchableOpacity>
+                  <Text style={styles.pagerPage}>
+                    {page} / {totalPages}
+                  </Text>
+                  <TouchableOpacity
+                    disabled={page === totalPages}
+                    onPress={() => setPage((p) => p + 1)}
+                    style={[
+                      styles.pagerBtn,
+                      page === totalPages && styles.pagerBtnOff,
+                    ]}
+                  >
+                    <MaterialCommunityIcons
+                      name="chevron-right"
+                      size={16}
+                      color={COLORS.text}
+                    />
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )}
+          </>
+        )}
+      </ScrollView>
 
       <BikeAccessoryFormModal
         open={modalOpen}
@@ -234,89 +252,82 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.background,
   },
-  filtersWrap: {
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.borderSubtle,
-    paddingBottom: 8,
+  page: {
+    paddingHorizontal: 16,
+    paddingTop: 14,
+    paddingBottom: 24,
+    gap: 12,
   },
-  tabRow: {
+  topRow: {
     flexDirection: "row",
-    gap: 6,
-    padding: 12,
-    paddingBottom: 8,
-  },
-  tab: {
-    flex: 1,
-    paddingVertical: 7,
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: COLORS.borderSubtle,
-    backgroundColor: COLORS.surface,
     alignItems: "center",
-  },
-  tabActive: {
-    backgroundColor: COLORS.accent,
-    borderColor: COLORS.accent,
-  },
-  tabText: {
-    fontSize: 12,
-    fontWeight: "600",
-    color: COLORS.textMuted,
-  },
-  tabTextActive: {
-    color: COLORS.white,
+    justifyContent: "space-between",
+    gap: 10,
   },
   urgencyRow: {
     flexDirection: "row",
     gap: 6,
-    paddingHorizontal: 12,
   },
   chip: {
-    paddingVertical: 5,
+    paddingVertical: 6,
     paddingHorizontal: 12,
-    borderRadius: 20,
+    borderRadius: 8,
     borderWidth: 1,
-    borderColor: COLORS.borderSubtle,
+    borderColor: COLORS.border,
     backgroundColor: "transparent",
   },
   chipActive: {
-    backgroundColor: "rgba(145,132,217,0.15)",
+    backgroundColor: tint(COLORS.accent, 0.12),
     borderColor: COLORS.accent,
   },
   chipText: {
-    fontSize: 11,
-    fontWeight: "500",
-    color: COLORS.textMuted,
+    fontSize: 12,
+    color: "rgba(233,233,237,0.85)",
   },
   chipTextActive: {
     color: COLORS.accent,
   },
-  pad: {
-    padding: 14,
-  },
-  sectionHeading: {
+  kicker: {
     fontSize: 11,
-    fontWeight: "500",
-    color: COLORS.textMuted,
-    textTransform: "uppercase",
-    letterSpacing: 0.6,
-    marginBottom: 8,
-  },
-  pagination: {
-    padding: 16,
-    alignItems: "center",
-  },
-  pageInfo: {
-    fontSize: 13,
+    letterSpacing: 0.9,
     color: COLORS.textLight,
-    marginBottom: 8,
   },
-  pageButtons: {
+  list: {
+    gap: 10,
+  },
+  pager: {
     flexDirection: "row",
-    gap: 12,
-    width: "100%",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 2,
+    paddingVertical: 4,
   },
-  pageButton: {
-    flex: 1,
+  pagerRange: {
+    fontSize: 12.5,
+    color: COLORS.textLight,
+    fontVariant: ["tabular-nums"],
+  },
+  pagerControls: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  pagerBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  pagerBtnOff: {
+    opacity: 0.45,
+  },
+  pagerPage: {
+    fontSize: 12.5,
+    color: COLORS.text,
+    paddingHorizontal: 6,
+    fontVariant: ["tabular-nums"],
   },
 });

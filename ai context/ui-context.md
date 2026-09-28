@@ -10,42 +10,101 @@ Icons: `@expo/vector-icons`'s `MaterialCommunityIcons` exclusively — one icon 
 
 ## Colors
 
-`utils/colors.ts` defines a `THEMES` object with 4 alternates (`coffee`, `forest`, `purple`, `ocean`), each the same shape:
+`utils/colors.ts` exports one theme, `THEMES.nocturne`, wired as `COLORS` — the **Nocturne** palette, retuned in spec 38 to the redesigned web client's `.dark` token block (`bikelog_client-web-/app/globals.css`) so both clients read as one product. Dark-only by user decision; there is no light variant.
 
-```ts
-{
-  primary: string;      // accent / CTA color
-  background: string;   // page/card background
-  text: string;          // primary text
-  border: string;        // hairline borders
-  white: string;          // always "#FFFFFF"
-  textLight: string;     // secondary/muted text
-  expense: string;        // negative/destructive amounts (domain-specific to the reference project)
-  income: string;          // positive amounts (domain-specific to the reference project)
-  card: string;             // always same as background in every theme so far
-  shadow: string;            // always "#000000"
-}
-```
+| Token | Value | Web token | Use |
+| --- | --- | --- | --- |
+| `background` | `#161826` | `--background` | page background |
+| `card` / `surface` | `#232532` | `--card` | panels, modals, inputs |
+| `surface2` | `#1f2130` | `--muted` | skeletons, bar tracks, file chips, neutral tags |
+| `surface3` | `#2b2741` | `--accent` | accent-tinted bg: user chat bubble, image thumbs, accent tags |
+| `accent` / `primary` | `#9184d9` | `--primary` | CTAs, active states, icons |
+| `accentForeground` | `#d2cefd` | `--accent-foreground` | text on `surface3` |
+| `text` | `#e9e9ed` | `--foreground` | primary text |
+| `textLight` | `#9397ab` | `--muted-foreground` | secondary text, labels, meta |
+| `textMuted` | `#75798c` | — | tertiary text (rare) |
+| `placeholder` | `#595d6c` | — | input placeholders |
+| `border` | `rgba(233,233,237,0.14)` | `--border` | control outlines, rules |
+| `borderSubtle` | `rgba(233,233,237,0.10)` | — | quieter dividers |
+| `edge` | `#3f424d` | `--elev-sm` | the hairline outline on every panel |
+| `success` | `#7cbf8e` | `--success` | |
+| `warning` | `#d8a657` | `--warning` | |
+| `danger` | `#e0786e` | `--destructive` | |
 
-`COLORS = THEMES.coffee` is the one actually wired up (`const COLORS = THEMES.coffee`); the other three are dead code, never referenced. **For Bike Log**: define one theme object shaped like the above (minus the `expense`/`income` keys, which are transaction-domain-specific — replace with whatever this app's own semantic colors turn out to need, e.g. a `danger`/`warning`/`success` triplet for the status badges `../PLAN.md` §7 calls for), pick it as `COLORS`, and don't port the other 3 unused alternates forward — build the one palette this app will actually use.
+`CHART_COLORS` is the web's `--chart-1..5` ramp: `["#968ae0", "#d2cefd", "#75798c", "#5d5294", "#b2b6ca"]`. Categories take index `min(i, 4)`, like the web.
 
-Every component reads colors via `COLORS.foo`, never a hardcoded hex, with exactly one class of exception: one-off gradient/decorative colors used nowhere else (e.g. `TotalBalanceCard`'s `LinearGradient` stops, `["#f7dfd2", "#ebccbc"]`) are inlined at their single use site rather than added to `COLORS` for a color nothing else needs.
+**Tints come from `tint(hex, alpha)`**, never a literal: `tint(COLORS.danger, 0.15)` → `rgba(224,120,110,0.15)`. Every old `rgba(...)` status literal was replaced by this in spec 38. The only raw colour values left in components are true black overlays (`rgba(0,0,0,…)`) and the web's 70%/85%-alpha foreground used for field labels and inactive segments (`rgba(233,233,237,0.7)` / `0.85`).
 
-## Status Badges (new for this app — no direct precedent)
+## Status Badges
 
-The reference project has no 3+-state colored-pill pattern to copy (see `../PLAN.md` §7) — `StatusBadge.tsx` needs to be built from scratch as a `View`+`Text` pill: rounded (`borderRadius: 9999` matches the reference project's own pill-shaped buttons, e.g. `yearContainerWrapper`'s `borderRadius: 9999`), `paddingHorizontal`/`paddingVertical` small (the reference project's comparable "current month" chip uses `paddingVertical: 6, paddingHorizontal: 12`), `fontSize` small (`10`–`12` range, matching the reference project's smallest label text), background/text color pair driven by a `Record<Status, {bg: string; text: string}>` lookup passed in as a prop — the RN equivalent of the web app's inline two-tone Tailwind pill classes, just as an actual component since RN has no utility-class shortcut.
+Status pills are **tone pills**, built by `toneStyle(tone)` in `components/main/shared/StatusBadge.tsx` (exported from the barrel), which returns a `{ bg, text }` pair:
+
+| Tone | Background | Text |
+| --- | --- | --- |
+| `neutral` | `COLORS.surface2` | `COLORS.text` |
+| `accent` | `COLORS.surface3` | `COLORS.accentForeground` |
+| `success` / `warning` / `danger` | `tint(c, 0.15)` | `c` |
+
+Shape: `paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6, fontSize: 11` — a small rounded tag, not a full pill. `StatusBadge({label, colorKey, colors})` keeps its original signature; its exported maps are remapped to the web tones:
+
+- `issueStatusColors`: open → warning, resolved → success
+- `accessoryStatusColors`: pending → neutral, purchased → success, cancelled → neutral
+- `accessoryUrgencyColors`: immediate → danger, medium → warning, low → neutral
+
+Screens mostly call `toneStyle()` directly for one-off tags (Full/Partial on fuel logs, Overdue/Upcoming on reminders, document expiry, the oil-type tag, the dashboard reg number).
 
 ## Spacing & Radius
 
-No formal spacing scale exists in the reference project — margins/padding are literal numbers chosen per-component (`marginVertical: 5`, `padding: 12`, `gap: 16`, etc.), not derived from a shared scale. Radius values seen in practice: `6` (cards, buttons), `8` (modals), `10` (gradient card), `20`/`25` (pill buttons), `9999` (fully-round chips/pills). Reuse these same values rather than inventing new ones — e.g. a new list card should be `borderRadius: 6` like every other card in the reference project (`TransactionCard`, `AddTransactionPage`'s wrapper), not a new arbitrary value.
+Screens follow one page rhythm: **16 horizontal / 14 top padding, 10–12 gap between blocks** (`paddingHorizontal: 16, paddingTop: 14, gap: 12` on the scroll container).
+
+| Radius | Use |
+| --- | --- |
+| 6 | tags / status pills |
+| 7 | the auth brand chip |
+| 8 | controls — buttons, inputs, segmented tabs, steppers, chips, image thumbs |
+| 10 | cards / panels, icon chips |
+| 12 | chat bubbles (with one 4pt corner) and the AI composer |
+| 14 | modals |
+
+Heights: inputs and stepper/pager buttons 40–44, compact buttons ≥36, table rows 44, file chips 40, bike-hub tiles 76. Icon hit boxes are 32×32 (card actions) or 36–40 (header back, ⋯ triggers).
+
+Use the shared pieces instead of re-deriving these: `Panel` (+ `panelStyle` for use inside a local `StyleSheet`), `RuleFade` for freestanding dividers, `StatTile`, `SegmentedTabs`, `FormActions`.
 
 ## Typography
 
-No `next/font`-equivalent custom font loading beyond the scaffold's unused `SpaceMono-Regular.ttf` — text uses the system font (`fontFamily: "System"` where set explicitly, otherwise Paper's default). Weight is set via numeric-string `fontWeight` (`"500"`, `"600"`, `"700"`, `"800"`, `"900"`) or the literal `"bold"`, mixed within the same file in the reference project — no strict rule on which to use where; match whichever the nearest existing similar-weight text in the same file already uses. Size range observed: `10`–`30`, with `14`–`16` as the default body-text size and `18`–`30` reserved for headings/totals/prices.
+System font only — no `expo-font`/Inter (spec 38 guardrail: no new dependencies). **Headings use `fontWeight: "500"`, not bold**; `"600"` appears only for markdown `strong`.
+
+| Size | Use |
+| --- | --- |
+| 34 | spending total |
+| 30 | odometer, rolling-average km/l |
+| 26 | auth heading |
+| 24 | card hero numbers (dashboard odometer, `StatTile` value) |
+| 20 | modal title |
+| 18 | fuel-log cost, AI empty-state title |
+| 17 | `EmptyState`/`ErrorState` title, record km/l, year stepper |
+| 15 | screen header title, panel titles, mini-stat values |
+| 13.5 | body, list-row names, AI chat text (line height 21) |
+| 13 | secondary body, segment labels, descriptions |
+| 12 / 12.5 | meta lines, field labels, stat labels |
+| 11 | tags, kickers, header subtitle |
+
+**Kickers** (section labels like `EXACT RECORDS`, `BY CATEGORY`): `fontSize: 11, letterSpacing: 0.9, textTransform: "uppercase", color: COLORS.textLight` (accent for the AI insight kicker).
+
+**Numbers**: `fontVariant: ["tabular-nums"]` on every odometer, money, liter and km/l value. `fontFamily: "monospace"` is no longer used anywhere.
+
+**Money**: always `formatTaka(n)` (`utils/formatTaka.ts`) — `৳` prefix, whole taka unless the value actually has decimals, matching the web exactly.
 
 ## Shadows / Elevation
 
-Every card-like `View` pairs an iOS shadow (`shadowColor: "#000", shadowOffset: {width:0,height:1-4}, shadowOpacity: 0.1-0.2, shadowRadius: 1-6`) with an Android `elevation` (`1`–`5`, roughly matching the shadow's visual weight) — always both together, never one without the other, since RN doesn't unify these across platforms. Match the existing weight tiers: `elevation: 1` for a plain list row, `elevation: 3`–`5` for a modal/prominent card.
+Nocturne elevation is an **outline, not a drop shadow**:
+
+- **Panel** (every card): `backgroundColor: COLORS.card, borderRadius: 10, borderWidth: 1, borderColor: COLORS.edge` — the web's `--elev-sm` hairline. No `shadow*`/`elevation`.
+- **Glow** (the one highlighted element per screen — first bike card, rolling average, spending total, empty-state icon chips, the AI composer while empty, auth brand chip): `glowStyle` from `Panel.tsx` = `borderColor: COLORS.accent` + `shadowColor: COLORS.accent, shadowOpacity: 0.45, shadowRadius: 12, shadowOffset: {0,0}` + `elevation: 6`. `shadow*` + `elevation` appear nowhere else — except that the three glowing icon chips (`EmptyState`, the AI assistant's empty state, the auth brand chip) repeat these same values inline rather than spreading `glowStyle`, because they also set their own size/radius; keep them in sync if the glow changes.
+- **Tone outline** (reminders, efficiency alert, error states, login banner): a panel with `borderColor: tint(COLORS.warning | COLORS.danger, 0.4)`.
+- **Modals**: `COLORS.card` + `edge` outline + radius 14, no shadow.
+
+⚠️ The glow has only been seen on Expo web, where it renders faintly (and RN-web warns `shadow*` is deprecated in favour of `boxShadow`). Its look on iOS (shadow) vs Android (`elevation`, which ignores `shadowColor` on older versions) is unverified — see the progress tracker's Known Gaps.
 
 ## Screen-size target
 

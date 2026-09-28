@@ -6,27 +6,44 @@ import {
   SectionLoading,
 } from "@/components/main/shared";
 import { useFetchData } from "@/hooks/useApi";
+import {
+  IBikeDocument,
+  TBikeDocumentsApiResponse,
+} from "@/types/bike-document.types";
 import { TBike } from "@/types/bike.types";
-import { TBikeDocumentsApiResponse } from "@/types/bike-document.types";
 import { COLORS } from "@/utils/colors";
+import { parseApiDate } from "@/utils/formatApiDate";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useLocalSearchParams } from "expo-router";
-import { useRef, useState } from "react";
-import { RefreshControl, ScrollView, StyleSheet, View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { SwipeableMethods } from "react-native-gesture-handler/ReanimatedSwipeable";
+import { useState } from "react";
+import {
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { Text } from "react-native-paper";
 import { BikeDocumentCard } from "./BikeDocumentCard";
 import { BikeDocumentFormModal } from "./BikeDocumentFormModal";
 
 const LIMIT = 10;
 
+/** Soonest expiry first, documents with no expiry last — client-side, like the web. */
+function byExpiry(a: IBikeDocument, b: IBikeDocument): number {
+  if (!a.expiryDate && !b.expiryDate) return 0;
+  if (!a.expiryDate) return 1;
+  if (!b.expiryDate) return -1;
+  return (
+    parseApiDate(a.expiryDate).getTime() - parseApiDate(b.expiryDate).getTime()
+  );
+}
+
 export function BikeDocument() {
-  const insets = useSafeAreaInsets();
   const { bikeId } = useLocalSearchParams<{ bikeId: string }>();
   const [page, setPage] = useState(1);
   const [modalOpen, setModalOpen] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const openSwipeableRef = useRef<SwipeableMethods | null>(null);
 
   const { data: bikeData } = useFetchData<TBike>(
     ["bikes", bikeId],
@@ -35,14 +52,18 @@ export function BikeDocument() {
   );
   const bike = bikeData?.data;
 
-  const { data, isLoading, isError, refetch } = useFetchData<TBikeDocumentsApiResponse>(
-    ["documents", bikeId, page.toString()],
-    `/bikes/${bikeId}/documents?page=${page}&limit=${LIMIT}`,
-    { enabled: !!bikeId },
-  );
+  const { data, isLoading, isError, refetch } =
+    useFetchData<TBikeDocumentsApiResponse>(
+      ["documents", bikeId, page.toString()],
+      `/bikes/${bikeId}/documents?page=${page}&limit=${LIMIT}`,
+      { enabled: !!bikeId },
+    );
 
-  const documents = data?.data?.result ?? [];
-  const totalPages = Math.ceil((data?.data?.meta ?? 0) / LIMIT) || 1;
+  const documents = [...(data?.data?.result ?? [])].sort(byExpiry);
+  const totalCount = data?.data?.meta ?? 0;
+  const totalPages = Math.ceil(totalCount / LIMIT) || 1;
+  const firstOnPage = (page - 1) * LIMIT + 1;
+  const lastOnPage = (page - 1) * LIMIT + documents.length;
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -50,71 +71,111 @@ export function BikeDocument() {
     setRefreshing(false);
   };
 
+  const addButton = (
+    <PrimaryButton onPress={() => setModalOpen(true)} icon="plus" compact>
+      Add
+    </PrimaryButton>
+  );
+
   return (
     <View style={styles.screen}>
       <ScreenHeader
         title="Documents"
+        subtitle={bike?.nickname}
         backLabel={bike?.nickname ?? "Back"}
-        rightIcon="plus"
-        onRightPress={() => setModalOpen(true)}
       />
 
-      {isLoading ? (
-        <View style={styles.pad}>
-          <SectionLoading count={5} />
+      <ScrollView
+        contentContainerStyle={styles.page}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            tintColor={COLORS.accent}
+          />
+        }
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.topRow}>
+          <Text style={styles.count}>
+            {isLoading
+              ? ""
+              : `${totalCount} document${totalCount === 1 ? "" : "s"}`}
+          </Text>
+          {addButton}
         </View>
-      ) : isError ? (
-        <ErrorState onRetry={refetch} />
-      ) : documents.length === 0 ? (
-        <EmptyState label="No documents added yet." />
-      ) : (
-        <>
-          <ScrollView
-            contentContainerStyle={styles.pad}
-            refreshControl={
-              <RefreshControl
-                refreshing={refreshing}
-                onRefresh={handleRefresh}
-                tintColor={COLORS.accent}
-              />
-            }
-            showsVerticalScrollIndicator={false}
-          >
-            {documents.map((document) => (
-              <BikeDocumentCard
-                key={document._id}
-                document={document}
-                bikeId={bikeId}
-                openSwipeableRef={openSwipeableRef}
-              />
-            ))}
-          </ScrollView>
 
-          {totalPages > 1 && (
-            <View style={[styles.pagination, { paddingBottom: 16 + insets.bottom }]}>
-              <Text style={styles.pageInfo}>
-                Page {page} of {totalPages}
-              </Text>
-              <View style={styles.pageButtons}>
-                <PrimaryButton
-                  disabled={page === 1}
-                  onPress={() => setPage((p) => p - 1)}
-                  style={styles.pageButton}
-                >
-                  Previous
-                </PrimaryButton>
-                <PrimaryButton
-                  disabled={page === totalPages}
-                  onPress={() => setPage((p) => p + 1)}
-                  style={styles.pageButton}
-                >
-                  Next
-                </PrimaryButton>
-              </View>
+        {isLoading ? (
+          <SectionLoading count={4} />
+        ) : isError ? (
+          <ErrorState title="Couldn’t load documents" onRetry={refetch} />
+        ) : documents.length === 0 ? (
+          <EmptyState
+            icon="file-document-outline"
+            title="No documents yet"
+            message="Keep registration, tax token, insurance and licence copies here with their expiry dates."
+            action={
+              <PrimaryButton
+                onPress={() => setModalOpen(true)}
+                icon="plus"
+                compact
+              >
+                Add document
+              </PrimaryButton>
+            }
+          />
+        ) : (
+          <>
+            <View style={styles.list}>
+              {documents.map((document) => (
+                <BikeDocumentCard
+                  key={document._id}
+                  document={document}
+                  bikeId={bikeId}
+                />
+              ))}
             </View>
-          )}
-        </>
-      )}
+
+            {totalPages > 1 && (
+              <View style={styles.pager}>
+                <Text style={styles.pagerRange}>
+                  {firstOnPage}–{lastOnPage} of {totalCount}
+                </Text>
+                <View style={styles.pagerControls}>
+                  <TouchableOpacity
+                    disabled={page === 1}
+                    onPress={() => setPage((p) => p - 1)}
+                    style={[styles.pagerBtn, page === 1 && styles.pagerBtnOff]}
+                  >
+                    <MaterialCommunityIcons
+                      name="chevron-left"
+                      size={16}
+                      color={COLORS.text}
+                    />
+                  </TouchableOpacity>
+                  <Text style={styles.pagerPage}>
+                    {page} / {totalPages}
+                  </Text>
+                  <TouchableOpacity
+                    disabled={page === totalPages}
+                    onPress={() => setPage((p) => p + 1)}
+                    style={[
+                      styles.pagerBtn,
+                      page === totalPages && styles.pagerBtnOff,
+                    ]}
+                  >
+                    <MaterialCommunityIcons
+                      name="chevron-right"
+                      size={16}
+                      color={COLORS.text}
+                    />
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )}
+          </>
+        )}
+      </ScrollView>
 
       <BikeDocumentFormModal
         open={modalOpen}
@@ -130,24 +191,58 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.background,
   },
-  pad: {
-    padding: 14,
+  page: {
+    paddingHorizontal: 16,
+    paddingTop: 14,
+    paddingBottom: 24,
+    gap: 12,
   },
-  pagination: {
-    padding: 16,
+  topRow: {
+    flexDirection: "row",
     alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
   },
-  pageInfo: {
+  count: {
     fontSize: 13,
     color: COLORS.textLight,
-    marginBottom: 8,
   },
-  pageButtons: {
+  list: {
+    gap: 10,
+  },
+  pager: {
     flexDirection: "row",
-    gap: 12,
-    width: "100%",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 2,
+    paddingVertical: 4,
   },
-  pageButton: {
-    flex: 1,
+  pagerRange: {
+    fontSize: 12.5,
+    color: COLORS.textLight,
+    fontVariant: ["tabular-nums"],
+  },
+  pagerControls: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  pagerBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  pagerBtnOff: {
+    opacity: 0.45,
+  },
+  pagerPage: {
+    fontSize: 12.5,
+    color: COLORS.text,
+    paddingHorizontal: 6,
+    fontVariant: ["tabular-nums"],
   },
 });

@@ -1,11 +1,11 @@
-import { StyleSheet, Text, View } from "react-native";
-import { format, parse } from "date-fns";
-import { ScrollView } from "react-native-gesture-handler";
-import { BarChart } from "react-native-gifted-charts";
-import { ErrorState, SectionLoading } from "@/components/main/shared";
+import { ErrorState, Panel, SectionLoading } from "@/components/main/shared";
 import { useFetchData } from "@/hooks/useApi";
-import { COLORS } from "@/utils/colors";
 import { TMileageTrend } from "@/types/mileage.types";
+import { CHART_COLORS, COLORS, tint } from "@/utils/colors";
+import { format, parse } from "date-fns";
+import { StyleSheet } from "react-native";
+import { BarChart } from "react-native-gifted-charts";
+import { Text } from "react-native-paper";
 
 interface MileageTrendTabProps {
   bikeId: string;
@@ -17,14 +17,16 @@ export function MileageTrendTab({ bikeId }: MileageTrendTabProps) {
     `/bikes/${bikeId}/mileage/trend?months=6`,
   );
 
-  const trend = data?.data;
-  const monthlySummary = trend?.monthlySummary ?? [];
+  const monthlySummary = data?.data?.monthlySummary ?? [];
 
+  // Earlier months sit back at 55%; the current month is the solid ramp colour.
   const barData = monthlySummary.map((m, i) => ({
     value: m.totalDistanceKm,
     label: format(parse(m.targetMonth, "yyyy-MM", new Date()), "MMM"),
     frontColor:
-      i === monthlySummary.length - 1 ? COLORS.accent : "rgba(145,132,217,0.3)",
+      i === monthlySummary.length - 1
+        ? CHART_COLORS[0]
+        : tint(CHART_COLORS[0], 0.55),
   }));
 
   if (isLoading) {
@@ -32,48 +34,44 @@ export function MileageTrendTab({ bikeId }: MileageTrendTabProps) {
   }
 
   if (isError) {
-    return <ErrorState onRetry={refetch} />;
+    return <ErrorState title="Couldn’t load the trend" onRetry={refetch} />;
   }
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      <View style={styles.chartCard}>
-        <Text style={styles.chartTitle}>Distance, last 6 months</Text>
-        <BarChart
-          data={barData}
-          barWidth={28}
-          spacing={24}
-          roundedTop
-          yAxisThickness={0}
-          xAxisThickness={0}
-          yAxisTextStyle={{ color: COLORS.textMuted, fontSize: 10 }}
-          xAxisLabelTextStyle={{ color: COLORS.textMuted, fontSize: 10 }}
-          rulesColor={COLORS.borderSubtle}
-          noOfSections={4}
-        />
-      </View>
-    </ScrollView>
+    <Panel style={styles.chartPanel}>
+      <Text style={styles.chartTitle}>Distance, last 6 months</Text>
+      <BarChart
+        data={barData}
+        barWidth={24}
+        spacing={16}
+        initialSpacing={8}
+        endSpacing={8}
+        yAxisLabelWidth={34}
+        roundedTop
+        height={180}
+        yAxisThickness={0}
+        xAxisThickness={0}
+        hideRules
+        showValuesAsTopLabel
+        topLabelTextStyle={{ color: COLORS.textLight, fontSize: 11 }}
+        yAxisTextStyle={{ color: COLORS.textLight, fontSize: 10 }}
+        xAxisLabelTextStyle={{ color: COLORS.textLight, fontSize: 11 }}
+        noOfSections={4}
+      />
+    </Panel>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  chartCard: {
-    backgroundColor: COLORS.surface,
-    borderWidth: 1,
-    borderColor: COLORS.borderSubtle,
-    borderRadius: 10,
-    padding: 16,
-    marginBottom: 12,
+  chartPanel: {
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 10,
   },
   chartTitle: {
-    fontSize: 11,
+    fontSize: 13,
     fontWeight: "500",
-    color: COLORS.textMuted,
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
-    marginBottom: 10,
+    color: COLORS.text,
+    marginBottom: 12,
   },
 });

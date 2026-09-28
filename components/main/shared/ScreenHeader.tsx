@@ -6,7 +6,12 @@ import { COLORS } from "@/utils/colors";
 
 interface ScreenHeaderProps {
   title: string;
+  /**
+   * Presence (not the text) is what matters now — the Nocturne header shows a
+   * chevron-only back control. Kept as a prop for backward compatibility.
+   */
   backLabel?: string;
+  subtitle?: string;
   onBack?: () => void;
   rightIcon?: React.ComponentProps<typeof MaterialCommunityIcons>["name"];
   onRightPress?: () => void;
@@ -15,6 +20,7 @@ interface ScreenHeaderProps {
 export function ScreenHeader({
   title,
   backLabel,
+  subtitle,
   onBack,
   rightIcon,
   onRightPress,
@@ -29,26 +35,38 @@ export function ScreenHeader({
           style={styles.back}
           hitSlop={8}
         >
-          <MaterialCommunityIcons name="chevron-left" size={20} color={COLORS.accent} />
-          <Text style={styles.backText} numberOfLines={1}>
-            {backLabel}
-          </Text>
+          <MaterialCommunityIcons
+            name="chevron-left"
+            size={22}
+            color={COLORS.text}
+          />
         </TouchableOpacity>
-      ) : (
-        <View style={styles.backPlaceholder} />
-      )}
+      ) : null}
 
-      <Text style={styles.title} numberOfLines={1}>
-        {title}
-      </Text>
+      <View style={styles.titleCol}>
+        <Text style={styles.title} numberOfLines={1}>
+          {title}
+        </Text>
+        {subtitle ? (
+          <Text style={styles.subtitle} numberOfLines={1}>
+            {subtitle}
+          </Text>
+        ) : null}
+      </View>
 
       {rightIcon ? (
-        <TouchableOpacity onPress={onRightPress} style={styles.navBtn} hitSlop={8}>
-          <MaterialCommunityIcons name={rightIcon} size={20} color={COLORS.accent} />
+        <TouchableOpacity
+          onPress={onRightPress}
+          style={styles.navBtn}
+          hitSlop={8}
+        >
+          <MaterialCommunityIcons
+            name={rightIcon}
+            size={20}
+            color={COLORS.textLight}
+          />
         </TouchableOpacity>
-      ) : (
-        <View style={styles.navBtn} />
-      )}
+      ) : null}
     </View>
   );
 }
@@ -58,33 +76,33 @@ const styles = StyleSheet.create({
     height: 52,
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 12,
-    gap: 8,
+    paddingHorizontal: 8,
     borderBottomWidth: 1,
-    borderBottomColor: COLORS.borderSubtle,
+    borderBottomColor: COLORS.border,
+    backgroundColor: COLORS.background,
   },
   back: {
-    flexDirection: "row",
+    width: 36,
+    height: 36,
     alignItems: "center",
-    maxWidth: 100,
+    justifyContent: "center",
   },
-  backPlaceholder: {
-    width: 32,
-  },
-  backText: {
-    fontSize: 15,
-    color: COLORS.accent,
+  titleCol: {
+    flex: 1,
+    paddingHorizontal: 8,
   },
   title: {
-    flex: 1,
-    fontSize: 16,
-    fontWeight: "600",
+    fontSize: 15,
+    fontWeight: "500",
     color: COLORS.text,
-    textAlign: "center",
+  },
+  subtitle: {
+    fontSize: 11,
+    color: COLORS.textLight,
   },
   navBtn: {
-    width: 32,
-    height: 32,
+    width: 40,
+    height: 40,
     alignItems: "center",
     justifyContent: "center",
   },
