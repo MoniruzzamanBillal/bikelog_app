@@ -39,7 +39,7 @@ export function ImageViewerModal({
   useEffect(() => {
     if (visible) {
       setCurrentIndex(initialIndex);
-      flatListRef.current?.scrollToOffset({
+      flatListRef?.current?.scrollToOffset({
         offset: initialIndex * SCREEN_WIDTH,
         animated: false,
       });
@@ -47,8 +47,8 @@ export function ImageViewerModal({
   }, [visible, initialIndex]);
 
   const goToIndex = (index: number) => {
-    if (index < 0 || index >= images.length) return;
-    flatListRef.current?.scrollToIndex({ index, animated: true });
+    if (index < 0 || index >= images?.length) return;
+    flatListRef?.current?.scrollToIndex({ index, animated: true });
     setCurrentIndex(index);
   };
 
@@ -56,12 +56,12 @@ export function ImageViewerModal({
     event: NativeSyntheticEvent<NativeScrollEvent>
   ) => {
     const index = Math.round(
-      event.nativeEvent.contentOffset.x / SCREEN_WIDTH
+      event?.nativeEvent?.contentOffset?.x / SCREEN_WIDTH
     );
     setCurrentIndex(index);
   };
 
-  if (images.length === 0) return null;
+  if (images?.length === 0) return null;
 
   return (
     <Portal>
@@ -72,7 +72,7 @@ export function ImageViewerModal({
       >
         <Pressable style={styles.backdrop} onPress={onDismiss}>
           <View style={styles.imageArea} pointerEvents="box-none">
-            {images.length > 1 ? (
+            {images?.length > 1 ? (
               <FlatList
                 ref={flatListRef}
                 data={images}
@@ -114,11 +114,11 @@ export function ImageViewerModal({
             style={styles.closeButton}
           />
 
-          {images.length > 1 && (
+          {images?.length > 1 && (
             <>
               <View style={styles.counter}>
                 <Text style={styles.counterText}>
-                  {currentIndex + 1} / {images.length}
+                  {currentIndex + 1} / {images?.length}
                 </Text>
               </View>
 

@@ -48,19 +48,19 @@ export function BikeAccessoryFormModal({
   const createMutation = usePost([["accessories", bikeId]]);
   const updateMutation = usePatch([["accessories", bikeId]]);
 
-  const isPending = createMutation.isPending || updateMutation.isPending;
+  const isPending = createMutation?.isPending || updateMutation?.isPending;
   // ! once purchased, status is a permanent, server-enforced lock (bikelog_server spec 25) —
   // ! disable it client-side too so the user isn't surprised by a rejected update
-  const isStatusLocked = !!initialAccessory && initialAccessory.status === "purchased";
+  const isStatusLocked = !!initialAccessory && initialAccessory?.status === "purchased";
 
   useEffect(() => {
     if (!open) return;
 
     if (initialAccessory) {
-      setName(initialAccessory.name || "");
-      setUrgency(initialAccessory.urgency || "medium");
-      setStatus(initialAccessory.status || "pending");
-      setPrice(initialAccessory.price?.toString() ?? "");
+      setName(initialAccessory?.name || "");
+      setUrgency(initialAccessory?.urgency || "medium");
+      setStatus(initialAccessory?.status || "pending");
+      setPrice(initialAccessory?.price?.toString() ?? "");
     } else {
       setName("");
       setUrgency("medium");
@@ -108,7 +108,7 @@ export function BikeAccessoryFormModal({
     try {
       if (initialAccessory) {
         await updateMutation.mutateAsync({
-          url: `/bikes/${bikeId}/accessories/${initialAccessory._id}`,
+          url: `/bikes/${bikeId}/accessories/${initialAccessory?._id}`,
           payload,
         });
         Toast.show({ type: "success", text1: "Accessory updated", position: "top" });

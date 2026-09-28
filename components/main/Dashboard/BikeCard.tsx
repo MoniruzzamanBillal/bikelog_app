@@ -34,30 +34,30 @@ export function BikeCard({
 
   const deleteMutation = useDelete([["bikes"]]);
 
-  const logged = bike.currentOdometer - (bike.initialOdometer ?? 0);
-  const since = bike.purchaseDate
-    ? format(new Date(bike.purchaseDate), "MMM yyyy")
+  const logged = bike?.currentOdometer - (bike?.initialOdometer ?? 0);
+  const since = bike?.purchaseDate
+    ? format(new Date(bike?.purchaseDate), "MMM yyyy")
     : "—";
 
   const handleSwipeableWillOpen = () => {
     if (
-      openSwipeableRef.current &&
-      openSwipeableRef.current !== swipeableRef.current
+      openSwipeableRef?.current &&
+      openSwipeableRef?.current !== swipeableRef?.current
     ) {
-      openSwipeableRef.current.close();
+      openSwipeableRef?.current?.close();
     }
-    openSwipeableRef.current = swipeableRef.current;
+    openSwipeableRef.current = swipeableRef?.current;
   };
 
   const handleDelete = () => {
-    swipeableRef.current?.close();
+    swipeableRef?.current?.close();
     confirmDelete("bike", async () => {
-      await deleteMutation.mutateAsync({ url: `/bikes/${bike._id}` });
+      await deleteMutation.mutateAsync({ url: `/bikes/${bike?._id}` });
     });
   };
 
   const handleEdit = () => {
-    swipeableRef.current?.close();
+    swipeableRef?.current?.close();
     setEditOpen(true);
   };
 
@@ -110,10 +110,10 @@ export function BikeCard({
           <View style={styles.titleRow}>
             <View style={styles.titleCol}>
               <Text style={styles.nickname} numberOfLines={1}>
-                {bike.nickname}
+                {bike?.nickname}
               </Text>
               <Text style={styles.model} numberOfLines={1}>
-                {bike.brand} {bike.model}
+                {bike?.brand} {bike?.model}
               </Text>
             </View>
             <MaterialCommunityIcons
@@ -126,19 +126,19 @@ export function BikeCard({
           <View style={styles.odoRow}>
             <View style={styles.odoValue}>
               <Text style={styles.odometer}>
-                {bike.currentOdometer.toLocaleString()}
+                {bike?.currentOdometer?.toLocaleString()}
               </Text>
               <Text style={styles.odometerUnit}>km</Text>
             </View>
             <View style={styles.regTag}>
               <Text style={styles.regTagText} numberOfLines={1}>
-                {bike.registrationNumber}
+                {bike?.registrationNumber}
               </Text>
             </View>
           </View>
 
           <Text style={styles.meta} numberOfLines={1}>
-            {logged.toLocaleString()} km logged · {bike.fuelTankCapacityLiters} L
+            {logged.toLocaleString()} km logged · {bike?.fuelTankCapacityLiters} L
             tank · Since {since}
           </Text>
         </TouchableOpacity>

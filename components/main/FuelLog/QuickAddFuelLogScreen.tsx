@@ -36,8 +36,8 @@ export function QuickAddFuelLogScreen() {
   const seedFromLastLog = useMemo(() => {
     if (!lastLog) return undefined;
     return {
-      fuelStation: lastLog.fuelStation,
-      pricePerLiter: lastLog.pricePerLiter,
+      fuelStation: lastLog?.fuelStation,
+      pricePerLiter: lastLog?.pricePerLiter,
     };
   }, [lastLog]);
 

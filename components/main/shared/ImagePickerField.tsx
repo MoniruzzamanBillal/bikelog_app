@@ -29,9 +29,9 @@ interface ImagePickerFieldProps {
 
 function assetToFile(asset: ImagePicker.ImagePickerAsset): TPickedImageFile {
   return {
-    uri: asset.uri,
-    name: asset.fileName ?? "photo.jpg",
-    type: asset.mimeType ?? "image/jpeg",
+    uri: asset?.uri,
+    name: asset?.fileName ?? "photo.jpg",
+    type: asset?.mimeType ?? "image/jpeg",
   };
 }
 
@@ -49,7 +49,7 @@ export function ImagePickerField({
 
   const takePhoto = async () => {
     const permission = await ImagePicker.requestCameraPermissionsAsync();
-    if (!permission.granted) {
+    if (!permission?.granted) {
       Toast.show({
         type: "error",
         text1: "Camera permission denied",
@@ -62,14 +62,14 @@ export function ImagePickerField({
       quality: 0.7,
       allowsEditing: false,
     });
-    if (!result.canceled && result.assets[0]) {
-      onUpload(assetToFile(result.assets[0]));
+    if (!result?.canceled && result?.assets[0]) {
+      onUpload(assetToFile(result?.assets[0]));
     }
   };
 
   const pickFromLibrary = async () => {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permission.granted) {
+    if (!permission?.granted) {
       Toast.show({
         type: "error",
         text1: "Photo library permission denied",
@@ -82,8 +82,8 @@ export function ImagePickerField({
       quality: 0.7,
       allowsEditing: false,
     });
-    if (!result.canceled && result.assets[0]) {
-      onUpload(assetToFile(result.assets[0]));
+    if (!result?.canceled && result?.assets[0]) {
+      onUpload(assetToFile(result?.assets[0]));
     }
   };
 

@@ -57,7 +57,7 @@ export function Dashboard() {
           <Text style={styles.count}>
             {isLoading
               ? ""
-              : `${bikes.length} bike${bikes.length === 1 ? "" : "s"}`}
+              : `${bikes?.length} bike${bikes?.length === 1 ? "" : "s"}`}
           </Text>
           {addButton}
         </View>
@@ -66,7 +66,7 @@ export function Dashboard() {
           <SectionLoading count={3} />
         ) : isError ? (
           <ErrorState title="Couldn’t load your bikes" onRetry={refetch} />
-        ) : bikes.length === 0 ? (
+        ) : bikes?.length === 0 ? (
           <EmptyState
             icon="motorbike"
             title="No bikes yet"

@@ -84,7 +84,7 @@ export function MaintenanceLog() {
       >
         <View style={styles.topRow}>
           <Text style={styles.count}>
-            {isLoading ? "" : `${logs.length} services logged`}
+            {isLoading ? "" : `${logs?.length} services logged`}
           </Text>
           {addButton}
         </View>
@@ -95,7 +95,7 @@ export function MaintenanceLog() {
           <SectionLoading count={4} />
         ) : isError ? (
           <ErrorState title="Couldn’t load service history" onRetry={refetch} />
-        ) : logs.length === 0 ? (
+        ) : logs?.length === 0 ? (
           <EmptyState
             icon="wrench-outline"
             title="No service history yet"

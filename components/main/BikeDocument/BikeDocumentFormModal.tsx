@@ -31,15 +31,15 @@ export function BikeDocumentFormModal({
   const createMutation = usePost([["documents", bikeId]]);
   const updateMutation = usePatch([["documents", bikeId]]);
 
-  const isPending = createMutation.isPending || updateMutation.isPending;
+  const isPending = createMutation?.isPending || updateMutation?.isPending;
 
   useEffect(() => {
     if (!open) return;
 
     if (initialDocument) {
-      setTitle(initialDocument.title || "");
-      setDescription(initialDocument.description || "");
-      setExpiryDate(initialDocument.expiryDate?.slice(0, 10) || "");
+      setTitle(initialDocument?.title || "");
+      setDescription(initialDocument?.description || "");
+      setExpiryDate(initialDocument?.expiryDate?.slice(0, 10) || "");
     } else {
       setTitle("");
       setDescription("");
@@ -66,7 +66,7 @@ export function BikeDocumentFormModal({
     try {
       if (initialDocument) {
         await updateMutation.mutateAsync({
-          url: `/bikes/${bikeId}/documents/${initialDocument._id}`,
+          url: `/bikes/${bikeId}/documents/${initialDocument?._id}`,
           payload,
         });
         Toast.show({

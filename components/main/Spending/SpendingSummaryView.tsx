@@ -18,9 +18,9 @@ export function SpendingSummaryView({
   avgDailyExpense,
   daysElapsed,
 }: SpendingSummaryViewProps) {
-  const total = summary.totalSpending || 0;
-  const categories = [...(summary.categoryBreakdown || [])].sort(
-    (a, b) => b.total - a.total,
+  const total = summary?.totalSpending || 0;
+  const categories = [...(summary?.categoryBreakdown || [])].sort(
+    (a, b) => b?.total - a?.total,
   );
   const maxCategory = categories[0]?.total ?? 0;
   const showAvgDaily =
@@ -50,15 +50,15 @@ export function SpendingSummaryView({
 
       <Text style={styles.kicker}>BY CATEGORY</Text>
 
-      {categories.length === 0 ? (
+      {categories?.length === 0 ? (
         <Text style={styles.noData}>No category breakdown available</Text>
       ) : (
         <Panel style={styles.listPanel}>
           {categories.map((cat, i) => {
             const percentage =
-              total > 0 ? ((cat.total / total) * 100).toFixed(1) : "0.0";
+              total > 0 ? ((cat?.total / total) * 100).toFixed(1) : "0.0";
             const barWidth =
-              maxCategory > 0 ? (cat.total / maxCategory) * 100 : 0;
+              maxCategory > 0 ? (cat?.total / maxCategory) * 100 : 0;
             const color = CHART_COLORS[Math.min(i, 4)];
 
             return (
@@ -66,10 +66,10 @@ export function SpendingSummaryView({
                 <View style={styles.categoryTop}>
                   <View style={[styles.swatch, { backgroundColor: color }]} />
                   <Text style={styles.categoryName} numberOfLines={1}>
-                    {cat.category}
+                    {cat?.category}
                   </Text>
                   <Text style={styles.categoryAmount}>
-                    {formatTaka(cat.total)}
+                    {formatTaka(cat?.total)}
                   </Text>
                 </View>
 

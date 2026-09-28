@@ -33,11 +33,11 @@ export function YearlyMileageTab({ bikeId }: YearlyMileageTabProps) {
   const months = yearly?.monthlySummary ?? [];
   // The backend always returns all 12 months (zero-filled), so emptiness is
   // "no fuel logs in any month", not an empty array.
-  const hasData = months.some((m) => m.fuelLogCount > 0);
+  const hasData = months.some((m) => m?.fuelLogCount > 0);
 
   const barData = months.map((m) => ({
-    value: m.totalDistanceKm,
-    label: format(parse(m.targetMonth, "yyyy-MM", new Date()), "MMM"),
+    value: m?.totalDistanceKm,
+    label: format(parse(m?.targetMonth, "yyyy-MM", new Date()), "MMM"),
     frontColor: CHART_COLORS[0],
   }));
 
@@ -80,7 +80,7 @@ export function YearlyMileageTab({ bikeId }: YearlyMileageTabProps) {
           <Panel style={styles.listPanel}>
             {months.map((m, i) => {
               const monthLabel = format(
-                parse(m.targetMonth, "yyyy-MM", new Date()),
+                parse(m?.targetMonth, "yyyy-MM", new Date()),
                 "MMMM",
               );
               return (
@@ -88,14 +88,14 @@ export function YearlyMileageTab({ bikeId }: YearlyMileageTabProps) {
                   <View style={styles.row}>
                     <Text style={styles.month}>{monthLabel}</Text>
                     <Text style={styles.rowValue}>
-                      {m.totalDistanceKm.toLocaleString()} km
+                      {m?.totalDistanceKm?.toLocaleString()} km
                     </Text>
                     <Text style={styles.rowValue}>
-                      {m.totalLitersConsumed.toFixed(2)} L
+                      {m?.totalLitersConsumed?.toFixed(2)} L
                     </Text>
-                    <Text style={styles.rowCount}>{m.fuelLogCount}</Text>
+                    <Text style={styles.rowCount}>{m?.fuelLogCount}</Text>
                   </View>
-                  {i < months.length - 1 ? <RuleFade /> : null}
+                  {i < months?.length - 1 ? <RuleFade /> : null}
                 </View>
               );
             })}

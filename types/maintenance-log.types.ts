@@ -5,10 +5,15 @@ export type TMaintenanceLog = {
   bike: string;
   maintenanceType: { _id: string; name: string } | string;
   odometerReading: number;
-  oilType?: { _id: string; name: string; suggestedIntervalKm: number } | string;
-  intervalKmUsed?: number;
-  nextDueOdometer?: number;
-  nextDueDate?: string;
+  oilType?:
+    | { _id: string; name: string; suggestedIntervalKm: number }
+    | string
+    | null;
+  // ! nullable, not just optional — the backend returns an explicit `null` for these
+  // ! when unset. Guard with `!= null`, never `!== undefined`.
+  intervalKmUsed?: number | null;
+  nextDueOdometer?: number | null;
+  nextDueDate?: string | null;
   cost: number;
   serviceDate: string;
   serviceCenter?: string;
@@ -50,11 +55,11 @@ export type TReminder = {
   maintenanceType: string;
   lastServiceDate: string;
   lastOdometerReading: number;
-  nextDueOdometer?: number;
-  nextDueDate?: string;
+  nextDueOdometer?: number | null;
+  nextDueDate?: string | null;
   status: "overdue" | "upcoming";
-  kmRemaining?: number;
-  daysRemaining?: number;
+  kmRemaining?: number | null;
+  daysRemaining?: number | null;
 };
 
 export type TMaintenanceLogsApiResponse = {

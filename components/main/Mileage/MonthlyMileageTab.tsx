@@ -39,7 +39,7 @@ export function MonthlyMileageTab({ bikeId }: MonthlyMileageTabProps) {
         <SectionLoading count={2} />
       ) : isError ? (
         <ErrorState title="Couldn’t load mileage" onRetry={refetch} />
-      ) : monthly && monthly.fuelLogCount > 0 ? (
+      ) : monthly && monthly?.fuelLogCount > 0 ? (
         <View style={styles.grid}>
           <StatTile
             label="Distance"

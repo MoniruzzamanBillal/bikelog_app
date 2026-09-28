@@ -52,20 +52,20 @@ const TILES: TTile[] = [
  */
 function getAvgMileage(history?: TMileageHistoryResponse): string {
   const exact = history?.exactRecords ?? [];
-  if (exact.length > 0) {
+  if (exact?.length > 0) {
     const recent = [...exact]
       .sort(
         (a, b) =>
-          new Date(b.periodEndDate).getTime() -
-          new Date(a.periodEndDate).getTime(),
+          new Date(b?.periodEndDate).getTime() -
+          new Date(a?.periodEndDate).getTime(),
       )
       .slice(0, 5);
     const avg =
-      recent.reduce((sum, r) => sum + r.mileageKmPerLiter, 0) / recent.length;
+      recent.reduce((sum, r) => sum + r?.mileageKmPerLiter, 0) / recent?.length;
     return avg.toFixed(1);
   }
   if (history?.approximate) {
-    return history.approximate.mileageKmPerLiter.toFixed(1);
+    return history?.approximate?.mileageKmPerLiter?.toFixed(1);
   }
   return "—";
 }
@@ -180,7 +180,7 @@ export function BikeDetailPage() {
               <Text style={styles.kicker}>ODOMETER</Text>
               <View style={styles.odoValueRow}>
                 <Text style={styles.odoValue}>
-                  {bike.currentOdometer.toLocaleString()}
+                  {bike?.currentOdometer?.toLocaleString()}
                 </Text>
                 <Text style={styles.odoUnit}>km</Text>
               </View>
@@ -257,7 +257,7 @@ export function BikeDetailPage() {
                 color={COLORS.accent}
               />
               <Text style={styles.tileLabel} numberOfLines={1}>
-                {tile.label}
+                {tile?.label}
               </Text>
             </TouchableOpacity>
           ))}

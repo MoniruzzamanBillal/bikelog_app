@@ -21,10 +21,10 @@ export function MileageTrendTab({ bikeId }: MileageTrendTabProps) {
 
   // Earlier months sit back at 55%; the current month is the solid ramp colour.
   const barData = monthlySummary.map((m, i) => ({
-    value: m.totalDistanceKm,
-    label: format(parse(m.targetMonth, "yyyy-MM", new Date()), "MMM"),
+    value: m?.totalDistanceKm,
+    label: format(parse(m?.targetMonth, "yyyy-MM", new Date()), "MMM"),
     frontColor:
-      i === monthlySummary.length - 1
+      i === monthlySummary?.length - 1
         ? CHART_COLORS[0]
         : tint(CHART_COLORS[0], 0.55),
   }));

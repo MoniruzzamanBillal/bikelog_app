@@ -44,8 +44,8 @@ async function exportSpendingPdf(
   setIsExporting(true);
   try {
     const query = new URLSearchParams({ period });
-    if (params.targetMonth) query.set("targetMonth", params.targetMonth);
-    if (params.targetYear) query.set("targetYear", params.targetYear);
+    if (params?.targetMonth) query.set("targetMonth", params?.targetMonth);
+    if (params?.targetYear) query.set("targetYear", params?.targetYear);
 
     const response = await apiGet(
       `/bikes/${bikeId}/spending-summary/details?${query.toString()}`,
@@ -164,7 +164,7 @@ function MonthTab({ bikeId }: { bikeId: string }) {
         <SectionLoading count={3} />
       ) : isError ? (
         <ErrorState title="Couldn’t load spending" onRetry={refetch} />
-      ) : summary && summary.totalSpending > 0 ? (
+      ) : summary && summary?.totalSpending > 0 ? (
         <SpendingSummaryView
           summary={summary}
           periodLabel={periodLabel}
@@ -233,7 +233,7 @@ function YearTab({ bikeId }: { bikeId: string }) {
         <SectionLoading count={3} />
       ) : isError ? (
         <ErrorState title="Couldn’t load spending" onRetry={refetch} />
-      ) : summary && summary.totalSpending > 0 ? (
+      ) : summary && summary?.totalSpending > 0 ? (
         <SpendingSummaryView summary={summary} periodLabel={targetYear} />
       ) : (
         <EmptyState
@@ -290,7 +290,7 @@ function LifetimeTab({ bikeId }: { bikeId: string }) {
         <SectionLoading count={3} />
       ) : isError ? (
         <ErrorState title="Couldn’t load spending" onRetry={refetch} />
-      ) : summary && summary.totalSpending > 0 ? (
+      ) : summary && summary?.totalSpending > 0 ? (
         <SpendingSummaryView summary={summary} periodLabel="Lifetime" />
       ) : (
         <EmptyState
@@ -312,22 +312,22 @@ function TrendTab({ bikeId }: { bikeId: string }) {
   );
 
   const monthlySummary = data?.data?.monthlySummary ?? [];
-  const latest = monthlySummary[monthlySummary.length - 1];
+  const latest = monthlySummary[monthlySummary?.length - 1];
   const latestBreakdown = latest?.categoryBreakdown ?? [];
-  const breakdownTotal = latestBreakdown.reduce((sum, c) => sum + c.total, 0);
+  const breakdownTotal = latestBreakdown.reduce((sum, c) => sum + c?.total, 0);
 
   const barData = monthlySummary.map((m, i) => ({
-    value: m.totalSpending,
-    label: format(parse(m.targetMonth, "yyyy-MM", new Date()), "MMM"),
+    value: m?.totalSpending,
+    label: format(parse(m?.targetMonth, "yyyy-MM", new Date()), "MMM"),
     frontColor:
-      i === monthlySummary.length - 1
+      i === monthlySummary?.length - 1
         ? CHART_COLORS[0]
         : tint(CHART_COLORS[0], 0.55),
   }));
 
   const pieData = latestBreakdown.map((c, i) => ({
-    value: c.total,
-    text: c.category,
+    value: c?.total,
+    text: c?.category,
     color: CHART_COLORS[Math.min(i, 4)],
   }));
 
@@ -374,13 +374,13 @@ function TrendTab({ bikeId }: { bikeId: string }) {
         />
       </Panel>
 
-      {pieData.length > 0 ? (
+      {pieData?.length > 0 ? (
         <Panel style={styles.chartPanel}>
           <Text style={styles.chartTitle}>
             By category
             {latest
               ? ` · ${format(
-                  parse(latest.targetMonth, "yyyy-MM", new Date()),
+                  parse(latest?.targetMonth, "yyyy-MM", new Date()),
                   "MMM yyyy",
                 )}`
               : ""}
@@ -399,7 +399,7 @@ function TrendTab({ bikeId }: { bikeId: string }) {
               {latestBreakdown.map((c, i) => {
                 const percentage =
                   breakdownTotal > 0
-                    ? ((c.total / breakdownTotal) * 100).toFixed(1)
+                    ? ((c?.total / breakdownTotal) * 100).toFixed(1)
                     : "0.0";
                 return (
                   <View key={c.category} style={styles.legendItem}>
@@ -410,7 +410,7 @@ function TrendTab({ bikeId }: { bikeId: string }) {
                       ]}
                     />
                     <Text style={styles.legendLabel} numberOfLines={1}>
-                      {c.category}
+                      {c?.category}
                     </Text>
                     <Text style={styles.legendValue}>{percentage}%</Text>
                   </View>

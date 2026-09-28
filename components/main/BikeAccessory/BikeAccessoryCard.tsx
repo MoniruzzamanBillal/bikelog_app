@@ -48,7 +48,7 @@ export function BikeAccessoryCard({
       const formData = new FormData();
       formData.append("image", file as any);
       await uploadImage({
-        url: `/bikes/${bikeId}/accessories/${accessory._id}/image`,
+        url: `/bikes/${bikeId}/accessories/${accessory?._id}/image`,
         payload: formData,
       });
       Toast.show({
@@ -68,7 +68,7 @@ export function BikeAccessoryCard({
   const handleImageDelete = async () => {
     try {
       await deleteImage({
-        url: `/bikes/${bikeId}/accessories/${accessory._id}/image`,
+        url: `/bikes/${bikeId}/accessories/${accessory?._id}/image`,
       });
       Toast.show({
         type: "success",
@@ -87,7 +87,7 @@ export function BikeAccessoryCard({
   const handleDelete = () => {
     confirmDelete("accessory", async () => {
       await deleteMutation.mutateAsync({
-        url: `/bikes/${bikeId}/accessories/${accessory._id}`,
+        url: `/bikes/${bikeId}/accessories/${accessory?._id}`,
       });
     });
   };
@@ -95,13 +95,13 @@ export function BikeAccessoryCard({
   const handleMarkPurchased = async () => {
     // A price is required server-side to mark purchased — if none is set yet,
     // send the user to the form instead of firing a request that will 400.
-    if (accessory.price === undefined) {
+    if (accessory?.price == null) {
       setEditOpen(true);
       return;
     }
     try {
       await markPurchasedMutation.mutateAsync({
-        url: `/bikes/${bikeId}/accessories/${accessory._id}`,
+        url: `/bikes/${bikeId}/accessories/${accessory?._id}`,
         payload: { status: "purchased" },
       });
       Toast.show({
@@ -118,12 +118,12 @@ export function BikeAccessoryCard({
     }
   };
 
-  const urgency = URGENCY[accessory.urgency] ?? {
-    label: accessory.urgency,
+  const urgency = URGENCY[accessory?.urgency] ?? {
+    label: accessory?.urgency,
     tone: "neutral" as TStatusTone,
   };
-  const urgencyTone = toneStyle(urgency.tone);
-  const isCancelled = accessory.status === "cancelled";
+  const urgencyTone = toneStyle(urgency?.tone);
+  const isCancelled = accessory?.status === "cancelled";
 
   return (
     <>
@@ -140,7 +140,7 @@ export function BikeAccessoryCard({
         <View style={styles.content}>
           <View style={styles.titleRow}>
             <Text style={styles.name} numberOfLines={2}>
-              {accessory.name}
+              {accessory?.name}
             </Text>
             <ActionMenu
               size={16}
@@ -173,24 +173,24 @@ export function BikeAccessoryCard({
           <View style={styles.metaRow}>
             <View style={[styles.pill, { backgroundColor: urgencyTone.bg }]}>
               <Text style={[styles.pillText, { color: urgencyTone.text }]}>
-                {urgency.label}
+                {urgency?.label}
               </Text>
             </View>
             <Text
               style={
-                accessory.price !== undefined ? styles.price : styles.noPrice
+                accessory.price != null ? styles.price : styles.noPrice
               }
             >
-              {accessory.price !== undefined
-                ? formatTaka(accessory?.price ?? 0)
+              {accessory?.price != null
+                ? formatTaka(accessory?.price)
                 : "No price"}
             </Text>
           </View>
 
-          {accessory.status === "purchased" && accessory.purchaseDate ? (
+          {accessory?.status === "purchased" && accessory?.purchaseDate ? (
             <Text style={styles.purchased}>
               Purchased{" "}
-              {format(new Date(accessory.purchaseDate), "dd MMM yyyy")}
+              {format(new Date(accessory?.purchaseDate), "dd MMM yyyy")}
             </Text>
           ) : null}
         </View>

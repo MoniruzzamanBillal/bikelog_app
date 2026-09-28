@@ -36,7 +36,7 @@ async function resolveWidgetFace(): Promise<{
       return { deepLinkUri: DASHBOARD_URI };
     }
 
-    const bike = bikes.find((b) => b._id === bikeId);
+    const bike = bikes.find((b) => b?._id === bikeId);
     return {
       bikeNickname: bike?.nickname,
       deepLinkUri: `client://bikes/${bikeId}/fuel-logs/new`,
@@ -51,7 +51,7 @@ async function resolveWidgetFace(): Promise<{
 export const quickAddFuelWidgetTaskHandler: WidgetTaskHandler = async (
   props,
 ) => {
-  switch (props.widgetAction) {
+  switch (props?.widgetAction) {
     case "WIDGET_ADDED":
     case "WIDGET_UPDATE":
     case "WIDGET_RESIZED": {

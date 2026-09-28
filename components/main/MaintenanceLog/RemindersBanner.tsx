@@ -21,20 +21,20 @@ interface RemindersBannerProps {
  * ! derived from the bike's own odometer instead.
  */
 function getDistanceLine(r: TReminder, currentOdometer?: number): string {
-  const isOverdue = r.status === "overdue";
+  const isOverdue = r?.status === "overdue";
 
-  if (r.nextDueOdometer != null) {
+  if (r?.nextDueOdometer != null) {
     const km =
       isOverdue && currentOdometer != null
-        ? currentOdometer - r.nextDueOdometer
-        : (r.kmRemaining ?? 0);
+        ? currentOdometer - r?.nextDueOdometer
+        : (r?.kmRemaining ?? 0);
     return isOverdue
       ? `${Math.abs(km).toLocaleString()} km past due`
       : `${km.toLocaleString()} km left`;
   }
 
-  if (r.daysRemaining != null) {
-    const days = Math.abs(r.daysRemaining);
+  if (r?.daysRemaining != null) {
+    const days = Math.abs(r?.daysRemaining);
     return isOverdue ? `${days} days past due` : `${days} days left`;
   }
 
@@ -61,21 +61,21 @@ export function RemindersBanner({
 
   const reminders = data?.data?.reminders ?? [];
 
-  if (isLoading || reminders.length === 0) return null;
+  if (isLoading || reminders?.length === 0) return null;
 
   const currentOdometer = bikeData?.data?.currentOdometer;
 
   const getTypeName = (typeId: string) =>
-    maintenanceTypes?.find((t) => t._id === typeId)?.name ?? "Maintenance";
+    maintenanceTypes?.find((t) => t?._id === typeId)?.name ?? "Maintenance";
 
   const sorted = [...reminders].sort((a, b) =>
-    a?.status === b?.status ? 0 : a.status === "overdue" ? -1 : 1,
+    a?.status === b?.status ? 0 : a?.status === "overdue" ? -1 : 1,
   );
 
   return (
     <View style={[styles.stack, style]}>
       {sorted.map((reminder, i) => {
-        const isOverdue = reminder.status === "overdue";
+        const isOverdue = reminder?.status === "overdue";
         const tone = isOverdue ? COLORS.danger : COLORS.warning;
         const pill = toneStyle(isOverdue ? "danger" : "warning");
 
@@ -91,7 +91,7 @@ export function RemindersBanner({
             />
             <View style={styles.textCol}>
               <Text style={styles.name} numberOfLines={1}>
-                {getTypeName(reminder.maintenanceType)}
+                {getTypeName(reminder?.maintenanceType)}
               </Text>
               <Text style={styles.line} numberOfLines={1}>
                 {getDistanceLine(reminder, currentOdometer)}

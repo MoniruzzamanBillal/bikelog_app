@@ -37,14 +37,14 @@ export default function RootLayout() {
   useEffect(() => {
     const subscription = Notifications.addNotificationResponseReceivedListener(
       (response) => {
-        const data = response.notification.request.content.data as
+        const data = response?.notification?.request?.content?.data as
           | { bikeId?: string; type?: string }
           | undefined;
 
-        if (data?.type === "weekly-summary" && data.bikeId) {
+        if (data?.type === "weekly-summary" && data?.bikeId) {
           router.push({
             pathname: "/bikes/[bikeId]",
-            params: { bikeId: data.bikeId },
+            params: { bikeId: data?.bikeId },
           });
         }
       },

@@ -50,7 +50,7 @@ const UserProvider = ({ children }: { children: ReactNode }) => {
   // ! registers this device's Expo push token once per app session, once a real session
   // ! exists — covers both the post-login case and an already-stored session on cold launch
   useEffect(() => {
-    if (user && token && !hasRegisteredPushToken.current) {
+    if (user && token && !hasRegisteredPushToken?.current) {
       hasRegisteredPushToken.current = true;
       registerPushToken();
     }

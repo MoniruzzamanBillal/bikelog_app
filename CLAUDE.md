@@ -69,11 +69,12 @@ No automated test suite (no `test` script). Verification is manual: run on-devic
 2. Every bike-scoped screen takes `bikeId` from the route param (`useLocalSearchParams`), never component state.
 3. Never send server-derived fields in a mutation payload (`totalCost` on fuel logs, `nextDueOdometer` on maintenance logs, `owner`/`currentOdometer` on bike edit, `status` on bike-issue generic edit). See `../bikelog_server/postman/dummy-data.md`'s "Fields you will never see accepted" table for the authoritative list. Prefer encoding this at the type level (e.g. `TUpdateBikePayload = Partial<Omit<TCreateBikePayload, "currentOdometer">>`) over just remembering not to include a field.
 4. Reuse `components/main/shared/*` before writing a one-off.
-5. No react-hook-form — plain `useState` per field.
-6. No global client-state library, no charting library.
-7. No tab/bike screen renders without a valid session — enforced by `AuthGuard`, wired separately into `(tabs)/_layout.tsx` and `bikes/_layout.tsx` (see Architecture above).
-8. The axios error interceptor must reject on failure, not resolve with the error object.
-9. Bike issue status changes only through the dedicated `PATCH .../issues/:id/status` endpoint, never through the generic edit form (the backend silently strips `status` from generic PATCH bodies anyway, but don't rely on that — build the UI so it's never attempted).
+5. **Optional-chain every property read on data and local derived objects** (`data?.price`, `mileageTone?.bg`) — a standing user instruction, swept across the app 2026-09-28. Not on styles, imported bindings/constants, `insets`/`theme`, method calls on a bare identifier, fluent chains, or an assignment's left-hand side. Full rule + rationale in `ai context/code-standards.md`. `?.` is runtime defence only: under `strict: true` it does not widen a non-nullable type, so a genuinely nullable backend field still needs `| null` in `types/*.ts` and a `!= null` guard.
+6. No react-hook-form — plain `useState` per field.
+7. No global client-state library, no charting library.
+8. No tab/bike screen renders without a valid session — enforced by `AuthGuard`, wired separately into `(tabs)/_layout.tsx` and `bikes/_layout.tsx` (see Architecture above).
+9. The axios error interceptor must reject on failure, not resolve with the error object.
+10. Bike issue status changes only through the dedicated `PATCH .../issues/:id/status` endpoint, never through the generic edit form (the backend silently strips `status` from generic PATCH bodies anyway, but don't rely on that — build the UI so it's never attempted).
 
 ## Cross-project rules
 

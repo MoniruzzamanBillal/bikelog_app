@@ -32,7 +32,7 @@ export function SelectPickerField({
   // ! call — the options never (re)appear. Bumping this key remounts Menu on every close,
   // ! giving it fresh internal state so the next open always runs `show()` properly.
   const [menuKey, setMenuKey] = useState(0);
-  const selectedLabel = options.find((opt) => opt.value === value)?.label;
+  const selectedLabel = options.find((opt) => opt?.value === value)?.label;
 
   const closeMenu = () => {
     setMenuVisible(false);

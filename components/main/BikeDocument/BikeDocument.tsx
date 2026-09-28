@@ -31,11 +31,11 @@ const LIMIT = 10;
 
 /** Soonest expiry first, documents with no expiry last — client-side, like the web. */
 function byExpiry(a: IBikeDocument, b: IBikeDocument): number {
-  if (!a.expiryDate && !b.expiryDate) return 0;
-  if (!a.expiryDate) return 1;
-  if (!b.expiryDate) return -1;
+  if (!a?.expiryDate && !b?.expiryDate) return 0;
+  if (!a?.expiryDate) return 1;
+  if (!b?.expiryDate) return -1;
   return (
-    parseApiDate(a.expiryDate).getTime() - parseApiDate(b.expiryDate).getTime()
+    parseApiDate(a?.expiryDate).getTime() - parseApiDate(b?.expiryDate).getTime()
   );
 }
 
@@ -63,7 +63,7 @@ export function BikeDocument() {
   const totalCount = data?.data?.meta ?? 0;
   const totalPages = Math.ceil(totalCount / LIMIT) || 1;
   const firstOnPage = (page - 1) * LIMIT + 1;
-  const lastOnPage = (page - 1) * LIMIT + documents.length;
+  const lastOnPage = (page - 1) * LIMIT + documents?.length;
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -109,7 +109,7 @@ export function BikeDocument() {
           <SectionLoading count={4} />
         ) : isError ? (
           <ErrorState title="Couldn’t load documents" onRetry={refetch} />
-        ) : documents.length === 0 ? (
+        ) : documents?.length === 0 ? (
           <EmptyState
             icon="file-document-outline"
             title="No documents yet"

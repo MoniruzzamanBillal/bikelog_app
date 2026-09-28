@@ -51,19 +51,19 @@ export function FuelLogFormModal({
     ["lifetime"],
   ]);
 
-  const isPending = createMutation.isPending || updateMutation.isPending;
+  const isPending = createMutation?.isPending || updateMutation?.isPending;
 
   useEffect(() => {
     if (!open) return;
 
     if (initialFuelLog) {
-      setOdometer(initialFuelLog.odometerReading.toString());
-      setLiters(initialFuelLog.litersAdded.toString());
-      setIsFullTank(initialFuelLog.isFullTank || false);
-      setPricePerLiter(initialFuelLog.pricePerLiter.toString());
-      setStation(initialFuelLog.fuelStation || "");
-      setDate(initialFuelLog.date.split("T")[0]);
-      setNotes(initialFuelLog.notes || "");
+      setOdometer(initialFuelLog?.odometerReading?.toString());
+      setLiters(initialFuelLog?.litersAdded?.toString());
+      setIsFullTank(initialFuelLog?.isFullTank || false);
+      setPricePerLiter(initialFuelLog?.pricePerLiter?.toString());
+      setStation(initialFuelLog?.fuelStation || "");
+      setDate(initialFuelLog?.date?.split("T")[0]);
+      setNotes(initialFuelLog?.notes || "");
     } else {
       setOdometer("");
       setLiters("");
@@ -130,7 +130,7 @@ export function FuelLogFormModal({
     try {
       if (initialFuelLog) {
         await updateMutation.mutateAsync({
-          url: `/bikes/${bikeId}/fuel-logs/${initialFuelLog._id}`,
+          url: `/bikes/${bikeId}/fuel-logs/${initialFuelLog?._id}`,
           payload,
         });
         Toast.show({
@@ -152,7 +152,7 @@ export function FuelLogFormModal({
         if (result?.data?.mileageRecordClosed) {
           Toast.show({
             type: "success",
-            text1: `Mileage: ${result.data.mileageRecordClosed.mileageKmPerLiter.toFixed(2)} km/l for this tank`,
+            text1: `Mileage: ${result?.data?.mileageRecordClosed?.mileageKmPerLiter?.toFixed(2)} km/l for this tank`,
             position: "top",
           });
         }
