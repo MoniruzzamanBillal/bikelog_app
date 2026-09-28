@@ -13,13 +13,13 @@ instance.defaults.headers.post["Content-Type"] = "application/json";
 instance.defaults.timeout = 60000;
 
 // Request interceptor
-instance.interceptors.request.use(
+instance?.interceptors?.request?.use(
   async function (config) {
     // <========
     // If the request is a POST request and the data is not FormData,
     // set Content-Type to application/json
     // ========>
-    if (!(config.data instanceof FormData)) {
+    if (!(config?.data instanceof FormData)) {
       config.headers["Content-Type"] = "application/json";
     } else {
       // Let the browser set the correct multipart boundary
@@ -40,7 +40,7 @@ instance.interceptors.request.use(
   },
 );
 
-instance.interceptors.response.use(
+instance?.interceptors?.response?.use(
   // ✅ Handle success
   //@ts-expect-error: response type is not always consistent
   function (response) {
@@ -75,7 +75,7 @@ instance.interceptors.response.use(
 
     Toast.show({
       type: "error",
-      text1: errorObj.message,
+      text1: errorObj?.message,
       position: "top",
     });
 

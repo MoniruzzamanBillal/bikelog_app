@@ -71,10 +71,10 @@ export function LoginForm() {
       })) as TLoginResponse;
 
       if (result?.token) {
-        const decoded = jwtDecode<TUserToken>(result.token);
+        const decoded = jwtDecode<TUserToken>(result?.token);
 
-        handleSetToken(result.token);
-        handleSetUser({ _id: decoded.userId, email: decoded.userEmail });
+        handleSetToken(result?.token);
+        handleSetUser({ _id: decoded?.userId, email: decoded?.userEmail });
 
         Toast.show({
           type: "success",

@@ -38,7 +38,7 @@ export function BikeIssueCard({ issue, bikeId }: BikeIssueCardProps) {
       const formData = new FormData();
       files.forEach((file) => formData.append("images", file as any));
       await addImages({
-        url: `/bikes/${bikeId}/issues/${issue._id}/images`,
+        url: `/bikes/${bikeId}/issues/${issue?._id}/images`,
         payload: formData,
       });
       Toast.show({ type: "success", text1: "Images added", position: "top" });
@@ -54,7 +54,7 @@ export function BikeIssueCard({ issue, bikeId }: BikeIssueCardProps) {
   const handleRemoveImage = async (imageId: string) => {
     try {
       await removeImage({
-        url: `/bikes/${bikeId}/issues/${issue._id}/images/${imageId}`,
+        url: `/bikes/${bikeId}/issues/${issue?._id}/images/${imageId}`,
       });
       Toast.show({ type: "success", text1: "Image deleted", position: "top" });
     } catch (error: any) {
@@ -69,17 +69,17 @@ export function BikeIssueCard({ issue, bikeId }: BikeIssueCardProps) {
   const handleDelete = () => {
     confirmDelete("issue", async () => {
       await deleteMutation.mutateAsync({
-        url: `/bikes/${bikeId}/issues/${issue._id}`,
+        url: `/bikes/${bikeId}/issues/${issue?._id}`,
       });
     });
   };
 
   // ! status changes only ever go through the dedicated /status route
   const handleToggleStatus = async () => {
-    const newStatus = issue.status === "open" ? "resolved" : "open";
+    const newStatus = issue?.status === "open" ? "resolved" : "open";
     try {
       await toggleStatusMutation.mutateAsync({
-        url: `/bikes/${bikeId}/issues/${issue._id}/status`,
+        url: `/bikes/${bikeId}/issues/${issue?._id}/status`,
         payload: { status: newStatus },
       });
       Toast.show({
@@ -96,7 +96,7 @@ export function BikeIssueCard({ issue, bikeId }: BikeIssueCardProps) {
     }
   };
 
-  const isOpen = issue.status === "open";
+  const isOpen = issue?.status === "open";
   const statusTone = toneStyle(isOpen ? "warning" : "success");
 
   return (
@@ -106,7 +106,7 @@ export function BikeIssueCard({ issue, bikeId }: BikeIssueCardProps) {
           <View style={styles.titleCol}>
             <View style={styles.titleLine}>
               <Text style={styles.title} numberOfLines={2}>
-                {issue.title}
+                {issue?.title}
               </Text>
               <View style={[styles.pill, { backgroundColor: statusTone.bg }]}>
                 <Text style={[styles.pillText, { color: statusTone.text }]}>
@@ -115,7 +115,7 @@ export function BikeIssueCard({ issue, bikeId }: BikeIssueCardProps) {
               </View>
             </View>
             <Text style={styles.date}>
-              Reported {formatApiDate(issue.dateReported, "dd MMM yyyy")}
+              Reported {formatApiDate(issue?.dateReported, "dd MMM yyyy")}
             </Text>
           </View>
 
@@ -156,8 +156,8 @@ export function BikeIssueCard({ issue, bikeId }: BikeIssueCardProps) {
           </View>
         </View>
 
-        {issue.description ? (
-          <Text style={styles.description}>{issue.description}</Text>
+        {issue?.description ? (
+          <Text style={styles.description}>{issue?.description}</Text>
         ) : null}
 
         <MultiImagePickerField

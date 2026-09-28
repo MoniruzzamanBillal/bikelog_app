@@ -28,18 +28,18 @@ export function BikeFormModal({ open, onClose, initialBike }: BikeFormModalProps
   const createMutation = usePost([["bikes"]]);
   const updateMutation = usePatch([["bikes"], ["bikes", initialBike?._id ?? ""]]);
 
-  const isPending = createMutation.isPending || updateMutation.isPending;
+  const isPending = createMutation?.isPending || updateMutation?.isPending;
 
   useEffect(() => {
     if (!open) return;
 
     if (initialBike) {
-      setNickname(initialBike.nickname);
-      setBrand(initialBike.brand);
-      setModel(initialBike.model);
-      setRegistrationNumber(initialBike.registrationNumber);
-      setPurchaseDate(initialBike.purchaseDate.split("T")[0]);
-      setFuelTankCapacityLiters(initialBike.fuelTankCapacityLiters.toString());
+      setNickname(initialBike?.nickname);
+      setBrand(initialBike?.brand);
+      setModel(initialBike?.model);
+      setRegistrationNumber(initialBike?.registrationNumber);
+      setPurchaseDate(initialBike?.purchaseDate?.split("T")[0]);
+      setFuelTankCapacityLiters(initialBike?.fuelTankCapacityLiters?.toString());
       setCurrentOdometer("");
     } else {
       setNickname("");
@@ -92,7 +92,7 @@ export function BikeFormModal({ open, onClose, initialBike }: BikeFormModalProps
           fuelTankCapacityLiters: parseFloat(fuelTankCapacityLiters),
         };
         await updateMutation.mutateAsync({
-          url: `/bikes/${initialBike._id}`,
+          url: `/bikes/${initialBike?._id}`,
           payload,
         });
         Toast.show({ type: "success", text1: "Bike updated successfully", position: "top" });

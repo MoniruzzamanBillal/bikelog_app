@@ -56,7 +56,7 @@ export function BikeDocumentCard({ document, bikeId }: BikeDocumentCardProps) {
   ]);
 
   const expiryPill = getExpiryPill(document.expiryDate);
-  const pillStyle = expiryPill ? toneStyle(expiryPill.tone) : null;
+  const pillStyle = expiryPill ? toneStyle(expiryPill?.tone) : null;
 
   const handleAddFiles = async (pickedFiles: TPickedFile[]) => {
     try {
@@ -111,7 +111,7 @@ export function BikeDocumentCard({ document, bikeId }: BikeDocumentCardProps) {
               {expiryPill && pillStyle ? (
                 <View style={[styles.pill, { backgroundColor: pillStyle.bg }]}>
                   <Text style={[styles.pillText, { color: pillStyle.text }]}>
-                    {expiryPill.label}
+                    {expiryPill?.label}
                   </Text>
                 </View>
               ) : null}

@@ -37,7 +37,7 @@ export function RegisterForm() {
       });
       return;
     }
-    if (password.length < 6) {
+    if (password?.length < 6) {
       Toast.show({
         type: "error",
         text1: "Password must be at least 6 characters",

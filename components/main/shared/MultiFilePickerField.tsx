@@ -22,9 +22,9 @@ const MAX_FILES_PER_REQUEST = 10;
 
 function imageAssetToFile(asset: ImagePicker.ImagePickerAsset): TPickedFile {
   return {
-    uri: asset.uri,
-    name: asset.fileName ?? "photo.jpg",
-    type: asset.mimeType ?? "image/jpeg",
+    uri: asset?.uri,
+    name: asset?.fileName ?? "photo.jpg",
+    type: asset?.mimeType ?? "image/jpeg",
   };
 }
 
@@ -34,10 +34,10 @@ export function MultiFilePickerField({
   onRemove,
   uploading,
 }: MultiFilePickerFieldProps) {
-  const remaining = Math.max(MAX_FILES_PER_REQUEST - files.length, 0);
+  const remaining = Math.max(MAX_FILES_PER_REQUEST - files?.length, 0);
   const [viewerIndex, setViewerIndex] = useState<number | null>(null);
 
-  const imageFiles = files.filter((f) => f.resourceType === "image");
+  const imageFiles = files.filter((f) => f?.resourceType === "image");
 
   const notifyIfCapped = (pickedCount: number, allowed: number) => {
     if (pickedCount > allowed) {
@@ -51,7 +51,7 @@ export function MultiFilePickerField({
 
   const takePhoto = async () => {
     const permission = await ImagePicker.requestCameraPermissionsAsync();
-    if (!permission.granted) {
+    if (!permission?.granted) {
       Toast.show({
         type: "error",
         text1: "Camera permission denied",
@@ -64,14 +64,14 @@ export function MultiFilePickerField({
       quality: 0.7,
       allowsEditing: false,
     });
-    if (!result.canceled && result.assets[0]) {
-      onAdd([imageAssetToFile(result.assets[0])]);
+    if (!result?.canceled && result?.assets[0]) {
+      onAdd([imageAssetToFile(result?.assets[0])]);
     }
   };
 
   const pickImages = async () => {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permission.granted) {
+    if (!permission?.granted) {
       Toast.show({
         type: "error",
         text1: "Photo library permission denied",
@@ -86,9 +86,9 @@ export function MultiFilePickerField({
       allowsMultipleSelection: true,
       selectionLimit: Math.max(1, remaining),
     });
-    if (!result.canceled && result.assets.length > 0) {
-      notifyIfCapped(result.assets.length, remaining);
-      onAdd(result.assets.slice(0, remaining).map(imageAssetToFile));
+    if (!result?.canceled && result?.assets?.length > 0) {
+      notifyIfCapped(result?.assets?.length, remaining);
+      onAdd(result?.assets?.slice(0, remaining).map(imageAssetToFile));
     }
   };
 
@@ -98,14 +98,14 @@ export function MultiFilePickerField({
       multiple: true,
       copyToCacheDirectory: true,
     });
-    if (!result.canceled && result.assets.length > 0) {
-      notifyIfCapped(result.assets.length, remaining);
-      const picked: TPickedFile[] = result.assets
-        .slice(0, remaining)
+    if (!result?.canceled && result?.assets?.length > 0) {
+      notifyIfCapped(result?.assets?.length, remaining);
+      const picked: TPickedFile[] = result?.assets
+        ?.slice(0, remaining)
         .map((asset) => ({
-          uri: asset.uri,
-          name: asset.name,
-          type: asset.mimeType ?? "application/pdf",
+          uri: asset?.uri,
+          name: asset?.name,
+          type: asset?.mimeType ?? "application/pdf",
         }));
       onAdd(picked);
     }
@@ -133,13 +133,13 @@ export function MultiFilePickerField({
   };
 
   const handleOpenRaw = (file: TDocumentFile) => {
-    Linking.openURL(file.url);
+    Linking.openURL(file?.url);
   };
 
   return (
     <View style={styles.row}>
       {files.map((file) => {
-        const isImage = file.resourceType === "image";
+        const isImage = file?.resourceType === "image";
         return (
           <View key={file._id} style={styles.chip}>
             <TouchableOpacity
@@ -159,7 +159,7 @@ export function MultiFilePickerField({
                 color={COLORS.accent}
               />
               <Text style={styles.chipLabel} numberOfLines={1}>
-                {file.originalName}
+                {file?.originalName}
               </Text>
             </TouchableOpacity>
 

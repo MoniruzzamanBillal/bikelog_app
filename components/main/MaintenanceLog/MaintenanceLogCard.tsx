@@ -29,23 +29,23 @@ function getTypeName(
   log: TMaintenanceLog,
   maintenanceTypes: TMaintenanceType[],
 ): string {
-  if (typeof log.maintenanceType === "object" && log.maintenanceType?.name) {
-    return log.maintenanceType.name;
+  if (typeof log?.maintenanceType === "object" && log?.maintenanceType?.name) {
+    return log?.maintenanceType?.name;
   }
   const typeId =
-    typeof log.maintenanceType === "string" ? log.maintenanceType : undefined;
-  return maintenanceTypes.find((t) => t._id === typeId)?.name ?? "Maintenance";
+    typeof log?.maintenanceType === "string" ? log?.maintenanceType : undefined;
+  return maintenanceTypes.find((t) => t?._id === typeId)?.name ?? "Maintenance";
 }
 
 function getOilTypeName(
   log: TMaintenanceLog,
   oilTypes: TEngineOilType[],
 ): string | undefined {
-  if (typeof log.oilType === "object" && log.oilType?.name) {
-    return log.oilType.name;
+  if (typeof log?.oilType === "object" && log?.oilType?.name) {
+    return log?.oilType?.name;
   }
-  const oilId = typeof log.oilType === "string" ? log.oilType : undefined;
-  return oilId ? oilTypes.find((o) => o._id === oilId)?.name : undefined;
+  const oilId = typeof log?.oilType === "string" ? log?.oilType : undefined;
+  return oilId ? oilTypes.find((o) => o?._id === oilId)?.name : undefined;
 }
 
 export function MaintenanceLogCard({
@@ -72,7 +72,7 @@ export function MaintenanceLogCard({
       const formData = new FormData();
       formData.append("image", file as any);
       await uploadImage({
-        url: `/bikes/${bikeId}/maintenance-logs/${log._id}/image`,
+        url: `/bikes/${bikeId}/maintenance-logs/${log?._id}/image`,
         payload: formData,
       });
       Toast.show({
@@ -92,7 +92,7 @@ export function MaintenanceLogCard({
   const handleImageDelete = async () => {
     try {
       await deleteImage({
-        url: `/bikes/${bikeId}/maintenance-logs/${log._id}/image`,
+        url: `/bikes/${bikeId}/maintenance-logs/${log?._id}/image`,
       });
       Toast.show({
         type: "success",
@@ -111,21 +111,24 @@ export function MaintenanceLogCard({
   const handleDelete = () => {
     confirmDelete("maintenance log", async () => {
       await deleteMutation.mutateAsync({
-        url: `/bikes/${bikeId}/maintenance-logs/${log._id}`,
+        url: `/bikes/${bikeId}/maintenance-logs/${log?._id}`,
       });
     });
   };
 
   const oilTypeName = getOilTypeName(log, oilTypes);
-  const parts = log.partsReplaced?.filter(Boolean) ?? [];
+  const parts = log?.partsReplaced?.filter(Boolean) ?? [];
   const oilTone = toneStyle("accent");
   const neutralTone = toneStyle("neutral");
 
+  // ! `!= null`, not `!== undefined`: the backend sends an explicit `null` for an
+  // ! unset optional number rather than omitting the key, so an `undefined`-only
+  // ! guard lets `null` through and throws on `.toLocaleString()`.
   const nextDue =
-    log.nextDueOdometer !== undefined
-      ? `${log.nextDueOdometer.toLocaleString()} km`
-      : log.nextDueDate
-        ? formatApiDate(log.nextDueDate, "dd MMM yyyy")
+    log?.nextDueOdometer != null
+      ? `${log?.nextDueOdometer?.toLocaleString()} km`
+      : log?.nextDueDate
+        ? formatApiDate(log?.nextDueDate, "dd MMM yyyy")
         : "—";
 
   return (
@@ -155,8 +158,8 @@ export function MaintenanceLogCard({
               ) : null}
             </View>
             <Text style={styles.meta}>
-              {formatApiDate(log.serviceDate, "dd MMM yyyy")} ·{" "}
-              {log.odometerReading?.toLocaleString()} km
+              {formatApiDate(log?.serviceDate, "dd MMM yyyy")} ·{" "}
+              {log?.odometerReading?.toLocaleString()} km
             </Text>
           </View>
 
@@ -189,13 +192,13 @@ export function MaintenanceLogCard({
         <View style={styles.grid}>
           <View style={styles.gridCell}>
             <Text style={styles.gridLabel}>Cost</Text>
-            <Text style={styles.gridValue}>{formatTaka(log.cost ?? 0)}</Text>
+            <Text style={styles.gridValue}>{formatTaka(log?.cost ?? 0)}</Text>
           </View>
           <View style={styles.gridCell}>
             <Text style={styles.gridLabel}>Interval</Text>
             <Text style={styles.gridValue}>
-              {log.intervalKmUsed !== undefined
-                ? `${log.intervalKmUsed.toLocaleString()} km`
+              {log?.intervalKmUsed != null
+                ? `${log?.intervalKmUsed?.toLocaleString()} km`
                 : "—"}
             </Text>
           </View>
@@ -205,12 +208,12 @@ export function MaintenanceLogCard({
           </View>
         </View>
 
-        {(log.serviceCenter || parts.length > 0) && (
+        {(log?.serviceCenter || parts?.length > 0) && (
           <View style={styles.tagRow}>
-            {log.serviceCenter ? (
+            {log?.serviceCenter ? (
               <View style={[styles.tag, { backgroundColor: neutralTone.bg }]}>
                 <Text style={[styles.tagText, { color: neutralTone.text }]}>
-                  {log.serviceCenter}
+                  {log?.serviceCenter}
                 </Text>
               </View>
             ) : null}
@@ -227,7 +230,7 @@ export function MaintenanceLogCard({
           </View>
         )}
 
-        {log.notes ? <Text style={styles.notes}>{log.notes}</Text> : null}
+        {log?.notes ? <Text style={styles.notes}>{log?.notes}</Text> : null}
       </Panel>
 
       <MaintenanceLogFormModal

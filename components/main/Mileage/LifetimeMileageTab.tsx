@@ -29,7 +29,7 @@ export function LifetimeMileageTab({ bikeId }: LifetimeMileageTabProps) {
     return <ErrorState title="Couldn’t load mileage" onRetry={refetch} />;
   }
 
-  if (!lifetime || lifetime.fuelLogCount === 0) {
+  if (!lifetime || lifetime?.fuelLogCount === 0) {
     return (
       <EmptyState
         icon="speedometer-medium"
@@ -40,8 +40,8 @@ export function LifetimeMileageTab({ bikeId }: LifetimeMileageTabProps) {
   }
 
   const avg =
-    lifetime.totalLitersConsumed > 0
-      ? (lifetime.totalDistanceKm / lifetime.totalLitersConsumed).toFixed(2)
+    lifetime?.totalLitersConsumed > 0
+      ? (lifetime?.totalDistanceKm / lifetime?.totalLitersConsumed).toFixed(2)
       : "—";
 
   return (

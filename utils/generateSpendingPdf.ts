@@ -6,8 +6,8 @@ import * as Print from "expo-print";
 import * as Sharing from "expo-sharing";
 
 function buildFilename(details: TSpendingDetails): string {
-  if (details.period === "month") return `spending-month-${details.targetMonth}.pdf`;
-  if (details.period === "year") return `spending-year-${details.targetYear}.pdf`;
+  if (details?.period === "month") return `spending-month-${details?.targetMonth}.pdf`;
+  if (details?.period === "year") return `spending-year-${details?.targetYear}.pdf`;
   return "spending-lifetime.pdf";
 }
 
@@ -21,30 +21,30 @@ function escapeHtml(value: string): string {
 function recordRow(record: TSpendingRecord): string {
   return `
     <tr>
-      <td>${formatApiDate(record.date, "d MMM yyyy")}</td>
-      <td>${escapeHtml(record.category)}</td>
-      <td>${escapeHtml(record.description)}</td>
-      <td>৳${record.amount.toFixed(2)}</td>
-      <td>${record.vendor ? escapeHtml(record.vendor) : "-"}</td>
-      <td>${record.remarks ? escapeHtml(record.remarks) : "-"}</td>
+      <td>${formatApiDate(record?.date, "d MMM yyyy")}</td>
+      <td>${escapeHtml(record?.category)}</td>
+      <td>${escapeHtml(record?.description)}</td>
+      <td>৳${record?.amount?.toFixed(2)}</td>
+      <td>${record?.vendor ? escapeHtml(record?.vendor) : "-"}</td>
+      <td>${record?.remarks ? escapeHtml(record?.remarks) : "-"}</td>
     </tr>`;
 }
 
 function buildHtml(details: TSpendingDetails, periodLabel: string): string {
   const generatedAt = format(new Date(), "d MMM yyyy, h:mm a");
 
-  const categoryRows = details.categoryBreakdown
-    .map(
+  const categoryRows = details?.categoryBreakdown
+    ?.map(
       (cat) => `
     <tr>
-      <td>${escapeHtml(cat.category)}</td>
-      <td>৳${cat.total.toFixed(2)}</td>
+      <td>${escapeHtml(cat?.category)}</td>
+      <td>৳${cat?.total?.toFixed(2)}</td>
     </tr>`,
     )
     .join("");
 
   const lineItemsSection =
-    details.records.length > 0
+    details?.records?.length > 0
       ? `
     <table>
       <thead>
@@ -58,7 +58,7 @@ function buildHtml(details: TSpendingDetails, periodLabel: string): string {
         </tr>
       </thead>
       <tbody>
-        ${details.records.map(recordRow).join("")}
+        ${details?.records?.map(recordRow).join("")}
       </tbody>
     </table>`
       : `<p class="empty">No spending records for this period.</p>`;
@@ -84,7 +84,7 @@ function buildHtml(details: TSpendingDetails, periodLabel: string): string {
     <p class="subtitle">${escapeHtml(periodLabel)}</p>
     <p class="subtitle">Generated ${generatedAt}</p>
 
-    <p class="total">Total Spending: ৳${details.totalSpending.toFixed(2)}</p>
+    <p class="total">Total Spending: ৳${details?.totalSpending?.toFixed(2)}</p>
 
     <table>
       <thead>
@@ -109,7 +109,7 @@ export async function generateSpendingPdf(
 
   const generatedFile = new File(uri);
   const destination = new File(Paths.cache, buildFilename(details));
-  if (destination.exists) destination.delete();
+  if (destination?.exists) destination.delete();
   generatedFile.copy(destination);
 
   const canShare = await Sharing.isAvailableAsync();
@@ -117,7 +117,7 @@ export async function generateSpendingPdf(
     throw new Error("Sharing isn't available on this device.");
   }
 
-  await Sharing.shareAsync(destination.uri, {
+  await Sharing.shareAsync(destination?.uri, {
     mimeType: "application/pdf",
     dialogTitle: "Export Spending Report",
     UTI: "com.adobe.pdf",

@@ -85,9 +85,9 @@ export function BikeAccessory() {
   const totalCount = data?.data?.meta ?? 0;
   const totalPages = Math.ceil(totalCount / LIMIT) || 1;
   const firstOnPage = (page - 1) * LIMIT + 1;
-  const lastOnPage = (page - 1) * LIMIT + accessories.length;
+  const lastOnPage = (page - 1) * LIMIT + accessories?.length;
   const statusLabel =
-    STATUSES.find((s) => s.value === statusFilter)?.label ?? "";
+    STATUSES.find((s) => s?.value === statusFilter)?.label ?? "";
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -166,7 +166,7 @@ export function BikeAccessory() {
           <SectionLoading count={4} />
         ) : isError ? (
           <ErrorState title="Couldn’t load accessories" onRetry={refetch} />
-        ) : accessories.length === 0 ? (
+        ) : accessories?.length === 0 ? (
           <EmptyState
             icon="shopping-outline"
             title="Wishlist is empty"

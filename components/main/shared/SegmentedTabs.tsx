@@ -27,7 +27,7 @@ export function SegmentedTabs<T extends string>({
   fill = false,
 }: SegmentedTabsProps<T>) {
   const segments = options.map((opt, i) => {
-    const active = opt.value === value;
+    const active = opt?.value === value;
     return (
       <TouchableOpacity
         key={opt.value}
@@ -46,7 +46,7 @@ export function SegmentedTabs<T extends string>({
           adjustsFontSizeToFit={fill}
           minimumFontScale={0.8}
         >
-          {opt.label}
+          {opt?.label}
         </Text>
       </TouchableOpacity>
     );

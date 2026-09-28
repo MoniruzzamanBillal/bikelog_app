@@ -22,9 +22,9 @@ export function EfficiencyAlertBanner({
   );
 
   const alert = data?.data?.efficiencyAlert;
-  if (isLoading || !alert || !alert.isAnomaly) return null;
+  if (isLoading || !alert || !alert?.isAnomaly) return null;
 
-  const dropPct = Math.abs(alert.percentChange * 100).toFixed(0);
+  const dropPct = Math.abs(alert?.percentChange * 100).toFixed(0);
 
   return (
     <Panel style={[styles.banner, style]}>
@@ -36,9 +36,9 @@ export function EfficiencyAlertBanner({
       <View style={styles.textCol}>
         <Text style={styles.title}>Efficiency drop detected</Text>
         <Text style={styles.detail}>
-          {alert.latestKmPerLiter.toFixed(1)} km/l, {dropPct}% below your{" "}
-          {alert.periodsUsed}-period average (
-          {alert.rollingAverageKmPerLiter.toFixed(1)} km/l)
+          {alert?.latestKmPerLiter?.toFixed(1)} km/l, {dropPct}% below your{" "}
+          {alert?.periodsUsed}-period average (
+          {alert?.rollingAverageKmPerLiter?.toFixed(1)} km/l)
         </Text>
       </View>
     </Panel>

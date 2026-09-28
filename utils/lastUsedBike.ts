@@ -27,8 +27,8 @@ export async function getLastUsedBike(): Promise<string | null> {
 export async function resolveBikeId(
   bikes: { _id: string }[],
 ): Promise<string | null> {
-  if (bikes.length === 1) return bikes[0]._id;
+  if (bikes?.length === 1) return bikes[0]?._id;
   const stored = await getLastUsedBike();
-  if (stored && bikes.some((b) => b._id === stored)) return stored;
+  if (stored && bikes.some((b) => b?._id === stored)) return stored;
   return null;
 }

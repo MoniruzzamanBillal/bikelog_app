@@ -32,15 +32,15 @@ export function BikeIssueFormModal({
   const createMutation = usePost([["issues", bikeId]]);
   const updateMutation = usePatch([["issues", bikeId]]);
 
-  const isPending = createMutation.isPending || updateMutation.isPending;
+  const isPending = createMutation?.isPending || updateMutation?.isPending;
 
   useEffect(() => {
     if (!open) return;
 
     if (initialIssue) {
-      setTitle(initialIssue.title || "");
-      setDescription(initialIssue.description || "");
-      setDateReported(initialIssue.dateReported.split("T")[0]);
+      setTitle(initialIssue?.title || "");
+      setDescription(initialIssue?.description || "");
+      setDateReported(initialIssue?.dateReported?.split("T")[0]);
     } else {
       setTitle("");
       setDescription("");
@@ -67,7 +67,7 @@ export function BikeIssueFormModal({
     try {
       if (initialIssue) {
         await updateMutation.mutateAsync({
-          url: `/bikes/${bikeId}/issues/${initialIssue._id}`,
+          url: `/bikes/${bikeId}/issues/${initialIssue?._id}`,
           payload,
         });
         Toast.show({ type: "success", text1: "Issue updated", position: "top" });

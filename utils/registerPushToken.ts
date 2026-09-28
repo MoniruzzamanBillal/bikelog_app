@@ -24,11 +24,11 @@ export const registerPushToken = async (): Promise<void> => {
   }
 
   const existingPermission = await Notifications.getPermissionsAsync();
-  let finalStatus = existingPermission.status;
+  let finalStatus = existingPermission?.status;
 
   if (finalStatus !== "granted") {
     const requested = await Notifications.requestPermissionsAsync();
-    finalStatus = requested.status;
+    finalStatus = requested?.status;
   }
 
   if (finalStatus !== "granted") {
@@ -46,8 +46,8 @@ export const registerPushToken = async (): Promise<void> => {
 
   try {
     const tokenResponse = await Notifications.getExpoPushTokenAsync({ projectId });
-    console.log("[push] obtained token:", tokenResponse.data);
-    await apiPost("/auth/push-token", { expoPushToken: tokenResponse.data });
+    console.log("[push] obtained token:", tokenResponse?.data);
+    await apiPost("/auth/push-token", { expoPushToken: tokenResponse?.data });
   } catch (error) {
     console.log("Failed to register push token", error);
   }

@@ -35,7 +35,7 @@ export function MileageHistoryTab({ bikeId }: MileageHistoryTabProps) {
     return <ErrorState title="Couldn’t load mileage" onRetry={refetch} />;
   }
 
-  if (records.length === 0 && !approx) {
+  if (records?.length === 0 && !approx) {
     return (
       <EmptyState
         icon="speedometer-medium"
@@ -45,7 +45,7 @@ export function MileageHistoryTab({ bikeId }: MileageHistoryTabProps) {
     );
   }
 
-  const maxKmpl = Math.max(...records.map((r) => r.mileageKmPerLiter), 0);
+  const maxKmpl = Math.max(...records.map((r) => r?.mileageKmPerLiter), 0);
 
   return (
     <View style={styles.stack}>
@@ -55,14 +55,14 @@ export function MileageHistoryTab({ bikeId }: MileageHistoryTabProps) {
             <Text style={styles.rollingLabel}>Rolling average</Text>
             <View style={styles.rollingValueRow}>
               <Text style={styles.rollingValue}>
-                {approx.mileageKmPerLiter.toFixed(2)}
+                {approx?.mileageKmPerLiter?.toFixed(2)}
               </Text>
               <Text style={styles.rollingUnit}>km/l</Text>
             </View>
           </View>
           <View style={styles.rollingMeta}>
             <Text style={styles.rollingMetaText}>
-              Based on last {approx.basedOnFuelLogCount} fills
+              Based on last {approx?.basedOnFuelLogCount} fills
             </Text>
             <Text
               style={[
@@ -70,7 +70,7 @@ export function MileageHistoryTab({ bikeId }: MileageHistoryTabProps) {
                 { color: approx.isEstimate ? COLORS.warning : COLORS.success },
               ]}
             >
-              {approx.isEstimate
+              {approx?.isEstimate
                 ? "Estimate · partial fills"
                 : "Exact · full tanks"}
             </Text>
@@ -80,7 +80,7 @@ export function MileageHistoryTab({ bikeId }: MileageHistoryTabProps) {
 
       <Text style={styles.kicker}>EXACT RECORDS</Text>
 
-      {records.length === 0 ? (
+      {records?.length === 0 ? (
         <Text style={styles.noRecords}>
           No exact records yet — log a full-tank fill to close a period.
         </Text>
@@ -90,17 +90,17 @@ export function MileageHistoryTab({ bikeId }: MileageHistoryTabProps) {
             <View style={styles.recordRow}>
               <View style={styles.recordLeft}>
                 <Text style={styles.recordPeriod}>
-                  {formatApiDate(record.periodStartDate, "dd MMM")} →{" "}
-                  {formatApiDate(record.periodEndDate, "dd MMM yyyy")}
+                  {formatApiDate(record?.periodStartDate, "dd MMM")} →{" "}
+                  {formatApiDate(record?.periodEndDate, "dd MMM yyyy")}
                 </Text>
                 <Text style={styles.recordDetail}>
-                  {record.distanceKm.toLocaleString()} km ·{" "}
-                  {record.litersConsumed.toFixed(2)} L
+                  {record?.distanceKm?.toLocaleString()} km ·{" "}
+                  {record?.litersConsumed?.toFixed(2)} L
                 </Text>
               </View>
               <View style={styles.recordKmplRow}>
                 <Text style={styles.recordKmpl}>
-                  {record.mileageKmPerLiter.toFixed(1)}
+                  {record?.mileageKmPerLiter?.toFixed(1)}
                 </Text>
                 <Text style={styles.recordKmplUnit}>km/l</Text>
               </View>

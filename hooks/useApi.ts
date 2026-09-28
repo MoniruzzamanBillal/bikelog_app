@@ -38,7 +38,7 @@ export const usePost = (invalidateQueriesKeys?: string[][]) => {
       url: string;
       payload: Record<string, unknown> | FormData | any;
     }) => {
-      return apiPost(params.url, params.payload);
+      return apiPost(params?.url, params?.payload);
     },
     onSuccess: () => {
       if (invalidateQueriesKeys) {
@@ -58,7 +58,7 @@ export const usePatch = (invalidateQueriesKeys?: string[][]) => {
       url: string;
       payload: Record<string, unknown> | FormData;
     }) => {
-      return apiPatch(params.url, params.payload);
+      return apiPatch(params?.url, params?.payload);
     },
     onSuccess: () => {
       if (invalidateQueriesKeys) {
@@ -78,7 +78,7 @@ export const usePut = (invalidateQueriesKeys?: string[][]) => {
       url: string;
       payload: Record<string, unknown> | FormData;
     }) => {
-      return apiPut(params.url, params.payload);
+      return apiPut(params?.url, params?.payload);
     },
     onSuccess: () => {
       if (invalidateQueriesKeys) {

@@ -61,10 +61,10 @@ export function MaintenanceLogFormModal({
 
   const createMutation = usePost([["maintenanceLogs", bikeId], ["reminders", bikeId]]);
   const updateMutation = usePatch([["maintenanceLogs", bikeId], ["reminders", bikeId]]);
-  const isPending = createMutation.isPending || updateMutation.isPending;
+  const isPending = createMutation?.isPending || updateMutation?.isPending;
 
   const selectedMaintType = useMemo(
-    () => maintenanceTypes.find((mt) => mt._id === maintenanceType),
+    () => maintenanceTypes.find((mt) => mt?._id === maintenanceType),
     [maintenanceTypes, maintenanceType],
   );
   const isEngineOil = selectedMaintType?.name === "Engine Oil";
@@ -76,13 +76,13 @@ export function MaintenanceLogFormModal({
   }, [isEngineOil]);
 
   const mtOptions = useMemo(
-    () => maintenanceTypes.map((mt) => ({ label: mt.name, value: mt._id })),
+    () => maintenanceTypes.map((mt) => ({ label: mt?.name, value: mt?._id })),
     [maintenanceTypes],
   );
   const oilOptions = useMemo(
     () => oilTypes.map((ot) => ({
-      label: `${ot.name} (${ot.suggestedIntervalKm} km)`,
-      value: ot._id,
+      label: `${ot?.name} (${ot?.suggestedIntervalKm} km)`,
+      value: ot?._id,
     })),
     [oilTypes],
   );
@@ -91,24 +91,24 @@ export function MaintenanceLogFormModal({
     if (!open) return;
 
     if (log) {
-      const mtId = typeof log.maintenanceType === "object"
-        ? log.maintenanceType._id
-        : log.maintenanceType;
+      const mtId = typeof log?.maintenanceType === "object"
+        ? log?.maintenanceType?._id
+        : log?.maintenanceType;
       setMaintenanceType(mtId);
-      setOdometerReading(log.odometerReading.toString());
-      const oilId = typeof log.oilType === "object" && log.oilType
-        ? log.oilType._id
-        : typeof log.oilType === "string"
-          ? log.oilType
+      setOdometerReading(log?.odometerReading?.toString());
+      const oilId = typeof log?.oilType === "object" && log?.oilType
+        ? log?.oilType?._id
+        : typeof log?.oilType === "string"
+          ? log?.oilType
           : "";
       setOilType(oilId || null);
-      setIntervalKmUsed(log.intervalKmUsed?.toString() ?? "");
-      setCost(log.cost.toString());
-      setServiceDate(log.serviceDate ? log.serviceDate.split("T")[0] : "");
-      setNextDueDate(log.nextDueDate ? log.nextDueDate.split("T")[0] : "");
-      setServiceCenter(log.serviceCenter || "");
-      setPartsReplaced(log.partsReplaced?.join(", ") || "");
-      setNotes(log.notes || "");
+      setIntervalKmUsed(log?.intervalKmUsed?.toString() ?? "");
+      setCost(log?.cost?.toString());
+      setServiceDate(log?.serviceDate ? log?.serviceDate?.split("T")[0] : "");
+      setNextDueDate(log?.nextDueDate ? log?.nextDueDate?.split("T")[0] : "");
+      setServiceCenter(log?.serviceCenter || "");
+      setPartsReplaced(log?.partsReplaced?.join(", ") || "");
+      setNotes(log?.notes || "");
     } else {
       setMaintenanceType(null);
       setOdometerReading("");
@@ -155,14 +155,14 @@ export function MaintenanceLogFormModal({
       serviceDate: serviceDate || format(new Date(), "yyyy-MM-dd"),
       nextDueDate: nextDueDate || undefined,
       serviceCenter: serviceCenter.trim() || undefined,
-      partsReplaced: parts.length > 0 ? parts : undefined,
+      partsReplaced: parts?.length > 0 ? parts : undefined,
       notes: notes.trim() || undefined,
     };
 
     try {
       if (log) {
         await updateMutation.mutateAsync({
-          url: `/bikes/${bikeId}/maintenance-logs/${log._id}`,
+          url: `/bikes/${bikeId}/maintenance-logs/${log?._id}`,
           payload,
         });
         Toast.show({ type: "success", text1: "Maintenance log updated", position: "top" });
@@ -189,7 +189,7 @@ export function MaintenanceLogFormModal({
         <KeyboardAwareScrollView showsVerticalScrollIndicator={false}>
           <Text style={styles.title}>{log ? "Edit Service" : "Add Service"}</Text>
 
-          {maintenanceTypes.length === 0 ? (
+          {maintenanceTypes?.length === 0 ? (
             <SectionLoading count={1} />
           ) : (
             <SelectPickerField
@@ -202,7 +202,7 @@ export function MaintenanceLogFormModal({
           )}
 
           {isEngineOil && (
-            oilTypes.length === 0 ? (
+            oilTypes?.length === 0 ? (
               <SectionLoading count={1} />
             ) : (
               <SelectPickerField

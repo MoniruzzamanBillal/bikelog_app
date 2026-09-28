@@ -158,13 +158,13 @@ export function SettingsCatalog() {
   };
 
   const startEditMaint = (type: TMaintenanceType) => {
-    setEditingMaintId(type._id);
-    setEditMaintName(type.name);
+    setEditingMaintId(type?._id);
+    setEditMaintName(type?.name);
     setEditMaintIntervalKm(
-      type.defaultIntervalKm ? String(type.defaultIntervalKm) : "",
+      type?.defaultIntervalKm ? String(type?.defaultIntervalKm) : "",
     );
     setEditMaintIntervalDays(
-      type.defaultIntervalDays ? String(type.defaultIntervalDays) : "",
+      type?.defaultIntervalDays ? String(type?.defaultIntervalDays) : "",
     );
     setExpandMaint(false);
   };
@@ -205,9 +205,9 @@ export function SettingsCatalog() {
   };
 
   const startEditOil = (oil: TEngineOilType) => {
-    setEditingOilId(oil._id);
-    setEditOilName(oil.name);
-    setEditOilIntervalKm(String(oil.suggestedIntervalKm));
+    setEditingOilId(oil?._id);
+    setEditOilName(oil?.name);
+    setEditOilIntervalKm(String(oil?.suggestedIntervalKm));
     setExpandOil(false);
   };
 
@@ -358,7 +358,7 @@ export function SettingsCatalog() {
 
           {maintLoading ? (
             <SectionLoading count={2} />
-          ) : maintTypes.length === 0 ? (
+          ) : maintTypes?.length === 0 ? (
             <EmptyState
               icon="wrench-outline"
               title="No maintenance types yet"
@@ -377,7 +377,7 @@ export function SettingsCatalog() {
 
               {maintTypes.map((type) => (
                 <View key={type._id}>
-                  {editingMaintId === type._id ? (
+                  {editingMaintId === type?._id ? (
                     <View style={[styles.tr, styles.trEditing]}>
                       <CellInput
                         value={editMaintName}
@@ -419,13 +419,13 @@ export function SettingsCatalog() {
                   ) : (
                     <View style={styles.tr}>
                       <Text style={[styles.td, styles.colName]} numberOfLines={1}>
-                        {type.name}
+                        {type?.name}
                       </Text>
                       <Text style={[styles.tdNum, styles.colNum]}>
-                        {dash(type.defaultIntervalKm)}
+                        {dash(type?.defaultIntervalKm)}
                       </Text>
                       <Text style={[styles.tdNum, styles.colNum]}>
-                        {dash(type.defaultIntervalDays)}
+                        {dash(type?.defaultIntervalDays)}
                       </Text>
                       <View style={styles.colAction}>
                         <RowIcon
@@ -492,7 +492,7 @@ export function SettingsCatalog() {
 
           {oilLoading ? (
             <SectionLoading count={2} />
-          ) : oilTypes.length === 0 ? (
+          ) : oilTypes?.length === 0 ? (
             <EmptyState
               icon="oil"
               title="No oil types yet"
@@ -510,7 +510,7 @@ export function SettingsCatalog() {
 
               {oilTypes.map((oil) => (
                 <View key={oil._id}>
-                  {editingOilId === oil._id ? (
+                  {editingOilId === oil?._id ? (
                     <View style={[styles.tr, styles.trEditing]}>
                       <CellInput
                         value={editOilName}
@@ -543,10 +543,10 @@ export function SettingsCatalog() {
                   ) : (
                     <View style={styles.tr}>
                       <Text style={[styles.td, styles.colName]} numberOfLines={1}>
-                        {oil.name}
+                        {oil?.name}
                       </Text>
                       <Text style={[styles.tdNum, styles.colWide]}>
-                        {dash(oil.suggestedIntervalKm)}
+                        {dash(oil?.suggestedIntervalKm)}
                       </Text>
                       <View style={styles.colAction}>
                         <RowIcon
@@ -568,7 +568,7 @@ export function SettingsCatalog() {
         <Panel style={styles.panel}>
           <Text style={styles.panelTitle}>Account</Text>
           {user?.email ? (
-            <Text style={styles.accountEmail}>{user.email}</Text>
+            <Text style={styles.accountEmail}>{user?.email}</Text>
           ) : null}
           <PrimaryButton
             onPress={handleLogout}

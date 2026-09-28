@@ -60,7 +60,7 @@ export function BikeIssue() {
   const totalCount = data?.data?.meta ?? 0;
   const totalPages = Math.ceil(totalCount / LIMIT) || 1;
   const firstOnPage = (page - 1) * LIMIT + 1;
-  const lastOnPage = (page - 1) * LIMIT + issues.length;
+  const lastOnPage = (page - 1) * LIMIT + issues?.length;
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -111,7 +111,7 @@ export function BikeIssue() {
           <SectionLoading count={4} />
         ) : isError ? (
           <ErrorState title="Couldn’t load issues" onRetry={refetch} />
-        ) : issues.length === 0 ? (
+        ) : issues?.length === 0 ? (
           <EmptyState
             icon="alert-circle-outline"
             title="No issues reported"

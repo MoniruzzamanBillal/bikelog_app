@@ -34,7 +34,7 @@ export const THEMES = {
   nocturne,
 };
 
-export const COLORS = THEMES.nocturne;
+export const COLORS = THEMES?.nocturne;
 
 // Web --chart-1..5. Categories use index `min(i, 4)`, like the web.
 export const CHART_COLORS = [
@@ -57,7 +57,7 @@ export const tint = (hex: string, alpha: number): string => {
 
   const raw = match[1];
   const full =
-    raw.length === 3
+    raw?.length === 3
       ? raw
           .split("")
           .map((c) => c + c)

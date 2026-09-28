@@ -33,8 +33,8 @@ function findMileageForLog(
   log: TFuelLog,
   records: TMileageRecord[],
 ): number | undefined {
-  if (!log.isFullTank) return undefined;
-  return records.find((r) => r.endOdometer === log.odometerReading)
+  if (!log?.isFullTank) return undefined;
+  return records.find((r) => r?.endOdometer === log?.odometerReading)
     ?.mileageKmPerLiter;
 }
 
@@ -46,11 +46,11 @@ function findMileageForLog(
 function buildLockMap(records: TMileageRecord[]): Map<string, string> {
   const locks = new Map<string, string>();
   records.forEach((record) => {
-    const period = `${formatApiDate(record.periodStartDate, "d MMM")} → ${formatApiDate(
-      record.periodEndDate,
+    const period = `${formatApiDate(record?.periodStartDate, "d MMM")} → ${formatApiDate(
+      record?.periodEndDate,
       "d MMM",
     )}`;
-    record.fuelLogIds?.forEach((id) => {
+    record?.fuelLogIds?.forEach((id) => {
       locks.set(id, `Locked — part of a closed mileage period (${period})`);
     });
   });
@@ -89,7 +89,7 @@ export function FuelLog() {
   const totalCount = data?.data?.meta ?? 0;
   const totalPages = Math.ceil(totalCount / LIMIT) || 1;
   const firstOnPage = (page - 1) * LIMIT + 1;
-  const lastOnPage = (page - 1) * LIMIT + fuelLogs.length;
+  const lastOnPage = (page - 1) * LIMIT + fuelLogs?.length;
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -133,7 +133,7 @@ export function FuelLog() {
           <SectionLoading count={5} />
         ) : isError ? (
           <ErrorState title="Couldn’t load fuel logs" onRetry={refetch} />
-        ) : fuelLogs.length === 0 ? (
+        ) : fuelLogs?.length === 0 ? (
           <EmptyState
             icon="gas-station"
             title="No fill-ups yet"

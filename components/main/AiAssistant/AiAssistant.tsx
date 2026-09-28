@@ -46,7 +46,7 @@ export function AiAssistant() {
 
   const handleSend = async (prompt?: string) => {
     const content = (prompt ?? input).trim();
-    if (!content || chatMutation.isPending) return;
+    if (!content || chatMutation?.isPending) return;
 
     const userMessage: TChatMessage = { role: "user", content };
     const history = [...messages, userMessage];
@@ -58,7 +58,7 @@ export function AiAssistant() {
         url: `/bikes/${bikeId}/ai/chat`,
         payload: { messages: history },
       });
-      const reply = (response.data as TBikeChatResponse).reply;
+      const reply = (response?.data as TBikeChatResponse).reply;
       setMessages((prev) => [...prev, { role: "assistant", content: reply }]);
     } catch (error: any) {
       Toast.show({
@@ -88,7 +88,7 @@ export function AiAssistant() {
         }
         showsVerticalScrollIndicator={false}
       >
-        {messages.length === 0 && !chatMutation.isPending && (
+        {messages?.length === 0 && !chatMutation?.isPending && (
           <View style={styles.emptyState}>
             <View style={styles.emptyChip}>
               <MaterialCommunityIcons
@@ -130,15 +130,15 @@ export function AiAssistant() {
                 : styles.bubbleAssistant,
             ]}
           >
-            {message.role === "user" ? (
-              <Text style={styles.bubbleTextUser}>{message.content}</Text>
+            {message?.role === "user" ? (
+              <Text style={styles.bubbleTextUser}>{message?.content}</Text>
             ) : (
-              <Markdown style={markdownStyles}>{message.content}</Markdown>
+              <Markdown style={markdownStyles}>{message?.content}</Markdown>
             )}
           </View>
         ))}
 
-        {chatMutation.isPending && (
+        {chatMutation?.isPending && (
           <View
             style={[styles.bubble, styles.bubbleAssistant, styles.bubbleThinking]}
           >

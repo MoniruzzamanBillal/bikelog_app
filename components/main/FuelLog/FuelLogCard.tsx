@@ -50,7 +50,7 @@ export function FuelLogCard({
       const formData = new FormData();
       formData.append("image", file as any);
       await uploadImage({
-        url: `/bikes/${bikeId}/fuel-logs/${fuelLog._id}/image`,
+        url: `/bikes/${bikeId}/fuel-logs/${fuelLog?._id}/image`,
         payload: formData,
       });
       Toast.show({
@@ -70,7 +70,7 @@ export function FuelLogCard({
   const handleImageDelete = async () => {
     try {
       await deleteImage({
-        url: `/bikes/${bikeId}/fuel-logs/${fuelLog._id}/image`,
+        url: `/bikes/${bikeId}/fuel-logs/${fuelLog?._id}/image`,
       });
       Toast.show({
         type: "success",
@@ -89,13 +89,13 @@ export function FuelLogCard({
   const handleDelete = () => {
     confirmDelete("fuel log", async () => {
       await deleteMutation.mutateAsync({
-        url: `/bikes/${bikeId}/fuel-logs/${fuelLog._id}`,
+        url: `/bikes/${bikeId}/fuel-logs/${fuelLog?._id}`,
       });
     });
   };
 
-  const totalCost = fuelLog.litersAdded * fuelLog.pricePerLiter;
-  const tankTone = toneStyle(fuelLog.isFullTank ? "success" : "neutral");
+  const totalCost = fuelLog?.litersAdded * fuelLog?.pricePerLiter;
+  const tankTone = toneStyle(fuelLog?.isFullTank ? "success" : "neutral");
   const mileageTone = toneStyle("accent");
 
   return (
@@ -104,14 +104,14 @@ export function FuelLogCard({
         <View style={styles.left}>
           <View style={styles.metaRow}>
             <Text style={styles.date}>
-              {formatApiDate(fuelLog.date, "dd MMM yyyy")}
+              {formatApiDate(fuelLog?.date, "dd MMM yyyy")}
             </Text>
             <View style={[styles.tag, { backgroundColor: tankTone.bg }]}>
               <Text style={[styles.tagText, { color: tankTone.text }]}>
-                {fuelLog.isFullTank ? "Full" : "Partial"}
+                {fuelLog?.isFullTank ? "Full" : "Partial"}
               </Text>
             </View>
-            {mileageKmPerLiter !== undefined && (
+            {mileageKmPerLiter != null && (
               <View style={[styles.tag, { backgroundColor: mileageTone.bg }]}>
                 <Text style={[styles.tagText, { color: mileageTone.text }]}>
                   {mileageKmPerLiter.toFixed(1)} km/l
@@ -123,13 +123,13 @@ export function FuelLogCard({
           <View style={styles.costRow}>
             <Text style={styles.cost}>{formatTaka(totalCost)}</Text>
             <Text style={styles.costDetail}>
-              {fuelLog.litersAdded} L · ৳{fuelLog.pricePerLiter}/L
+              {fuelLog?.litersAdded} L · ৳{fuelLog?.pricePerLiter}/L
             </Text>
           </View>
 
           <Text style={styles.odoLine} numberOfLines={1}>
-            {fuelLog.odometerReading.toLocaleString()} km
-            {fuelLog.fuelStation ? ` · ${fuelLog.fuelStation}` : ""}
+            {fuelLog?.odometerReading?.toLocaleString()} km
+            {fuelLog?.fuelStation ? ` · ${fuelLog?.fuelStation}` : ""}
           </Text>
 
           {lockedNote ? (

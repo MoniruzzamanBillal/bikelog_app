@@ -9,9 +9,10 @@ export type TBikeAccessory = {
   name: string;
   urgency: TAccessoryUrgency;
   status: TAccessoryStatus;
-  price?: number;
+  // ! nullable, not just optional — see the note in `maintenance-log.types.ts`.
+  price?: number | null;
   // ! server-computed only — stamped the instant status transitions into "purchased", never client-sent
-  purchaseDate?: string;
+  purchaseDate?: string | null;
   productImage?: TCloudinaryImage;
   isDeleted: boolean;
   createdAt: string;

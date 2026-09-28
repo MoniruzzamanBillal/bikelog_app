@@ -51,6 +51,21 @@ No `/bikes/new`-style routes — creation is always a modal on the relevant list
 - Two-option fields (income/expense in the reference project; nothing in Bike Log is naturally binary except maybe a future toggle) are a pair of `TouchableOpacity` "pill" buttons. **3+-option fields** (`bikeAccessory.urgency`/`.status`, `maintenanceLog.maintenanceType`/`.oilType`) need a real select — resolve via `@react-native-picker/picker`'s `<Picker>` (a listed-but-currently-unused dependency in the reference project) or Paper's `Menu`, decided once in a shared component, not per-form. See `architecture.md`'s "Reused vs. adapted" note.
 - Edit-modal prefill: `useEffect` keyed on the entity prop, calling `setX(entity.x)` per field — not a `defaultValues`-only approach (Paper's `Modal` doesn't remount its children on close the way the web app's Radix `Dialog` does).
 
+## Optional Chaining (project-wide rule)
+
+**Use `?.` for every property read on data and on local derived objects** — `data?.price`, `fuelLog?.odometerReading`, `mileageTone?.bg`, `bike?.nickname`, `catalog.find(...)?.name`. This is a standing user instruction, applied across the whole app (2026-09-28), not a per-case judgement call.
+
+Where it does **not** go:
+
+- `StyleSheet` objects and style helpers — `styles.card`, `fieldStyles.box`.
+- Imported bindings: modules, components and module-level constants — `COLORS.accent`, `Toast.show(...)`, `Math.abs(...)`, `MaterialCommunityIcons`.
+- Hook results that are always defined by contract — `insets.bottom`, `theme.colors`.
+- Method calls on a bare identifier — `logs.map(...)`, `router.push(...)`, `deleteMutation.mutateAsync(...)`.
+- Fluent method chains — `value.replace(...).replace(...)`, `arr.filter(...).map(...)`. A property *read* on a call result still takes one: `catalog.find(...)?.name`.
+- **The left-hand side of an assignment** — `config.headers.Authorization = ...` is a syntax error with `?.` (TS2779). `utils/axiosInstance.ts` is the live example.
+
+**What this does and doesn't buy you.** `?.` is runtime defence only. With `strict: true`, `?.` on a receiver TypeScript believes is non-nullable does not widen the result type, so it silently does nothing at the type level — which is exactly why the whole sweep type-checked clean. A field that the backend can actually send as `null` still has to say so in `types/*.ts` (`price?: number | null`), and still has to be guarded with `!= null` rather than `!== undefined`. See the note at the top of `types/maintenance-log.types.ts`.
+
 ## Styling Rules
 
 - `StyleSheet.create()` per file — `const xStyles = StyleSheet.create({...})` at the bottom of the file, referenced from JSX via `style={xStyles.foo}` or `style={[xStyles.foo, condition && xStyles.fooActive]}` for conditional variants.
