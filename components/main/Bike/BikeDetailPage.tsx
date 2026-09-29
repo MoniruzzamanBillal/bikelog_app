@@ -44,6 +44,11 @@ const TILES: TTile[] = [
   { label: "Accessories", icon: "shopping-outline", segment: "accessories" },
   { label: "AI Assistant", icon: "robot-outline", segment: "assistant" },
   { label: "Documents", icon: "file-document-outline", segment: "documents" },
+  {
+    label: "Manual",
+    icon: "book-open-page-variant-outline",
+    segment: "manual",
+  },
 ];
 
 /**
