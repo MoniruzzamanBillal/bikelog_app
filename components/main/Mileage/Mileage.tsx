@@ -8,18 +8,16 @@ import { ScrollView, StyleSheet, View } from "react-native";
 import { AiMileageInsightCard } from "./AiMileageInsightCard";
 import { LifetimeMileageTab } from "./LifetimeMileageTab";
 import { MileageHistoryTab } from "./MileageHistoryTab";
-import { MileageTrendTab } from "./MileageTrendTab";
 import { MonthlyMileageTab } from "./MonthlyMileageTab";
 import { YearlyMileageTab } from "./YearlyMileageTab";
 
-type TTab = "history" | "monthly" | "yearly" | "lifetime" | "trends";
+type TTab = "history" | "monthly" | "yearly" | "lifetime";
 
 const TABS: { value: TTab; label: string }[] = [
   { value: "history", label: "History" },
   { value: "monthly", label: "Monthly" },
   { value: "yearly", label: "Yearly" },
   { value: "lifetime", label: "Lifetime" },
-  { value: "trends", label: "Trends" },
 ];
 
 export function Mileage() {
@@ -56,7 +54,6 @@ export function Mileage() {
         {activeTab === "monthly" && <MonthlyMileageTab bikeId={bikeId} />}
         {activeTab === "yearly" && <YearlyMileageTab bikeId={bikeId} />}
         {activeTab === "lifetime" && <LifetimeMileageTab bikeId={bikeId} />}
-        {activeTab === "trends" && <MileageTrendTab bikeId={bikeId} />}
 
         <AiMileageInsightCard bikeId={bikeId} />
       </ScrollView>

@@ -9,6 +9,7 @@ import { TouchableOpacity } from "react-native-gesture-handler";
 import { ActivityIndicator, Text } from "react-native-paper";
 import Toast from "react-native-toast-message";
 import { TPickedImageFile } from "./ImagePickerField";
+import { confirm } from "./ConfirmDialog";
 import { ImageViewerModal } from "./ImageViewerModal";
 
 type TGalleryImage = TCloudinaryImage & { _id: string };
@@ -94,14 +95,14 @@ export function MultiImagePickerField({
   };
 
   const handleRemove = (imageId: string) => {
-    Alert.alert("Delete?", "Are you sure you want to delete this image?", [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Delete",
-        style: "destructive",
-        onPress: () => onRemove(imageId),
-      },
-    ]);
+    confirm({
+      title: "Delete image?",
+      message: "This will permanently remove this photo. This can't be undone.",
+      confirmLabel: "Delete",
+      tone: "danger",
+      icon: "image-off-outline",
+      onConfirm: () => onRemove(imageId),
+    });
   };
 
   return (
@@ -205,7 +206,10 @@ const styles = StyleSheet.create({
   },
   deleteBadge: {
     position: "absolute",
-    top: -70,
+    // ! -6, not the old -70: the wrapper is exactly SIZE tall, so a -70 offset floated
+    // ! the badge far above the thumbnail. -6 overlaps the tile's top-right corner,
+    // ! which is what it was always meant to do (tuned for the pre-Nocturne layout).
+    top: -6,
     right: -6,
     width: 18,
     height: 18,

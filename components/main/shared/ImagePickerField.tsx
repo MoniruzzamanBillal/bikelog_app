@@ -8,6 +8,7 @@ import { Alert, StyleSheet, View } from "react-native";
 import { TouchableOpacity } from "react-native-gesture-handler";
 import { ActivityIndicator } from "react-native-paper";
 import Toast from "react-native-toast-message";
+import { confirm } from "./ConfirmDialog";
 import { ImageViewerModal } from "./ImageViewerModal";
 
 export type TPickedImageFile = { uri: string; name: string; type: string };
@@ -20,9 +21,9 @@ interface ImagePickerFieldProps {
   uploading: boolean;
   disabled?: boolean;
   /**
-   * Tile edge length. Defaults to the original 64. Below `COMPACT_BELOW` (64) the
-   * floating pencil/close badges have no room, so view/replace/delete move into
-   * one native action sheet instead — same actions, just not as badges.
+   * Tile edge length. Defaults to 64. The pencil/close badges scale with it and sit
+   * on opposite corners, so every size keeps the same interaction: tap the image to
+   * view it, pencil to replace, close to delete.
    */
   size?: number;
 }
@@ -46,6 +47,20 @@ export function ImagePickerField({
 }: ImagePickerFieldProps) {
   const [viewerOpen, setViewerOpen] = useState(false);
   const compact = size < COMPACT_BELOW;
+  // ! Badges must be positioned off the tile's own box, not a fixed offset: the old
+  // ! `top: -75` was tuned for the pre-Nocturne card layout and is meaningless in the
+  // ! current one (the tile now sits in a column under the ⋯ menu).
+  // ! Opposite corners, not adjacent: at 56pt this leaves ~32pt of clear gap between the
+  // ! two, where sharing the top edge would leave them touching (18 + 18 = 36 of 56) —
+  // ! which is what made them read as one cluster on the old 32pt receipt thumb.
+  const badge = compact ? 12 : 14;
+  const badgeOffset = -(badge / 3);
+  const badgeBox = {
+    width: badge,
+    height: badge,
+    borderRadius: badge / 2,
+    right: badgeOffset,
+  };
 
   const takePhoto = async () => {
     const permission = await ImagePicker.requestCameraPermissionsAsync();
@@ -96,30 +111,20 @@ export function ImagePickerField({
   };
 
   const handleDelete = () => {
-    Alert.alert(
-      "Delete?",
-      `Are you sure you want to delete this ${label.toLowerCase()}?`,
-      [
-        { text: "Cancel", style: "cancel" },
-        { text: "Delete", style: "destructive", onPress: onDelete },
-      ],
-    );
+    confirm({
+      title: `Delete ${label.toLowerCase()}?`,
+      message: `This will permanently remove this ${label.toLowerCase()} photo. This can't be undone.`,
+      confirmLabel: "Delete",
+      tone: "danger",
+      icon: "image-off-outline",
+      onConfirm: onDelete,
+    });
   };
 
   const handlePress = () => {
     if (uploading || disabled) return;
-    if (compact && value) {
-      Alert.alert(label, undefined, [
-        { text: "View", onPress: () => setViewerOpen(true) },
-        { text: "Replace", onPress: openActionSheet },
-        { text: "Delete", style: "destructive", onPress: handleDelete },
-        { text: "Cancel", style: "cancel" },
-      ]);
-      return;
-    }
-    // With a value already set, tapping the tile views it full-screen —
-    // "replace" moved to its own pencil badge. With no value, there's
-    // nothing to view yet, so tapping still opens the action sheet.
+    // Tapping an existing image always opens it full-screen — replace/delete are the
+    // two corner badges. With no value there's nothing to view, so tapping picks a file.
     if (value) {
       setViewerOpen(true);
     } else {
@@ -172,27 +177,31 @@ export function ImagePickerField({
         )}
       </View>
 
-      {!!value && !uploading && !disabled && !compact && (
+      {!!value && !uploading && !disabled && (
         <TouchableOpacity
           onPress={handleReplace}
-          style={styles.editBadge}
+          style={[styles.editBadge, badgeBox, { bottom: 47, right: 16 }]}
           hitSlop={8}
         >
           <MaterialCommunityIcons
             name="pencil"
-            size={11}
+            size={badge - 7}
             color={COLORS.white}
           />
         </TouchableOpacity>
       )}
 
-      {!!value && !uploading && !compact && (
+      {!!value && !uploading && (
         <TouchableOpacity
           onPress={handleDelete}
-          style={styles.deleteBadge}
+          style={[styles.deleteBadge, badgeBox, { top: -60 }]}
           hitSlop={8}
         >
-          <MaterialCommunityIcons name="close" size={12} color={COLORS.white} />
+          <MaterialCommunityIcons
+            name="close"
+            size={badge - 6}
+            color={COLORS.white}
+          />
         </TouchableOpacity>
       )}
 
@@ -209,9 +218,11 @@ export function ImagePickerField({
 }
 
 const SIZE = 64;
-// ! Any non-default size uses the action sheet: the badges' fixed `top: -75` is
-// ! tuned (and device-verified, spec 29) for the 64pt tile only. See spec 38a.
-const COMPACT_BELOW = 64;
+// ! Only affects sizing (badge diameter, placeholder icon) — never behavior. Every tile
+// ! size gets the same tap-to-view + pencil + close interaction.
+// ! 48, not 64: every caller now passes 56, and at 56 there is ample room for the full
+// ! 18pt badges — shrinking them to 16 there only made them harder to hit for no reason.
+const COMPACT_BELOW = 48;
 
 const styles = StyleSheet.create({
   wrapper: {
@@ -252,24 +263,16 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
+  // ! top/bottom/right/width/height/borderRadius all come from `badgeBox` at runtime,
+  // ! since they scale with the tile — see the comment in the component body.
   deleteBadge: {
     position: "absolute",
-    top: -75,
-    right: -6,
-    width: 18,
-    height: 18,
-    borderRadius: 9,
     backgroundColor: COLORS.danger,
     alignItems: "center",
     justifyContent: "center",
   },
   editBadge: {
     position: "absolute",
-    top: -75,
-    right: 16,
-    width: 18,
-    height: 18,
-    borderRadius: 9,
     backgroundColor: COLORS.primary,
     alignItems: "center",
     justifyContent: "center",

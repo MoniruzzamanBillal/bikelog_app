@@ -1,6 +1,5 @@
 import { useState } from "react";
 import {
-  Alert,
   TextInput as NativeTextInput,
   StyleSheet,
   TouchableOpacity,
@@ -19,6 +18,7 @@ import {
   RuleFade,
   ScreenHeader,
   SectionLoading,
+  confirm,
 } from "@/components/main/shared";
 import { useFetchData, usePatch, usePost } from "@/hooks/useApi";
 import { useUserContext } from "@/context/user.context";
@@ -277,17 +277,17 @@ export function SettingsCatalog() {
   };
 
   const handleLogout = () => {
-    Alert.alert("Log Out?", "Are you sure you want to log out?", [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Log Out",
-        style: "destructive",
-        onPress: async () => {
-          await logoutFunction();
-          router.replace("/auth");
-        },
+    confirm({
+      title: "Log out?",
+      message: "You'll need to sign in again to reach your bikes.",
+      confirmLabel: "Log out",
+      tone: "danger",
+      icon: "logout",
+      onConfirm: async () => {
+        await logoutFunction();
+        router.replace("/auth");
       },
-    ]);
+    });
   };
 
   return (

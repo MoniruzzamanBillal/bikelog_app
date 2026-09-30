@@ -6,6 +6,8 @@ export {
   accessoryUrgencyColors,
 } from "./StatusBadge";
 export { confirmDelete } from "./ConfirmDelete";
+export { confirm, ConfirmDialogHost } from "./ConfirmDialog";
+export type { TConfirmRequest, TConfirmTone } from "./ConfirmDialog";
 export { EmptyState } from "./EmptyState";
 export { ErrorState } from "./ErrorState";
 export { SectionLoading, SkeletonBar } from "./SectionLoading";
