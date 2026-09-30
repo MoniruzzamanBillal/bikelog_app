@@ -53,10 +53,10 @@ export function ImageViewerModal({
   };
 
   const handleMomentumScrollEnd = (
-    event: NativeSyntheticEvent<NativeScrollEvent>
+    event: NativeSyntheticEvent<NativeScrollEvent>,
   ) => {
     const index = Math.round(
-      event?.nativeEvent?.contentOffset?.x / SCREEN_WIDTH
+      event?.nativeEvent?.contentOffset?.x / SCREEN_WIDTH,
     );
     setCurrentIndex(index);
   };
@@ -76,7 +76,9 @@ export function ImageViewerModal({
               <FlatList
                 ref={flatListRef}
                 data={images}
-                keyExtractor={(item, index) => item.publicId ?? `${item.url}-${index}`}
+                keyExtractor={(item, index) =>
+                  item.publicId ?? `${item.url}-${index}`
+                }
                 horizontal
                 pagingEnabled
                 showsHorizontalScrollIndicator={false}
@@ -108,7 +110,11 @@ export function ImageViewerModal({
 
           <IconButton
             icon={() => (
-              <MaterialCommunityIcons name="close" size={26} color={COLORS.white} />
+              <MaterialCommunityIcons
+                name="close"
+                size={26}
+                color={COLORS.white}
+              />
             )}
             onPress={onDismiss}
             style={styles.closeButton}

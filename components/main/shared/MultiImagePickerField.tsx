@@ -205,7 +205,10 @@ const styles = StyleSheet.create({
   },
   deleteBadge: {
     position: "absolute",
-    top: -70,
+    // ! -6, not the old -70: the wrapper is exactly SIZE tall, so a -70 offset floated
+    // ! the badge far above the thumbnail. -6 overlaps the tile's top-right corner,
+    // ! which is what it was always meant to do (tuned for the pre-Nocturne layout).
+    top: -6,
     right: -6,
     width: 18,
     height: 18,
