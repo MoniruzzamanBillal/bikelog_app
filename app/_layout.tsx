@@ -1,3 +1,4 @@
+import { ConfirmDialogHost } from "@/components/main/shared/ConfirmDialog";
 import UserProvider from "@/context/user.context";
 import { COLORS } from "@/utils/colors";
 import { paperTheme } from "@/utils/theme";
@@ -67,6 +68,7 @@ export default function RootLayout() {
                 >
                   <Slot />
                 </SafeAreaView>
+                <ConfirmDialogHost />
                 <Toast />
               </UserProvider>
             </PaperProvider>

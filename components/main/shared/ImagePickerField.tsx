@@ -8,6 +8,7 @@ import { Alert, StyleSheet, View } from "react-native";
 import { TouchableOpacity } from "react-native-gesture-handler";
 import { ActivityIndicator } from "react-native-paper";
 import Toast from "react-native-toast-message";
+import { confirm } from "./ConfirmDialog";
 import { ImageViewerModal } from "./ImageViewerModal";
 
 export type TPickedImageFile = { uri: string; name: string; type: string };
@@ -110,14 +111,14 @@ export function ImagePickerField({
   };
 
   const handleDelete = () => {
-    Alert.alert(
-      "Delete?",
-      `Are you sure you want to delete this ${label.toLowerCase()}?`,
-      [
-        { text: "Cancel", style: "cancel" },
-        { text: "Delete", style: "destructive", onPress: onDelete },
-      ],
-    );
+    confirm({
+      title: `Delete ${label.toLowerCase()}?`,
+      message: `This will permanently remove this ${label.toLowerCase()} photo. This can't be undone.`,
+      confirmLabel: "Delete",
+      tone: "danger",
+      icon: "image-off-outline",
+      onConfirm: onDelete,
+    });
   };
 
   const handlePress = () => {
@@ -179,7 +180,7 @@ export function ImagePickerField({
       {!!value && !uploading && !disabled && (
         <TouchableOpacity
           onPress={handleReplace}
-          style={[styles.editBadge, badgeBox, { bottom: 47, right: 12 }]}
+          style={[styles.editBadge, badgeBox, { bottom: 47, right: 16 }]}
           hitSlop={8}
         >
           <MaterialCommunityIcons

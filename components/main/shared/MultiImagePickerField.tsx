@@ -9,6 +9,7 @@ import { TouchableOpacity } from "react-native-gesture-handler";
 import { ActivityIndicator, Text } from "react-native-paper";
 import Toast from "react-native-toast-message";
 import { TPickedImageFile } from "./ImagePickerField";
+import { confirm } from "./ConfirmDialog";
 import { ImageViewerModal } from "./ImageViewerModal";
 
 type TGalleryImage = TCloudinaryImage & { _id: string };
@@ -94,14 +95,14 @@ export function MultiImagePickerField({
   };
 
   const handleRemove = (imageId: string) => {
-    Alert.alert("Delete?", "Are you sure you want to delete this image?", [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Delete",
-        style: "destructive",
-        onPress: () => onRemove(imageId),
-      },
-    ]);
+    confirm({
+      title: "Delete image?",
+      message: "This will permanently remove this photo. This can't be undone.",
+      confirmLabel: "Delete",
+      tone: "danger",
+      icon: "image-off-outline",
+      onConfirm: () => onRemove(imageId),
+    });
   };
 
   return (

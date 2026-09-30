@@ -8,6 +8,7 @@ import { Alert, Linking, StyleSheet, View } from "react-native";
 import { TouchableOpacity } from "react-native-gesture-handler";
 import { ActivityIndicator, Text } from "react-native-paper";
 import Toast from "react-native-toast-message";
+import { confirm } from "./ConfirmDialog";
 import { ImageViewerModal } from "./ImageViewerModal";
 
 interface MultiFilePickerFieldProps {
@@ -122,14 +123,14 @@ export function MultiFilePickerField({
   };
 
   const handleRemove = (fileId: string) => {
-    Alert.alert("Delete?", "Are you sure you want to delete this file?", [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Delete",
-        style: "destructive",
-        onPress: () => onRemove(fileId),
-      },
-    ]);
+    confirm({
+      title: "Delete file?",
+      message: "This will permanently remove this file. This can't be undone.",
+      confirmLabel: "Delete",
+      tone: "danger",
+      icon: "file-remove-outline",
+      onConfirm: () => onRemove(fileId),
+    });
   };
 
   const handleOpenRaw = (file: TDocumentFile) => {
