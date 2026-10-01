@@ -137,7 +137,7 @@ export function MaintenanceLogCard({
         <View style={styles.topRow}>
           <ImagePickerField
             label="Service"
-            size={56}
+            size={64}
             value={log.serviceImage}
             onUpload={handleImageUpload}
             onDelete={handleImageDelete}

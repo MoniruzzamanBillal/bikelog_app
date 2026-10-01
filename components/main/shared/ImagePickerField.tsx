@@ -50,9 +50,14 @@ export function ImagePickerField({
   // ! Badges must be positioned off the tile's own box, not a fixed offset: the old
   // ! `top: -75` was tuned for the pre-Nocturne card layout and is meaningless in the
   // ! current one (the tile now sits in a column under the ⋯ menu).
-  // ! Opposite corners, not adjacent: at 56pt this leaves ~32pt of clear gap between the
-  // ! two, where sharing the top edge would leave them touching (18 + 18 = 36 of 56) —
-  // ! which is what made them read as one cluster on the old 32pt receipt thumb.
+  // ! Opposite corners, not adjacent: at the current 64pt tile this leaves a clear gap
+  // ! between the two, where sharing the top edge would leave them touching — which is
+  // ! what made them read as one cluster on the old 32pt receipt thumb.
+  // ! NOTE the two inline offsets below (`bottom`/`top`) are hand-tuned literals, NOT
+  // ! derived from `size`. The delete badge is anchored to the top edge so it is unaffected
+  // ! by a size change; the replace badge is anchored to the bottom, so growing the tile
+  // ! moves it down relative to the top edge by the same amount. Re-check both by eye after
+  // ! changing `size`.
   const badge = compact ? 14 : 16;
   const badgeOffset = -(badge / 3);
   const badgeBox = {
@@ -220,8 +225,8 @@ export function ImagePickerField({
 const SIZE = 64;
 // ! Only affects sizing (badge diameter, placeholder icon) — never behavior. Every tile
 // ! size gets the same tap-to-view + pencil + close interaction.
-// ! 48, not 64: every caller now passes 56, and at 56 there is ample room for the full
-// ! 18pt badges — shrinking them to 16 there only made them harder to hit for no reason.
+// ! 48, not 64: every caller now passes 64 (spec 46; 56 before that), and at that size
+// ! there is ample room for the full badges — shrinking them only made them harder to hit.
 const COMPACT_BELOW = 48;
 
 const styles = StyleSheet.create({

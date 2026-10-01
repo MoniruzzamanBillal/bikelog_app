@@ -130,7 +130,7 @@ export function BikeAccessoryCard({
       <Panel style={[styles.card, isCancelled && styles.cardCancelled]}>
         <ImagePickerField
           label="Product"
-          size={56}
+          size={64}
           value={accessory.productImage}
           onUpload={handleImageUpload}
           onDelete={handleImageDelete}

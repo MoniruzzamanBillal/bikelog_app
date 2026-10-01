@@ -168,7 +168,7 @@ export function MultiImagePickerField({
   );
 }
 
-const SIZE = 56;
+const SIZE = 64;
 
 const styles = StyleSheet.create({
   row: {
