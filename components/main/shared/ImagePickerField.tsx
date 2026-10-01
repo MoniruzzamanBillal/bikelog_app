@@ -53,7 +53,7 @@ export function ImagePickerField({
   // ! Opposite corners, not adjacent: at 56pt this leaves ~32pt of clear gap between the
   // ! two, where sharing the top edge would leave them touching (18 + 18 = 36 of 56) —
   // ! which is what made them read as one cluster on the old 32pt receipt thumb.
-  const badge = compact ? 12 : 14;
+  const badge = compact ? 14 : 16;
   const badgeOffset = -(badge / 3);
   const badgeBox = {
     width: badge,
@@ -180,12 +180,12 @@ export function ImagePickerField({
       {!!value && !uploading && !disabled && (
         <TouchableOpacity
           onPress={handleReplace}
-          style={[styles.editBadge, badgeBox, { bottom: 47, right: 16 }]}
+          style={[styles.editBadge, badgeBox, { bottom: 50, right: 18 }]}
           hitSlop={8}
         >
           <MaterialCommunityIcons
             name="pencil"
-            size={badge - 7}
+            size={badge - 6}
             color={COLORS.white}
           />
         </TouchableOpacity>
@@ -194,7 +194,7 @@ export function ImagePickerField({
       {!!value && !uploading && (
         <TouchableOpacity
           onPress={handleDelete}
-          style={[styles.deleteBadge, badgeBox, { top: -60 }]}
+          style={[styles.deleteBadge, badgeBox, { top: -66 }]}
           hitSlop={8}
         >
           <MaterialCommunityIcons
