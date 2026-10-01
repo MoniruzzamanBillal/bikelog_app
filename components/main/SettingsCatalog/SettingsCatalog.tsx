@@ -378,42 +378,45 @@ export function SettingsCatalog() {
               {maintTypes.map((type) => (
                 <View key={type._id}>
                   {editingMaintId === type?._id ? (
-                    <View style={[styles.tr, styles.trEditing]}>
+                    <View style={styles.editBlock}>
                       <CellInput
                         value={editMaintName}
                         onChangeText={setEditMaintName}
                         editable={!updateMaintType.isPending}
-                        style={styles.colName}
+                        placeholder="Type name"
+                        style={styles.editNameInput}
                       />
-                      <CellInput
-                        value={editMaintIntervalKm}
-                        onChangeText={setEditMaintIntervalKm}
-                        keyboardType="number-pad"
-                        placeholder="—"
-                        editable={!updateMaintType.isPending}
-                        style={styles.colNumInput}
-                      />
-                      <CellInput
-                        value={editMaintIntervalDays}
-                        onChangeText={setEditMaintIntervalDays}
-                        keyboardType="number-pad"
-                        placeholder="—"
-                        editable={!updateMaintType.isPending}
-                        style={styles.colNumInput}
-                      />
-                      <View style={styles.editActions}>
-                        <RowIcon
-                          name="check"
-                          color={COLORS.success}
-                          onPress={handleSaveMaintEdit}
-                          disabled={updateMaintType.isPending}
+                      <View style={styles.editControls}>
+                        <CellInput
+                          value={editMaintIntervalKm}
+                          onChangeText={setEditMaintIntervalKm}
+                          keyboardType="number-pad"
+                          placeholder="km"
+                          editable={!updateMaintType.isPending}
+                          style={styles.editNumInput}
                         />
-                        <RowIcon
-                          name="close"
-                          color={COLORS.textLight}
-                          onPress={cancelEditMaint}
-                          disabled={updateMaintType.isPending}
+                        <CellInput
+                          value={editMaintIntervalDays}
+                          onChangeText={setEditMaintIntervalDays}
+                          keyboardType="number-pad"
+                          placeholder="days"
+                          editable={!updateMaintType.isPending}
+                          style={styles.editNumInput}
                         />
+                        <View style={styles.editActions}>
+                          <RowIcon
+                            name="check"
+                            color={COLORS.success}
+                            onPress={handleSaveMaintEdit}
+                            disabled={updateMaintType.isPending}
+                          />
+                          <RowIcon
+                            name="close"
+                            color={COLORS.textLight}
+                            onPress={cancelEditMaint}
+                            disabled={updateMaintType.isPending}
+                          />
+                        </View>
                       </View>
                     </View>
                   ) : (
@@ -511,33 +514,37 @@ export function SettingsCatalog() {
               {oilTypes.map((oil) => (
                 <View key={oil._id}>
                   {editingOilId === oil?._id ? (
-                    <View style={[styles.tr, styles.trEditing]}>
+                    <View style={styles.editBlock}>
                       <CellInput
                         value={editOilName}
                         onChangeText={setEditOilName}
                         editable={!updateOilType.isPending}
-                        style={styles.colName}
+                        placeholder="Oil type name"
+                        style={styles.editNameInput}
                       />
-                      <CellInput
-                        value={editOilIntervalKm}
-                        onChangeText={setEditOilIntervalKm}
-                        keyboardType="number-pad"
-                        editable={!updateOilType.isPending}
-                        style={styles.colWideInput}
-                      />
-                      <View style={styles.editActions}>
-                        <RowIcon
-                          name="check"
-                          color={COLORS.success}
-                          onPress={handleSaveOilEdit}
-                          disabled={updateOilType.isPending}
+                      <View style={styles.editControls}>
+                        <CellInput
+                          value={editOilIntervalKm}
+                          onChangeText={setEditOilIntervalKm}
+                          keyboardType="number-pad"
+                          placeholder="km"
+                          editable={!updateOilType.isPending}
+                          style={styles.editNumInput}
                         />
-                        <RowIcon
-                          name="close"
-                          color={COLORS.textLight}
-                          onPress={cancelEditOil}
-                          disabled={updateOilType.isPending}
-                        />
+                        <View style={styles.editActions}>
+                          <RowIcon
+                            name="check"
+                            color={COLORS.success}
+                            onPress={handleSaveOilEdit}
+                            disabled={updateOilType.isPending}
+                          />
+                          <RowIcon
+                            name="close"
+                            color={COLORS.textLight}
+                            onPress={cancelEditOil}
+                            disabled={updateOilType.isPending}
+                          />
+                        </View>
                       </View>
                     </View>
                   ) : (
@@ -650,9 +657,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 8,
   },
-  trEditing: {
-    paddingVertical: 6,
-  },
   td: {
     fontSize: 13.5,
     color: COLORS.text,
@@ -671,21 +675,37 @@ const styles = StyleSheet.create({
     width: 56,
     textAlign: "right",
   },
-  colNumInput: {
-    width: 56,
-    textAlign: "right",
-  },
   colWide: {
     width: 110,
-    textAlign: "right",
-  },
-  colWideInput: {
-    width: 90,
     textAlign: "right",
   },
   colAction: {
     width: 32,
     alignItems: "center",
+  },
+  // ! The inline editor deliberately does NOT reuse the table's columns. Sharing them
+  // ! left the name input with flex:1 of whatever survived two 56pt interval fields and
+  // ! 64pt of action icons — about 96pt on a 360pt-wide screen — so any real type name
+  // ! ("Engine Oil Change") overflowed and scrolled horizontally inside the field, which
+  // ! is unreadable and uneditable. Stacking gives the name the panel's full inner width
+  // ! and drops the interval fields to a second line, where flex:1 each is far roomier
+  // ! than the fixed 56/90pt they had. Columns stop lining up with the header while a row
+  // ! is being edited; the placeholders ("km"/"days") carry that meaning instead.
+  editBlock: {
+    paddingVertical: 8,
+    gap: 8,
+  },
+  editNameInput: {
+    width: "100%",
+  },
+  editControls: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  editNumInput: {
+    flex: 1,
+    textAlign: "right",
   },
   editActions: {
     flexDirection: "row",
