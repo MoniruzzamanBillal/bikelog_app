@@ -1,5 +1,14 @@
 # Bike Log — Mobile App Plan
 
+> **HISTORICAL — superseded. Do not read this as current state.**
+> This was the pre-implementation brief, written when this directory held nothing but this file. The app has since
+> been fully built out across 42 specs. The sentence below claiming "No mobile code exists yet" has been false since
+> the first spec landed. Kept because §2–§4's analysis of the conventions to follow is still the rationale behind the
+> stack, but for anything about what exists today read `CLAUDE.md` and `ai context/progress-tracker.md` instead.
+> One correction worth flagging: §2 says "no global design-token file beyond `utils/colors.ts`" — `utils/colors.ts` is
+> now exactly that, the dark-only "Nocturne" palette tuned to match the web client's `.dark` tokens, alongside
+> `utils/theme.ts`.
+
 This file is the brief to hand to Claude Code when mobile work actually starts. It captures: the coding approach to follow (reverse-engineered from `expenseTrackerReactNative`, a finished personal project by the same developer), the backend contract to build against (`bikelog_server`, already complete), and the full feature set to port (`bikelog_client(web)`, already complete and verified end-to-end against the backend). No mobile code exists yet — this folder currently holds only this plan.
 
 ## 1. Why this approach
