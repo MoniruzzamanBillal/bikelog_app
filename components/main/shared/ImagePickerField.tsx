@@ -58,7 +58,7 @@ export function ImagePickerField({
   // ! by a size change; the replace badge is anchored to the bottom, so growing the tile
   // ! moves it down relative to the top edge by the same amount. Re-check both by eye after
   // ! changing `size`.
-  const badge = compact ? 14 : 16;
+  const badge = compact ? 15 : 17;
   const badgeOffset = -(badge / 3);
   const badgeBox = {
     width: badge,
@@ -185,8 +185,8 @@ export function ImagePickerField({
       {!!value && !uploading && !disabled && (
         <TouchableOpacity
           onPress={handleReplace}
-          style={[styles.editBadge, badgeBox, { bottom: 50, right: 18 }]}
-          hitSlop={8}
+          style={[styles.editBadge, badgeBox, { bottom: 56, right: 18 }]}
+          hitSlop={10}
         >
           <MaterialCommunityIcons
             name="pencil"
@@ -199,8 +199,8 @@ export function ImagePickerField({
       {!!value && !uploading && (
         <TouchableOpacity
           onPress={handleDelete}
-          style={[styles.deleteBadge, badgeBox, { top: -66 }]}
-          hitSlop={8}
+          style={[styles.deleteBadge, badgeBox, { top: -73 }]}
+          hitSlop={10}
         >
           <MaterialCommunityIcons
             name="close"
