@@ -1,10 +1,12 @@
+import { COLORS } from "@/utils/colors";
 import { ReactNode, useState } from "react";
 import { StyleSheet, View } from "react-native";
 import { Text, TextInput } from "react-native-paper";
-import { COLORS } from "@/utils/colors";
 
-interface FormFieldProps
-  extends Omit<React.ComponentProps<typeof TextInput>, "style" | "mode"> {
+interface FormFieldProps extends Omit<
+  React.ComponentProps<typeof TextInput>,
+  "style" | "mode"
+> {
   label: string;
   rightElement?: ReactNode;
   required?: boolean;
@@ -69,7 +71,7 @@ export const fieldStyles = StyleSheet.create({
     marginBottom: 14,
   },
   label: {
-    fontSize: 12,
+    fontSize: 11,
     color: "rgba(233,233,237,0.7)",
     marginBottom: 6,
   },
@@ -81,7 +83,7 @@ export const fieldStyles = StyleSheet.create({
     borderWidth: 1,
     borderColor: COLORS.border,
     borderRadius: 8,
-    paddingHorizontal: 12,
+    paddingHorizontal: 11,
     height: 44,
     justifyContent: "center",
   },
@@ -91,10 +93,10 @@ export const fieldStyles = StyleSheet.create({
   boxError: {
     borderColor: COLORS.danger,
   },
-  valueText: { fontSize: 15, color: COLORS.text },
-  placeholderText: { fontSize: 15, color: COLORS.placeholder },
+  valueText: { fontSize: 14, color: COLORS.text },
+  placeholderText: { fontSize: 14, color: COLORS.placeholder },
   error: {
-    fontSize: 12,
+    fontSize: 11,
     color: COLORS.danger,
     marginTop: 4,
   },
@@ -112,10 +114,9 @@ const styles = StyleSheet.create({
     borderWidth: 0,
     backgroundColor: "transparent",
     padding: 0,
-    // Paper's flat TextInput only drops its own inner inset for a numeric
-    // paddingHorizontal (spec 38a) — `padding: 0` alone doesn't reach it.
+
     paddingHorizontal: 0,
-    fontSize: 15,
-    height: 42,
+    fontSize: 12,
+    height: 40,
   },
 });

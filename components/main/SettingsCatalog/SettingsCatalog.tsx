@@ -1,15 +1,3 @@
-import { useState } from "react";
-import {
-  TextInput as NativeTextInput,
-  StyleSheet,
-  TouchableOpacity,
-  View,
-} from "react-native";
-import { ScrollView } from "react-native-gesture-handler";
-import { Text } from "react-native-paper";
-import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { router } from "expo-router";
-import Toast from "react-native-toast-message";
 import {
   EmptyState,
   FormField,
@@ -20,16 +8,27 @@ import {
   SectionLoading,
   confirm,
 } from "@/components/main/shared";
-import { useFetchData, usePatch, usePost } from "@/hooks/useApi";
 import { useUserContext } from "@/context/user.context";
-import { COLORS, tint } from "@/utils/colors";
+import { useFetchData, usePatch, usePost } from "@/hooks/useApi";
 import {
-  TMaintenanceType,
   TEngineOilType,
-  TUpdateMaintenanceTypePayload,
+  TMaintenanceType,
   TUpdateEngineOilTypePayload,
+  TUpdateMaintenanceTypePayload,
 } from "@/types/catalog.types";
-
+import { COLORS, tint } from "@/utils/colors";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { router } from "expo-router";
+import { useState } from "react";
+import {
+  TextInput as NativeTextInput,
+  StyleSheet,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { ScrollView } from "react-native-gesture-handler";
+import { Text } from "react-native-paper";
+import Toast from "react-native-toast-message";
 
 /** Compact inline-edit input used inside a catalog table row. */
 function CellInput(props: React.ComponentProps<typeof NativeTextInput>) {
@@ -117,10 +116,19 @@ const dash = (n?: number | null) => (n ? n.toLocaleString() : "—");
 
 export function SettingsCatalog() {
   const { user, logoutFunction } = useUserContext();
-  const { data: maintData, isLoading: maintLoading, refetch: refetchMaint } =
-    useFetchData<TMaintenanceType[]>(["maintenance-types"], "/maintenance-types");
-  const { data: oilData, isLoading: oilLoading, refetch: refetchOil } =
-    useFetchData<TEngineOilType[]>(["engine-oil-types"], "/engine-oil-types");
+  const {
+    data: maintData,
+    isLoading: maintLoading,
+    refetch: refetchMaint,
+  } = useFetchData<TMaintenanceType[]>(
+    ["maintenance-types"],
+    "/maintenance-types",
+  );
+  const {
+    data: oilData,
+    isLoading: oilLoading,
+    refetch: refetchOil,
+  } = useFetchData<TEngineOilType[]>(["engine-oil-types"], "/engine-oil-types");
 
   const createMaintType = usePost([["maintenance-types"]]);
   const createOilType = usePost([["engine-oil-types"]]);
@@ -170,7 +178,11 @@ export function SettingsCatalog() {
       setNewMaintIntervalKm("");
       setNewMaintIntervalDays("");
       setExpandMaint(false);
-      Toast.show({ type: "success", text1: "Maintenance type added", position: "top" });
+      Toast.show({
+        type: "success",
+        text1: "Maintenance type added",
+        position: "top",
+      });
       refetchMaint();
     } catch (error: any) {
       Toast.show({
@@ -217,7 +229,11 @@ export function SettingsCatalog() {
         payload,
       });
       setEditingMaintId(null);
-      Toast.show({ type: "success", text1: "Maintenance type updated", position: "top" });
+      Toast.show({
+        type: "success",
+        text1: "Maintenance type updated",
+        position: "top",
+      });
       refetchMaint();
     } catch (error: any) {
       Toast.show({
@@ -258,7 +274,11 @@ export function SettingsCatalog() {
         payload,
       });
       setEditingOilId(null);
-      Toast.show({ type: "success", text1: "Oil type updated", position: "top" });
+      Toast.show({
+        type: "success",
+        text1: "Oil type updated",
+        position: "top",
+      });
       refetchOil();
     } catch (error: any) {
       Toast.show({
@@ -446,7 +466,10 @@ export function SettingsCatalog() {
                     </View>
                   ) : (
                     <View style={styles.tr}>
-                      <Text style={[styles.td, styles.colName]} numberOfLines={1}>
+                      <Text
+                        style={[styles.td, styles.colName]}
+                        numberOfLines={1}
+                      >
                         {type?.name}
                       </Text>
                       <Text style={[styles.tdNum, styles.colNum]}>
@@ -575,7 +598,10 @@ export function SettingsCatalog() {
                     </View>
                   ) : (
                     <View style={styles.tr}>
-                      <Text style={[styles.td, styles.colName]} numberOfLines={1}>
+                      <Text
+                        style={[styles.td, styles.colName]}
+                        numberOfLines={1}
+                      >
                         {oil?.name}
                       </Text>
                       <Text style={[styles.tdNum, styles.colWide]}>
