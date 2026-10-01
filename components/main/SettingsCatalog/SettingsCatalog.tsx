@@ -9,7 +9,7 @@ import {
   confirm,
 } from "@/components/main/shared";
 import { useUserContext } from "@/context/user.context";
-import { useFetchData, usePatch, usePost } from "@/hooks/useApi";
+import { useDelete, useFetchData, usePatch, usePost } from "@/hooks/useApi";
 import {
   TEngineOilType,
   TMaintenanceType,
@@ -134,6 +134,8 @@ export function SettingsCatalog() {
   const createOilType = usePost([["engine-oil-types"]]);
   const updateMaintType = usePatch([["maintenance-types"]]);
   const updateOilType = usePatch([["engine-oil-types"]]);
+  const deleteMaintType = useDelete([["maintenance-types"]]);
+  const deleteOilType = useDelete([["engine-oil-types"]]);
 
   const maintTypes = maintData?.data ?? [];
   const oilTypes = oilData?.data ?? [];
@@ -242,6 +244,59 @@ export function SettingsCatalog() {
         position: "top",
       });
     }
+  };
+
+  const handleDeleteMaint = (type: TMaintenanceType) => {
+    confirm({
+      title: "Delete maintenance type?",
+      message: `"${type?.name}" will be removed from the catalog. Maintenance logs that already used it keep their history.`,
+      confirmLabel: "Delete",
+      tone: "danger",
+      icon: "trash-can-outline",
+      onConfirm: async () => {
+        try {
+          await deleteMaintType.mutateAsync({
+            url: `/maintenance-types/${type?._id}`,
+          });
+          Toast.show({
+            type: "success",
+            text1: "Maintenance type deleted",
+            position: "top",
+          });
+          refetchMaint();
+        } catch {
+          // ! Deliberately empty. The axios interceptor already surfaced the backend's
+          // ! message — a 409 "still in use" refusal shows as an amber warning toast
+          // ! (spec 45 §3). A Toast.show here would double it, which is exactly the
+          // ! pre-existing bug the other catch blocks in this file still have.
+        }
+      },
+    });
+  };
+
+  const handleDeleteOil = (oil: TEngineOilType) => {
+    confirm({
+      title: "Delete oil type?",
+      message: `"${oil?.name}" will be removed from the catalog. Maintenance logs that already used it keep their history.`,
+      confirmLabel: "Delete",
+      tone: "danger",
+      icon: "trash-can-outline",
+      onConfirm: async () => {
+        try {
+          await deleteOilType.mutateAsync({
+            url: `/engine-oil-types/${oil?._id}`,
+          });
+          Toast.show({
+            type: "success",
+            text1: "Oil type deleted",
+            position: "top",
+          });
+          refetchOil();
+        } catch {
+          // ! See handleDeleteMaint — interceptor owns the error toast.
+        }
+      },
+    });
   };
 
   const startEditOil = (oil: TEngineOilType) => {
@@ -484,6 +539,12 @@ export function SettingsCatalog() {
                           color={COLORS.primary}
                           onPress={() => startEditMaint(type)}
                         />
+                        <RowIcon
+                          name="trash-can-outline"
+                          color={COLORS.danger}
+                          onPress={() => handleDeleteMaint(type)}
+                          disabled={deleteMaintType.isPending}
+                        />
                       </View>
                     </View>
                   )}
@@ -612,6 +673,12 @@ export function SettingsCatalog() {
                           name="pencil-outline"
                           color={COLORS.primary}
                           onPress={() => startEditOil(oil)}
+                        />
+                        <RowIcon
+                          name="trash-can-outline"
+                          color={COLORS.danger}
+                          onPress={() => handleDeleteOil(oil)}
+                          disabled={deleteOilType.isPending}
                         />
                       </View>
                     </View>
@@ -745,7 +812,11 @@ const styles = StyleSheet.create({
     textAlign: "right",
   },
   colAction: {
-    width: 32,
+    // ! 64, not 32: holds the pencil plus spec 45's trash icon. RowIcon is 32pt square, so
+    // ! two sit side by side; the flex NAME column absorbs the difference. Read-only row
+    // ! only — spec 43's stacked editor has its own action container.
+    width: 64,
+    flexDirection: "row",
     alignItems: "center",
   },
   // ! The inline editor deliberately does NOT reuse the table's columns. Sharing them

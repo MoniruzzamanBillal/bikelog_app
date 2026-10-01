@@ -52,7 +52,10 @@ export type TUpdateMaintenanceLogPayload = {
 };
 
 export type TReminder = {
-  maintenanceType: string;
+  // ! Populated `{ _id, name }` since backend spec 41 §C — the bare-id form is kept in the
+  // ! union because `utils/envConfig.ts` points at a deployed backend that may still predate
+  // ! that change. Consumers must handle both (see spec 45a).
+  maintenanceType: { _id: string; name: string } | string;
   lastServiceDate: string;
   lastOdometerReading: number;
   nextDueOdometer?: number | null;

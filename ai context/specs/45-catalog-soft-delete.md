@@ -20,7 +20,7 @@ Add a delete control to each row of both catalog tables on the Settings page. De
 
 > suppose i have created a engine oil type . then in maintenance page , i have added a data and use that engine oil type . so when i try to delete that then the backend should prevent the deletation . it should send proper error message and in frontend the error message will be shown… same for the maintenance type
 
-The *preventing* and the *message* are backend work (spec 41 §E and §I). This spec owns the third part: **showing it**. Both catalogs behave identically.
+The _preventing_ and the _message_ are backend work (spec 41 §E and §I). This spec owns the third part: **showing it**. Both catalogs behave identically.
 
 ### The error path, end to end
 
@@ -76,7 +76,7 @@ Toast.show({
 
 Reads `error.response.status`, **not** `errorObj.statusCode`, for the reason in Design §3.
 
-⚠️ **Confirm before doing this:** the interceptor is shared, so this recolours *every* 409 in the app to amber — including the existing duplicate-name conflicts on catalog create/update. That is arguably more correct (409 = "refused", not "broken"), but it is a cross-screen change. The alternative is to leave the interceptor alone and have the delete handler show its own warning toast, which then requires suppressing the interceptor's — messier, and it would need an opt-out flag on the request.
+⚠️ **Confirm before doing this:** the interceptor is shared, so this recolours _every_ 409 in the app to amber — including the existing duplicate-name conflicts on catalog create/update. That is arguably more correct (409 = "refused", not "broken"), but it is a cross-screen change. The alternative is to leave the interceptor alone and have the delete handler show its own warning toast, which then requires suppressing the interceptor's — messier, and it would need an opt-out flag on the request.
 
 ### 4. Delete action — `components/main/SettingsCatalog/SettingsCatalog.tsx`
 
@@ -148,14 +148,14 @@ Widen `styles.colAction` from `32` to `64`. `RowIcon` is already 32pt square wit
 
 **No new packages.** All of it already exists:
 
-| Need | Already available |
-| --- | --- |
-| `DELETE` mutation | `useDelete` — `hooks/useApi.ts` |
-| Confirm dialog | `confirm()` — `shared/ConfirmDialog` (spec 42) |
-| Toast | `react-native-toast-message`, installed and mounted |
-| Trash icon | `MaterialCommunityIcons` `trash-can-outline` |
-| Amber token + tint | `COLORS.warning`, `tint()` — `utils/colors.ts` |
-| Row icon button | `RowIcon` — local to `SettingsCatalog.tsx` |
+| Need               | Already available                                   |
+| ------------------ | --------------------------------------------------- |
+| `DELETE` mutation  | `useDelete` — `hooks/useApi.ts`                     |
+| Confirm dialog     | `confirm()` — `shared/ConfirmDialog` (spec 42)      |
+| Toast              | `react-native-toast-message`, installed and mounted |
+| Trash icon         | `MaterialCommunityIcons` `trash-can-outline`        |
+| Amber token + tint | `COLORS.warning`, `tint()` — `utils/colors.ts`      |
+| Row icon button    | `RowIcon` — local to `SettingsCatalog.tsx`          |
 
 ---
 
@@ -164,6 +164,7 @@ Widen `styles.colAction` from `32` to `64`. `RowIcon` is already 32pt square wit
 Needs a real build on device — `tsc --noEmit` and `eslint` clean first, and server spec 41 deployed or running locally.
 
 **The user's stated scenario — engine oil type**
+
 - [ ] Create an oil type in Settings.
 - [ ] On the maintenance page, add a maintenance log that selects it.
 - [ ] Back in Settings, tap delete on that oil type → Nocturne confirm dialog appears.
@@ -172,15 +173,18 @@ Needs a real build on device — `tsc --noEmit` and `eslint` clean first, and se
 - [ ] Delete that maintenance log, retry → succeeds, success toast, row disappears.
 
 **Same for maintenance type**
+
 - [ ] Repeat all of the above for a maintenance type. Note every log pins its maintenance type (the FK is required), so any log at all blocks it.
 
 **History must survive**
+
 - [ ] After successfully deleting a type, open an existing maintenance log that used it → its type name still renders correctly, **not** the word "Maintenance". This is the regression server spec 41 §B exists to prevent; check it from the app, not just Postman.
 - [ ] The Reminders banner on the bike hub still names that type correctly (§C).
 - [ ] The maintenance-log form's picker no longer offers the deleted type.
 - [ ] Re-add a type using the deleted name → succeeds, and the historical logs still read correctly (the server revives the original row and its id).
 
 **Layout & regressions**
+
 - [ ] Both tables show pencil + trash in the action column; both are comfortably tappable and the NAME column is still readable at 360pt width.
 - [ ] Editing a row still works — spec 43's stacked editor is unchanged.
 - [ ] `success` and `error` toasts elsewhere in the app look unchanged after the `toastConfig` addition.
