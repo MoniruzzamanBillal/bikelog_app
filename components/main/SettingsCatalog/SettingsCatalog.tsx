@@ -22,7 +22,7 @@ import {
 } from "@/components/main/shared";
 import { useFetchData, usePatch, usePost } from "@/hooks/useApi";
 import { useUserContext } from "@/context/user.context";
-import { COLORS } from "@/utils/colors";
+import { COLORS, tint } from "@/utils/colors";
 import {
   TMaintenanceType,
   TEngineOilType,
@@ -64,6 +64,30 @@ function RowIcon({
     >
       <MaterialCommunityIcons name={name} size={16} color={color} />
     </TouchableOpacity>
+  );
+}
+
+/**
+ * Section-header icon in a tone-tinted chip. Mirrors `EmptyState`'s accent chip so a
+ * panel header and its own empty state read as the same family, and keeps every tint
+ * derived from a `COLORS` token via `tint()` rather than a hard-coded rgba literal.
+ */
+function PanelIcon({
+  name,
+  color,
+}: {
+  name: React.ComponentProps<typeof MaterialCommunityIcons>["name"];
+  color: string;
+}) {
+  return (
+    <View
+      style={[
+        styles.panelIcon,
+        { backgroundColor: tint(color, 0.14), borderColor: tint(color, 0.32) },
+      ]}
+    >
+      <MaterialCommunityIcons name={name} size={16} color={color} />
+    </View>
   );
 }
 
@@ -301,6 +325,7 @@ export function SettingsCatalog() {
         {/* ---------- Maintenance types ---------- */}
         <Panel style={styles.panel}>
           <View style={styles.panelHeader}>
+            <PanelIcon name="wrench-outline" color={COLORS.primary} />
             <View style={styles.panelTitleCol}>
               <Text style={styles.panelTitle}>Maintenance types</Text>
               <Text style={styles.panelSub}>
@@ -412,7 +437,7 @@ export function SettingsCatalog() {
                           />
                           <RowIcon
                             name="close"
-                            color={COLORS.textLight}
+                            color={COLORS.danger}
                             onPress={cancelEditMaint}
                             disabled={updateMaintType.isPending}
                           />
@@ -433,7 +458,7 @@ export function SettingsCatalog() {
                       <View style={styles.colAction}>
                         <RowIcon
                           name="pencil-outline"
-                          color={COLORS.textLight}
+                          color={COLORS.primary}
                           onPress={() => startEditMaint(type)}
                         />
                       </View>
@@ -449,6 +474,7 @@ export function SettingsCatalog() {
         {/* ---------- Engine oil types ---------- */}
         <Panel style={styles.panel}>
           <View style={styles.panelHeader}>
+            <PanelIcon name="oil" color={COLORS.warning} />
             <View style={styles.panelTitleCol}>
               <Text style={styles.panelTitle}>Engine oil types</Text>
               <Text style={styles.panelSub}>
@@ -540,7 +566,7 @@ export function SettingsCatalog() {
                           />
                           <RowIcon
                             name="close"
-                            color={COLORS.textLight}
+                            color={COLORS.danger}
                             onPress={cancelEditOil}
                             disabled={updateOilType.isPending}
                           />
@@ -558,7 +584,7 @@ export function SettingsCatalog() {
                       <View style={styles.colAction}>
                         <RowIcon
                           name="pencil-outline"
-                          color={COLORS.textLight}
+                          color={COLORS.primary}
                           onPress={() => startEditOil(oil)}
                         />
                       </View>
@@ -573,10 +599,15 @@ export function SettingsCatalog() {
 
         {/* ---------- Account ---------- */}
         <Panel style={styles.panel}>
-          <Text style={styles.panelTitle}>Account</Text>
-          {user?.email ? (
-            <Text style={styles.accountEmail}>{user?.email}</Text>
-          ) : null}
+          <View style={styles.panelHeader}>
+            <PanelIcon name="account-circle-outline" color={COLORS.primary} />
+            <View style={styles.panelTitleCol}>
+              <Text style={styles.panelTitle}>Account</Text>
+              {user?.email ? (
+                <Text style={styles.accountEmail}>{user?.email}</Text>
+              ) : null}
+            </View>
+          </View>
           <PrimaryButton
             onPress={handleLogout}
             variant="destructive"
@@ -610,6 +641,14 @@ const styles = StyleSheet.create({
     alignItems: "flex-start",
     justifyContent: "space-between",
     gap: 12,
+  },
+  panelIcon: {
+    width: 30,
+    height: 30,
+    borderRadius: 9,
+    borderWidth: 1,
+    alignItems: "center",
+    justifyContent: "center",
   },
   panelTitleCol: {
     flex: 1,
