@@ -123,7 +123,7 @@ export function MultiImagePickerField({
           <TouchableOpacity
             onPress={() => handleRemove(image?._id)}
             style={styles.deleteBadge}
-            hitSlop={8}
+            hitSlop={10}
           >
             <MaterialCommunityIcons
               name="close"
@@ -207,7 +207,7 @@ const styles = StyleSheet.create({
   deleteBadge: {
     position: "absolute",
 
-    top: -65,
+    top: -72,
     right: -6,
     width: 18,
     height: 18,

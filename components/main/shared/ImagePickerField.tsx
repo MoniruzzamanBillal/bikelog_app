@@ -185,12 +185,12 @@ export function ImagePickerField({
       {!!value && !uploading && !disabled && (
         <TouchableOpacity
           onPress={handleReplace}
-          style={[styles.editBadge, badgeBox, { bottom: 56, right: 18 }]}
+          style={[styles.editBadge, badgeBox, { bottom: 58, right: 18 }]}
           hitSlop={10}
         >
           <MaterialCommunityIcons
             name="pencil"
-            size={badge - 6}
+            size={badge - 5}
             color={COLORS.white}
           />
         </TouchableOpacity>
@@ -199,7 +199,7 @@ export function ImagePickerField({
       {!!value && !uploading && (
         <TouchableOpacity
           onPress={handleDelete}
-          style={[styles.deleteBadge, badgeBox, { top: -73 }]}
+          style={[styles.deleteBadge, badgeBox, { top: -74 }]}
           hitSlop={10}
         >
           <MaterialCommunityIcons
