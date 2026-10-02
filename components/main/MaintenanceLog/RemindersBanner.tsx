@@ -65,8 +65,19 @@ export function RemindersBanner({
 
   const currentOdometer = bikeData?.data?.currentOdometer;
 
-  const getTypeName = (typeId: string) =>
-    maintenanceTypes?.find((t) => t?._id === typeId)?.name ?? "Maintenance";
+  // ! Accepts either shape: backend spec 41 §C now populates `{ _id, name }`, but a
+  // ! deployment predating it still sends a bare id, so the catalog lookup stays as the
+  // ! fallback. Same pattern as MaintenanceLogCard's own getTypeName. See spec 45a.
+  const getTypeName = (type: TReminder["maintenanceType"]) => {
+    if (typeof type === "object" && type?.name) return type?.name;
+    const typeId = typeof type === "string" ? type : undefined;
+    return maintenanceTypes?.find((t) => t?._id === typeId)?.name ?? "Maintenance";
+  };
+
+  // ! Never template-stringify the field directly for the key — once populated it renders
+  // ! as "[object Object]" for every row.
+  const getTypeKey = (type: TReminder["maintenanceType"]) =>
+    typeof type === "object" ? type?._id : type;
 
   const sorted = [...reminders].sort((a, b) =>
     a?.status === b?.status ? 0 : a?.status === "overdue" ? -1 : 1,
@@ -81,7 +92,7 @@ export function RemindersBanner({
 
         return (
           <Panel
-            key={`${reminder.maintenanceType}-${i}`}
+            key={`${getTypeKey(reminder?.maintenanceType)}-${i}`}
             style={[styles.row, { borderColor: tint(tone, 0.4) }]}
           >
             <MaterialCommunityIcons

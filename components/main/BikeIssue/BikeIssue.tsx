@@ -134,11 +134,7 @@ export function BikeIssue() {
 
             <View style={styles.list}>
               {issues.map((issue) => (
-                <BikeIssueCard
-                  key={issue._id}
-                  issue={issue}
-                  bikeId={bikeId}
-                />
+                <BikeIssueCard key={issue._id} issue={issue} bikeId={bikeId} />
               ))}
             </View>
 

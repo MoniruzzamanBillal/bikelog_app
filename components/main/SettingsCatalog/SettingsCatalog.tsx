@@ -1,15 +1,3 @@
-import { useState } from "react";
-import {
-  TextInput as NativeTextInput,
-  StyleSheet,
-  TouchableOpacity,
-  View,
-} from "react-native";
-import { ScrollView } from "react-native-gesture-handler";
-import { Text } from "react-native-paper";
-import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { router } from "expo-router";
-import Toast from "react-native-toast-message";
 import {
   EmptyState,
   FormField,
@@ -20,16 +8,27 @@ import {
   SectionLoading,
   confirm,
 } from "@/components/main/shared";
-import { useFetchData, usePatch, usePost } from "@/hooks/useApi";
 import { useUserContext } from "@/context/user.context";
-import { COLORS } from "@/utils/colors";
+import { useDelete, useFetchData, usePatch, usePost } from "@/hooks/useApi";
 import {
-  TMaintenanceType,
   TEngineOilType,
-  TUpdateMaintenanceTypePayload,
+  TMaintenanceType,
   TUpdateEngineOilTypePayload,
+  TUpdateMaintenanceTypePayload,
 } from "@/types/catalog.types";
-
+import { COLORS, tint } from "@/utils/colors";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { router } from "expo-router";
+import { useState } from "react";
+import {
+  TextInput as NativeTextInput,
+  StyleSheet,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { ScrollView } from "react-native-gesture-handler";
+import { Text } from "react-native-paper";
+import Toast from "react-native-toast-message";
 
 /** Compact inline-edit input used inside a catalog table row. */
 function CellInput(props: React.ComponentProps<typeof NativeTextInput>) {
@@ -67,6 +66,30 @@ function RowIcon({
   );
 }
 
+/**
+ * Section-header icon in a tone-tinted chip. Mirrors `EmptyState`'s accent chip so a
+ * panel header and its own empty state read as the same family, and keeps every tint
+ * derived from a `COLORS` token via `tint()` rather than a hard-coded rgba literal.
+ */
+function PanelIcon({
+  name,
+  color,
+}: {
+  name: React.ComponentProps<typeof MaterialCommunityIcons>["name"];
+  color: string;
+}) {
+  return (
+    <View
+      style={[
+        styles.panelIcon,
+        { backgroundColor: tint(color, 0.14), borderColor: tint(color, 0.32) },
+      ]}
+    >
+      <MaterialCommunityIcons name={name} size={16} color={color} />
+    </View>
+  );
+}
+
 const cellStyles = StyleSheet.create({
   input: {
     height: 34,
@@ -93,15 +116,26 @@ const dash = (n?: number | null) => (n ? n.toLocaleString() : "—");
 
 export function SettingsCatalog() {
   const { user, logoutFunction } = useUserContext();
-  const { data: maintData, isLoading: maintLoading, refetch: refetchMaint } =
-    useFetchData<TMaintenanceType[]>(["maintenance-types"], "/maintenance-types");
-  const { data: oilData, isLoading: oilLoading, refetch: refetchOil } =
-    useFetchData<TEngineOilType[]>(["engine-oil-types"], "/engine-oil-types");
+  const {
+    data: maintData,
+    isLoading: maintLoading,
+    refetch: refetchMaint,
+  } = useFetchData<TMaintenanceType[]>(
+    ["maintenance-types"],
+    "/maintenance-types",
+  );
+  const {
+    data: oilData,
+    isLoading: oilLoading,
+    refetch: refetchOil,
+  } = useFetchData<TEngineOilType[]>(["engine-oil-types"], "/engine-oil-types");
 
   const createMaintType = usePost([["maintenance-types"]]);
   const createOilType = usePost([["engine-oil-types"]]);
   const updateMaintType = usePatch([["maintenance-types"]]);
   const updateOilType = usePatch([["engine-oil-types"]]);
+  const deleteMaintType = useDelete([["maintenance-types"]]);
+  const deleteOilType = useDelete([["engine-oil-types"]]);
 
   const maintTypes = maintData?.data ?? [];
   const oilTypes = oilData?.data ?? [];
@@ -146,7 +180,11 @@ export function SettingsCatalog() {
       setNewMaintIntervalKm("");
       setNewMaintIntervalDays("");
       setExpandMaint(false);
-      Toast.show({ type: "success", text1: "Maintenance type added", position: "top" });
+      Toast.show({
+        type: "success",
+        text1: "Maintenance type added",
+        position: "top",
+      });
       refetchMaint();
     } catch (error: any) {
       Toast.show({
@@ -193,7 +231,11 @@ export function SettingsCatalog() {
         payload,
       });
       setEditingMaintId(null);
-      Toast.show({ type: "success", text1: "Maintenance type updated", position: "top" });
+      Toast.show({
+        type: "success",
+        text1: "Maintenance type updated",
+        position: "top",
+      });
       refetchMaint();
     } catch (error: any) {
       Toast.show({
@@ -202,6 +244,59 @@ export function SettingsCatalog() {
         position: "top",
       });
     }
+  };
+
+  const handleDeleteMaint = (type: TMaintenanceType) => {
+    confirm({
+      title: "Delete maintenance type?",
+      message: `"${type?.name}" will be removed from the catalog. Maintenance logs that already used it keep their history.`,
+      confirmLabel: "Delete",
+      tone: "danger",
+      icon: "trash-can-outline",
+      onConfirm: async () => {
+        try {
+          await deleteMaintType.mutateAsync({
+            url: `/maintenance-types/${type?._id}`,
+          });
+          Toast.show({
+            type: "success",
+            text1: "Maintenance type deleted",
+            position: "top",
+          });
+          refetchMaint();
+        } catch {
+          // ! Deliberately empty. The axios interceptor already surfaced the backend's
+          // ! message — a 409 "still in use" refusal shows as an amber warning toast
+          // ! (spec 45 §3). A Toast.show here would double it, which is exactly the
+          // ! pre-existing bug the other catch blocks in this file still have.
+        }
+      },
+    });
+  };
+
+  const handleDeleteOil = (oil: TEngineOilType) => {
+    confirm({
+      title: "Delete oil type?",
+      message: `"${oil?.name}" will be removed from the catalog. Maintenance logs that already used it keep their history.`,
+      confirmLabel: "Delete",
+      tone: "danger",
+      icon: "trash-can-outline",
+      onConfirm: async () => {
+        try {
+          await deleteOilType.mutateAsync({
+            url: `/engine-oil-types/${oil?._id}`,
+          });
+          Toast.show({
+            type: "success",
+            text1: "Oil type deleted",
+            position: "top",
+          });
+          refetchOil();
+        } catch {
+          // ! See handleDeleteMaint — interceptor owns the error toast.
+        }
+      },
+    });
   };
 
   const startEditOil = (oil: TEngineOilType) => {
@@ -234,7 +329,11 @@ export function SettingsCatalog() {
         payload,
       });
       setEditingOilId(null);
-      Toast.show({ type: "success", text1: "Oil type updated", position: "top" });
+      Toast.show({
+        type: "success",
+        text1: "Oil type updated",
+        position: "top",
+      });
       refetchOil();
     } catch (error: any) {
       Toast.show({
@@ -301,6 +400,7 @@ export function SettingsCatalog() {
         {/* ---------- Maintenance types ---------- */}
         <Panel style={styles.panel}>
           <View style={styles.panelHeader}>
+            <PanelIcon name="wrench-outline" color={COLORS.primary} />
             <View style={styles.panelTitleCol}>
               <Text style={styles.panelTitle}>Maintenance types</Text>
               <Text style={styles.panelSub}>
@@ -378,47 +478,53 @@ export function SettingsCatalog() {
               {maintTypes.map((type) => (
                 <View key={type._id}>
                   {editingMaintId === type?._id ? (
-                    <View style={[styles.tr, styles.trEditing]}>
+                    <View style={styles.editBlock}>
                       <CellInput
                         value={editMaintName}
                         onChangeText={setEditMaintName}
                         editable={!updateMaintType.isPending}
-                        style={styles.colName}
+                        placeholder="Type name"
+                        style={styles.editNameInput}
                       />
-                      <CellInput
-                        value={editMaintIntervalKm}
-                        onChangeText={setEditMaintIntervalKm}
-                        keyboardType="number-pad"
-                        placeholder="—"
-                        editable={!updateMaintType.isPending}
-                        style={styles.colNumInput}
-                      />
-                      <CellInput
-                        value={editMaintIntervalDays}
-                        onChangeText={setEditMaintIntervalDays}
-                        keyboardType="number-pad"
-                        placeholder="—"
-                        editable={!updateMaintType.isPending}
-                        style={styles.colNumInput}
-                      />
-                      <View style={styles.editActions}>
-                        <RowIcon
-                          name="check"
-                          color={COLORS.success}
-                          onPress={handleSaveMaintEdit}
-                          disabled={updateMaintType.isPending}
+                      <View style={styles.editControls}>
+                        <CellInput
+                          value={editMaintIntervalKm}
+                          onChangeText={setEditMaintIntervalKm}
+                          keyboardType="number-pad"
+                          placeholder="km"
+                          editable={!updateMaintType.isPending}
+                          style={styles.editNumInput}
                         />
-                        <RowIcon
-                          name="close"
-                          color={COLORS.textLight}
-                          onPress={cancelEditMaint}
-                          disabled={updateMaintType.isPending}
+                        <CellInput
+                          value={editMaintIntervalDays}
+                          onChangeText={setEditMaintIntervalDays}
+                          keyboardType="number-pad"
+                          placeholder="days"
+                          editable={!updateMaintType.isPending}
+                          style={styles.editNumInput}
                         />
+                        <View style={styles.editActions}>
+                          <RowIcon
+                            name="check"
+                            color={COLORS.success}
+                            onPress={handleSaveMaintEdit}
+                            disabled={updateMaintType.isPending}
+                          />
+                          <RowIcon
+                            name="close"
+                            color={COLORS.danger}
+                            onPress={cancelEditMaint}
+                            disabled={updateMaintType.isPending}
+                          />
+                        </View>
                       </View>
                     </View>
                   ) : (
                     <View style={styles.tr}>
-                      <Text style={[styles.td, styles.colName]} numberOfLines={1}>
+                      <Text
+                        style={[styles.td, styles.colName]}
+                        numberOfLines={1}
+                      >
                         {type?.name}
                       </Text>
                       <Text style={[styles.tdNum, styles.colNum]}>
@@ -430,8 +536,14 @@ export function SettingsCatalog() {
                       <View style={styles.colAction}>
                         <RowIcon
                           name="pencil-outline"
-                          color={COLORS.textLight}
+                          color={COLORS.primary}
                           onPress={() => startEditMaint(type)}
+                        />
+                        <RowIcon
+                          name="trash-can-outline"
+                          color={COLORS.danger}
+                          onPress={() => handleDeleteMaint(type)}
+                          disabled={deleteMaintType.isPending}
                         />
                       </View>
                     </View>
@@ -446,6 +558,7 @@ export function SettingsCatalog() {
         {/* ---------- Engine oil types ---------- */}
         <Panel style={styles.panel}>
           <View style={styles.panelHeader}>
+            <PanelIcon name="oil" color={COLORS.warning} />
             <View style={styles.panelTitleCol}>
               <Text style={styles.panelTitle}>Engine oil types</Text>
               <Text style={styles.panelSub}>
@@ -511,38 +624,45 @@ export function SettingsCatalog() {
               {oilTypes.map((oil) => (
                 <View key={oil._id}>
                   {editingOilId === oil?._id ? (
-                    <View style={[styles.tr, styles.trEditing]}>
+                    <View style={styles.editBlock}>
                       <CellInput
                         value={editOilName}
                         onChangeText={setEditOilName}
                         editable={!updateOilType.isPending}
-                        style={styles.colName}
+                        placeholder="Oil type name"
+                        style={styles.editNameInput}
                       />
-                      <CellInput
-                        value={editOilIntervalKm}
-                        onChangeText={setEditOilIntervalKm}
-                        keyboardType="number-pad"
-                        editable={!updateOilType.isPending}
-                        style={styles.colWideInput}
-                      />
-                      <View style={styles.editActions}>
-                        <RowIcon
-                          name="check"
-                          color={COLORS.success}
-                          onPress={handleSaveOilEdit}
-                          disabled={updateOilType.isPending}
+                      <View style={styles.editControls}>
+                        <CellInput
+                          value={editOilIntervalKm}
+                          onChangeText={setEditOilIntervalKm}
+                          keyboardType="number-pad"
+                          placeholder="km"
+                          editable={!updateOilType.isPending}
+                          style={styles.editNumInput}
                         />
-                        <RowIcon
-                          name="close"
-                          color={COLORS.textLight}
-                          onPress={cancelEditOil}
-                          disabled={updateOilType.isPending}
-                        />
+                        <View style={styles.editActions}>
+                          <RowIcon
+                            name="check"
+                            color={COLORS.success}
+                            onPress={handleSaveOilEdit}
+                            disabled={updateOilType.isPending}
+                          />
+                          <RowIcon
+                            name="close"
+                            color={COLORS.danger}
+                            onPress={cancelEditOil}
+                            disabled={updateOilType.isPending}
+                          />
+                        </View>
                       </View>
                     </View>
                   ) : (
                     <View style={styles.tr}>
-                      <Text style={[styles.td, styles.colName]} numberOfLines={1}>
+                      <Text
+                        style={[styles.td, styles.colName]}
+                        numberOfLines={1}
+                      >
                         {oil?.name}
                       </Text>
                       <Text style={[styles.tdNum, styles.colWide]}>
@@ -551,8 +671,14 @@ export function SettingsCatalog() {
                       <View style={styles.colAction}>
                         <RowIcon
                           name="pencil-outline"
-                          color={COLORS.textLight}
+                          color={COLORS.primary}
                           onPress={() => startEditOil(oil)}
+                        />
+                        <RowIcon
+                          name="trash-can-outline"
+                          color={COLORS.danger}
+                          onPress={() => handleDeleteOil(oil)}
+                          disabled={deleteOilType.isPending}
                         />
                       </View>
                     </View>
@@ -566,10 +692,15 @@ export function SettingsCatalog() {
 
         {/* ---------- Account ---------- */}
         <Panel style={styles.panel}>
-          <Text style={styles.panelTitle}>Account</Text>
-          {user?.email ? (
-            <Text style={styles.accountEmail}>{user?.email}</Text>
-          ) : null}
+          <View style={styles.panelHeader}>
+            <PanelIcon name="account-circle-outline" color={COLORS.primary} />
+            <View style={styles.panelTitleCol}>
+              <Text style={styles.panelTitle}>Account</Text>
+              {user?.email ? (
+                <Text style={styles.accountEmail}>{user?.email}</Text>
+              ) : null}
+            </View>
+          </View>
           <PrimaryButton
             onPress={handleLogout}
             variant="destructive"
@@ -603,6 +734,14 @@ const styles = StyleSheet.create({
     alignItems: "flex-start",
     justifyContent: "space-between",
     gap: 12,
+  },
+  panelIcon: {
+    width: 30,
+    height: 30,
+    borderRadius: 9,
+    borderWidth: 1,
+    alignItems: "center",
+    justifyContent: "center",
   },
   panelTitleCol: {
     flex: 1,
@@ -650,9 +789,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 8,
   },
-  trEditing: {
-    paddingVertical: 6,
-  },
   td: {
     fontSize: 13.5,
     color: COLORS.text,
@@ -671,21 +807,41 @@ const styles = StyleSheet.create({
     width: 56,
     textAlign: "right",
   },
-  colNumInput: {
-    width: 56,
-    textAlign: "right",
-  },
   colWide: {
     width: 110,
     textAlign: "right",
   },
-  colWideInput: {
-    width: 90,
-    textAlign: "right",
-  },
   colAction: {
-    width: 32,
+    // ! 64, not 32: holds the pencil plus spec 45's trash icon. RowIcon is 32pt square, so
+    // ! two sit side by side; the flex NAME column absorbs the difference. Read-only row
+    // ! only — spec 43's stacked editor has its own action container.
+    width: 64,
+    flexDirection: "row",
     alignItems: "center",
+  },
+  // ! The inline editor deliberately does NOT reuse the table's columns. Sharing them
+  // ! left the name input with flex:1 of whatever survived two 56pt interval fields and
+  // ! 64pt of action icons — about 96pt on a 360pt-wide screen — so any real type name
+  // ! ("Engine Oil Change") overflowed and scrolled horizontally inside the field, which
+  // ! is unreadable and uneditable. Stacking gives the name the panel's full inner width
+  // ! and drops the interval fields to a second line, where flex:1 each is far roomier
+  // ! than the fixed 56/90pt they had. Columns stop lining up with the header while a row
+  // ! is being edited; the placeholders ("km"/"days") carry that meaning instead.
+  editBlock: {
+    paddingVertical: 8,
+    gap: 8,
+  },
+  editNameInput: {
+    width: "100%",
+  },
+  editControls: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  editNumInput: {
+    flex: 1,
+    textAlign: "right",
   },
   editActions: {
     flexDirection: "row",

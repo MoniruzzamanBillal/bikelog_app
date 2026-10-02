@@ -8,8 +8,8 @@ import { Alert, StyleSheet, View } from "react-native";
 import { TouchableOpacity } from "react-native-gesture-handler";
 import { ActivityIndicator, Text } from "react-native-paper";
 import Toast from "react-native-toast-message";
-import { TPickedImageFile } from "./ImagePickerField";
 import { confirm } from "./ConfirmDialog";
+import { TPickedImageFile } from "./ImagePickerField";
 import { ImageViewerModal } from "./ImageViewerModal";
 
 type TGalleryImage = TCloudinaryImage & { _id: string };
@@ -121,9 +121,9 @@ export function MultiImagePickerField({
             />
           </TouchableOpacity>
           <TouchableOpacity
-            onPress={() => handleRemove(image._id)}
+            onPress={() => handleRemove(image?._id)}
             style={styles.deleteBadge}
-            hitSlop={8}
+            hitSlop={10}
           >
             <MaterialCommunityIcons
               name="close"
@@ -168,7 +168,7 @@ export function MultiImagePickerField({
   );
 }
 
-const SIZE = 56;
+const SIZE = 64;
 
 const styles = StyleSheet.create({
   row: {
@@ -206,10 +206,8 @@ const styles = StyleSheet.create({
   },
   deleteBadge: {
     position: "absolute",
-    // ! -6, not the old -70: the wrapper is exactly SIZE tall, so a -70 offset floated
-    // ! the badge far above the thumbnail. -6 overlaps the tile's top-right corner,
-    // ! which is what it was always meant to do (tuned for the pre-Nocturne layout).
-    top: -6,
+
+    top: -72,
     right: -6,
     width: 18,
     height: 18,

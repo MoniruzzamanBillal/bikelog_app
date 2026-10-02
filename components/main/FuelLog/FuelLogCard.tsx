@@ -162,7 +162,7 @@ export function FuelLogCard({
 
           <ImagePickerField
             label="Receipt"
-            size={56}
+            size={64}
             value={fuelLog.receiptImage}
             onUpload={handleImageUpload}
             onDelete={handleImageDelete}

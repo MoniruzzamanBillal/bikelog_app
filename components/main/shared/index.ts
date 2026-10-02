@@ -33,3 +33,4 @@ export type { TStatusTone } from "./StatusBadge";
 export { ActionMenu } from "./ActionMenu";
 export type { TMenuAction } from "./ActionMenu";
 export { FormActions } from "./FormActions";
+export { toastConfig } from "./toastConfig";

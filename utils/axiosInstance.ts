@@ -73,8 +73,15 @@ instance?.interceptors?.response?.use(
       errors: error?.response?.data?.errors,
     };
 
+    // ! A 409 means the server *refused* the request, not that something broke — show it
+    // ! amber rather than red (spec 45 §3). Confirmed app-wide with the user: this also
+    // ! recolours the existing duplicate-name conflicts on catalog create/update, which is
+    // ! the intended reading of a 409.
+    // ! Reads `error.response.status`, NOT `errorObj.statusCode` — globalErrorHandler sends
+    // ! `{ success, message, errorSources, stack }` with no `statusCode`, so the field below
+    // ! is always its 500 fallback and can never identify a 409.
     Toast.show({
-      type: "error",
+      type: error?.response?.status === 409 ? "warning" : "error",
       text1: errorObj?.message,
       position: "top",
     });

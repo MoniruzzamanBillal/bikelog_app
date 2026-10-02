@@ -12,6 +12,7 @@ import { KeyboardProvider } from "react-native-keyboard-controller";
 import { Provider as PaperProvider } from "react-native-paper";
 import "react-native-reanimated";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
+import { toastConfig } from "@/components/main/shared";
 import Toast from "react-native-toast-message";
 
 export const unstable_settings = {
@@ -69,7 +70,7 @@ export default function RootLayout() {
                   <Slot />
                 </SafeAreaView>
                 <ConfirmDialogHost />
-                <Toast />
+                <Toast config={toastConfig} />
               </UserProvider>
             </PaperProvider>
           </GestureHandlerRootView>
