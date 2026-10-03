@@ -27,3 +27,8 @@ export type TCreateBikePayload = {
 export type TUpdateBikePayload = Partial<
   Omit<TCreateBikePayload, "currentOdometer">
 >;
+
+// ! PATCH /bikes/:id/odometer — the only way to write currentOdometer directly
+export type TUpdateOdometerPayload = {
+  currentOdometer: number;
+};

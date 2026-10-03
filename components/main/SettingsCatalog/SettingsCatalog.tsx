@@ -16,7 +16,7 @@ import {
   TUpdateEngineOilTypePayload,
   TUpdateMaintenanceTypePayload,
 } from "@/types/catalog.types";
-import { COLORS, tint } from "@/utils/colors";
+import { COLORS } from "@/utils/colors";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useState } from "react";
@@ -29,6 +29,8 @@ import {
 import { ScrollView } from "react-native-gesture-handler";
 import { Text } from "react-native-paper";
 import Toast from "react-native-toast-message";
+import { OdometerPanel } from "./OdometerPanel";
+import { PanelIcon } from "./PanelIcon";
 
 /** Compact inline-edit input used inside a catalog table row. */
 function CellInput(props: React.ComponentProps<typeof NativeTextInput>) {
@@ -63,30 +65,6 @@ function RowIcon({
     >
       <MaterialCommunityIcons name={name} size={16} color={color} />
     </TouchableOpacity>
-  );
-}
-
-/**
- * Section-header icon in a tone-tinted chip. Mirrors `EmptyState`'s accent chip so a
- * panel header and its own empty state read as the same family, and keeps every tint
- * derived from a `COLORS` token via `tint()` rather than a hard-coded rgba literal.
- */
-function PanelIcon({
-  name,
-  color,
-}: {
-  name: React.ComponentProps<typeof MaterialCommunityIcons>["name"];
-  color: string;
-}) {
-  return (
-    <View
-      style={[
-        styles.panelIcon,
-        { backgroundColor: tint(color, 0.14), borderColor: tint(color, 0.32) },
-      ]}
-    >
-      <MaterialCommunityIcons name={name} size={16} color={color} />
-    </View>
   );
 }
 
@@ -397,6 +375,9 @@ export function SettingsCatalog() {
         contentContainerStyle={styles.page}
         showsVerticalScrollIndicator={false}
       >
+        {/* ---------- Odometer ---------- */}
+        <OdometerPanel />
+
         {/* ---------- Maintenance types ---------- */}
         <Panel style={styles.panel}>
           <View style={styles.panelHeader}>
@@ -734,14 +715,6 @@ const styles = StyleSheet.create({
     alignItems: "flex-start",
     justifyContent: "space-between",
     gap: 12,
-  },
-  panelIcon: {
-    width: 30,
-    height: 30,
-    borderRadius: 9,
-    borderWidth: 1,
-    alignItems: "center",
-    justifyContent: "center",
   },
   panelTitleCol: {
     flex: 1,
