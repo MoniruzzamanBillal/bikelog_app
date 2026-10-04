@@ -1,6 +1,6 @@
 # 48: Per-user catalogs — cache isolation, `requiresOilType`, empty states (app)
 
-Status: ⛔ Not Started — plan only, awaiting implementation.
+Status: ✅ Complete (code-verified only — the two-user device/Expo-web pass in §Test plan has NOT been run) — 2026-10-04.
 
 App half of a three-repo change. Server counterpart: `bikelog_server/context/specs/46-per-user-catalog-ownership.md` (**ships first**). Web counterpart: `bikelog_client-web-/context/specs/30-per-user-catalogs.md`.
 
@@ -12,17 +12,17 @@ App half of a three-repo change. Server counterpart: `bikelog_server/context/spe
 
 The backend is making `MaintenanceType` and `EngineOilType` per-user (server spec 46). Three consequences land on this app:
 
-1. **A real leak.** This app never clears its react-query cache on logout, so user A → logout → user B login **in the same JS context** renders A's catalog to B. Today that is invisible, because the catalog is global and A's rows *are* B's rows. Once catalogs are private it is a genuine cross-tenant disclosure, and B's maintenance-log form will offer A's type ids — which the server will now correctly 404.
+1. **A real leak.** This app never clears its react-query cache on logout, so user A → logout → user B login **in the same JS context** renders A's catalog to B. Today that is invisible, because the catalog is global and A's rows _are_ B's rows. Once catalogs are private it is a genuine cross-tenant disclosure, and B's maintenance-log form will offer A's type ids — which the server will now correctly 404.
 2. **The oil-type dropdown breaks for new users.** `MaintenanceLogFormModal.tsx:70` gates it on `selectedMaintType?.name === "Engine Oil"`. That only ever worked because the global catalog was seeded with that row. New users now start with an **empty** catalog (server spec 46 decision 2), so they can never surface the field. Replaced by the server's new `requiresOilType` flag.
 3. **New users hit a dead end.** With an empty catalog the maintenance-log type picker has no options, so a new user cannot create a maintenance log at all and nothing explains why.
 
 ## Confirmed decisions (with the user, 2026-10-04)
 
-| Question | Decision |
-| --- | --- |
-| New users' catalogs | **Empty.** No seeding — server spec 42 removed the seed scripts at the user's instruction. |
-| The `"Engine Oil"` magic string | Replaced by a `requiresOilType` boolean on the maintenance type, set by its owner. |
-| Scope | All three repos, deliberately. |
+| Question                        | Decision                                                                                   |
+| ------------------------------- | ------------------------------------------------------------------------------------------ |
+| New users' catalogs             | **Empty.** No seeding — server spec 42 removed the seed scripts at the user's instruction. |
+| The `"Engine Oil"` magic string | Replaced by a `requiresOilType` boolean on the maintenance type, set by its owner.         |
+| Scope                           | All three repos, deliberately.                                                             |
 
 ---
 
@@ -49,7 +49,7 @@ const logoutFunction = async () => {
 };
 ```
 
-There is no `queryClient.clear()` or `removeQueries()` anywhere in this repo. With react-query's defaults (`staleTime: 0`, `gcTime: 5 min`, and no override anywhere in the repo) the cached rows render immediately on mount and *then* refetch — so the previous user's catalog is visibly on screen for the stale-while-revalidate window, not just held in memory.
+There is no `queryClient.clear()` or `removeQueries()` anywhere in this repo. With react-query's defaults (`staleTime: 0`, `gcTime: 5 min`, and no override anywhere in the repo) the cached rows render immediately on mount and _then_ refetch — so the previous user's catalog is visibly on screen for the stale-while-revalidate window, not just held in memory.
 
 `UserProvider` is nested **inside** `QueryClientProvider` (`_layout.tsx:61-64`), so a hook would work there — but `utils/axiosInstance.ts`'s interceptor runs at module scope and cannot use hooks. So make the singleton importable.
 
@@ -98,17 +98,17 @@ The Settings panels themselves already render an empty table body, but check the
 
 ## Implementation checklist
 
-- [ ] 1. `utils/queryClient.ts` — extract the singleton
-- [ ] 2. `app/_layout.tsx` — import it instead of constructing
-- [ ] 3. `context/user.context.tsx` — `clear()` in `logoutFunction` **and** `handleSetToken`
-- [ ] 4. `utils/axiosInstance.ts` — `clear()` in the 401 branch
-- [ ] 5. `types/catalog.types.ts` — `requiresOilType: boolean`
-- [ ] 6. `SettingsCatalog.tsx` — `SwitchField` in the add form and the edit block; include in both payloads
-- [ ] 7. `MaintenanceLogFormModal.tsx` — gate on the flag; empty state for a zero-option picker
-- [ ] 8. Copy fixes (§D)
-- [ ] 9. `expo lint` clean; `tsc` / typed-route check clean
-- [ ] 10. Device or Expo-web verification (§Test plan)
-- [ ] 11. Mark **Complete** in `progress-tracker.md`
+- [x] 1. `utils/queryClient.ts` — extract the singleton
+- [x] 2. `app/_layout.tsx` — import it instead of constructing
+- [x] 3. `context/user.context.tsx` — `clear()` in `logoutFunction` **and** `handleSetToken`
+- [x] 4. `utils/axiosInstance.ts` — `clear()` in the 401 branch
+- [x] 5. `types/catalog.types.ts` — `requiresOilType: boolean` (also optional on the create/update payload types)
+- [x] 6. `SettingsCatalog.tsx` — `SwitchField` in the add form and the edit block; include in both payloads
+- [x] 7. `MaintenanceLogFormModal.tsx` — gate on the flag; empty state for a zero-option picker
+- [x] 8. Copy fixes (§D)
+- [x] 9. `expo lint` clean; `tsc` / typed-route check clean — `npx tsc --noEmit` 0 errors, `yarn lint` clean, `eslint` on the 5 files outside lint's scope clean; static greps (`=== "Engine Oil"`, `Shared catalog`) → no hits
+- [x] 10. Device or Expo-web verification (§Test plan) — **code-verified only.** The cache mechanism was checked in Node against the app's own `@tanstack/query-core` (cached A data survives without `clear()`, is `undefined` after it). The two-user click path, the force-kill/401 paths, `requiresOilType` toggle round-trips and the regression list were **not run** — they need server spec 46 deployed (or a local server on a Neon branch) and two registered users on a device/Expo web. Still owed.
+- [x] 11. Mark **Complete** in `progress-tracker.md`
 
 ---
 
@@ -152,7 +152,15 @@ Maintenance-log cards (`MaintenanceLogCard.tsx:37`) and `RemindersBanner.tsx:74`
 - **The `?? "Maintenance"` display fallbacks** — unreachable for one's own data, since the server's `catalogInclude` always populates the name.
 - **`OdometerPanel.tsx`** — touches no catalog.
 - **The known double-toast bug** on the create/update catch blocks (`SettingsCatalog.tsx:246-249` documents it) — pre-existing, out of scope.
-- **`errorObj.statusCode` always being 500** — this app correctly reads `error.response.status` instead; it is the *web* client that needs that fix (web spec 30).
+- **`errorObj.statusCode` always being 500** — this app correctly reads `error.response.status` instead; it is the _web_ client that needs that fix (web spec 30).
+
+## Implementation notes (2026-10-04)
+
+- **One addition beyond §C's letter, forced by it:** `MaintenanceLogFormModal` previously treated *"list is empty"* as *"still loading"* for both pickers (`SectionLoading` whenever `length === 0`). With empty catalogs that would spin forever, so both pickers now key off the query's `isLoading` and fall through to the empty state (type picker) or a one-line hint (oil picker — needed because a user who turns the toggle on before adding any oil type would otherwise see a permanent skeleton, which the test plan's "toggle on → oil dropdown" step would hit).
+- The empty state is text-only (points at Settings → Maintenance types); no navigation button, to avoid a typed-route dependency on the generated `.expo/types/router.d.ts`.
+- The edit-block toggle carries no description line (the add form does) to keep the stacked inline editor compact.
+- The Settings panels' existing empty-state copy ("No maintenance types yet" / "Add one to start logging services against it.") already reads correctly for a brand-new user — left unchanged per §C.
+- `yarn lint`'s warning `'error' is defined but never used` at `user.context.tsx` `logoutFunction`'s `catch` is **pre-existing** and untouched.
 
 ## Open items
 

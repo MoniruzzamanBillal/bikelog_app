@@ -3,6 +3,7 @@ import axios from "axios";
 import { router } from "expo-router";
 import Toast from "react-native-toast-message";
 import { getBaseUrl } from "./envConfig";
+import { queryClient } from "./queryClient";
 
 const instance = axios.create({
   baseURL: getBaseUrl(),
@@ -56,6 +57,10 @@ instance?.interceptors?.response?.use(
     if (error?.response?.status === 401) {
       await AsyncStorage.removeItem("user");
       await AsyncStorage.removeItem("token");
+      // ! This path never goes through logoutFunction, so without this the whole cache
+      // ! survives a 401 and the next login would briefly render the old user's data
+      // ! (spec 48 §A).
+      queryClient.clear();
 
       Toast.show({
         type: "error",

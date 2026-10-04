@@ -1,8 +1,9 @@
 import { ConfirmDialogHost } from "@/components/main/shared/ConfirmDialog";
 import UserProvider from "@/context/user.context";
 import { COLORS } from "@/utils/colors";
+import { queryClient } from "@/utils/queryClient";
 import { paperTheme } from "@/utils/theme";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider } from "@tanstack/react-query";
 import { Slot, useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import * as Notifications from "expo-notifications";
@@ -18,8 +19,6 @@ import Toast from "react-native-toast-message";
 export const unstable_settings = {
   anchor: "(tabs)",
 };
-
-const queryClient = new QueryClient();
 
 // ! without this, a notification that arrives while the app is already open is silently
 // ! swallowed instead of showing a banner (Expo's default foreground behavior)
