@@ -53,24 +53,40 @@ instance?.interceptors?.response?.use(
 
   // ❌ Handle errors
   async function (error) {
-    // !
+    // ! Spec 48a: a 401 only means "this session expired" if the request that failed was sent
+    // ! with the session that is current RIGHT NOW. `logoutFunction` clears the query cache
+    // ! while the old screens are still mounted, so they refetch with no token; those 401s
+    // ! used to wipe whatever session existed when they landed — including a user who had
+    // ! just logged in on a slow connection. A 401 for any other token is a stale leftover.
+    const sentAuth = error?.config?.headers?.Authorization;
+    // ! Login/register answers are the user's own action, never "stale" — leave them alone.
+    const isAuthEndpoint = /^\/auth\//.test(error?.config?.url ?? "");
+    let isStale401 = false;
+
     if (error?.response?.status === 401) {
-      await AsyncStorage.removeItem("user");
-      await AsyncStorage.removeItem("token");
-      // ! This path never goes through logoutFunction, so without this the whole cache
-      // ! survives a 401 and the next login would briefly render the old user's data
-      // ! (spec 48 §A).
-      queryClient.clear();
+      const currentToken = await AsyncStorage.getItem("token");
+      const isCurrentSession =
+        !!sentAuth && !!currentToken && sentAuth === `Bearer ${currentToken}`;
 
-      Toast.show({
-        type: "error",
-        text1: "Token expired , please login ",
-        position: "top",
-      });
+      if (isCurrentSession) {
+        await AsyncStorage.removeItem("user");
+        await AsyncStorage.removeItem("token");
+        // ! This path never goes through logoutFunction, so without this the whole cache
+        // ! survives a 401 and the next login would briefly render the old user's data
+        // ! (spec 48 §A).
+        queryClient.clear();
 
-      router.replace("/auth");
+        Toast.show({
+          type: "error",
+          text1: "Token expired , please login ",
+          position: "top",
+        });
+
+        router.replace("/auth");
+      } else if (!isAuthEndpoint) {
+        isStale401 = true;
+      }
     }
-    // !
 
     const errorObj = {
       statusCode: error?.response?.data?.statusCode || 500,
@@ -85,11 +101,14 @@ instance?.interceptors?.response?.use(
     // ! Reads `error.response.status`, NOT `errorObj.statusCode` — globalErrorHandler sends
     // ! `{ success, message, errorSources, stack }` with no `statusCode`, so the field below
     // ! is always its 500 fallback and can never identify a 409.
-    Toast.show({
-      type: error?.response?.status === 409 ? "warning" : "error",
-      text1: errorObj?.message,
-      position: "top",
-    });
+    // ! A stale 401 (spec 48a) is not something the user did or can act on — no toast.
+    if (!isStale401) {
+      Toast.show({
+        type: error?.response?.status === 409 ? "warning" : "error",
+        text1: errorObj?.message,
+        position: "top",
+      });
+    }
 
     return Promise.reject(errorObj);
   },
