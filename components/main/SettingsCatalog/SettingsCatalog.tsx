@@ -18,6 +18,7 @@ import {
   TUpdateMaintenanceTypePayload,
 } from "@/types/catalog.types";
 import { COLORS } from "@/utils/colors";
+import { isAdminToken } from "@/utils/isAdmin";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useState } from "react";
@@ -94,7 +95,7 @@ const cellStyles = StyleSheet.create({
 const dash = (n?: number | null) => (n ? n.toLocaleString() : "—");
 
 export function SettingsCatalog() {
-  const { user, logoutFunction } = useUserContext();
+  const { user, token, logoutFunction } = useUserContext();
   const {
     data: maintData,
     isLoading: maintLoading,
@@ -691,6 +692,43 @@ export function SettingsCatalog() {
           )}
         </Panel>
 
+        {/* ---------- Admin (spec 50) ---------- */}
+        {/* Gated on the login token's `userRole` claim — the exact thing the server's
+            `adminCheck` reads — so this is visible iff the API would let the admin in. */}
+        {isAdminToken(token) ? (
+          <Panel style={styles.panel}>
+            <View style={styles.panelHeader}>
+              <PanelIcon name="shield-account-outline" color={COLORS.warning} />
+              <View style={styles.panelTitleCol}>
+                <Text style={styles.panelTitle}>Admin</Text>
+                <Text style={styles.panelSub}>Visible to admin accounts only</Text>
+              </View>
+            </View>
+            <TouchableOpacity
+              onPress={() => router.push("/admin/error-logs")}
+              activeOpacity={0.8}
+              style={styles.adminRow}
+            >
+              <MaterialCommunityIcons
+                name="bug-outline"
+                size={18}
+                color={COLORS.textLight}
+              />
+              <View style={styles.adminRowText}>
+                <Text style={styles.adminRowTitle}>Error logs</Text>
+                <Text style={styles.adminRowSub}>
+                  Server errors from the last 30 days
+                </Text>
+              </View>
+              <MaterialCommunityIcons
+                name="chevron-right"
+                size={20}
+                color={COLORS.textMuted}
+              />
+            </TouchableOpacity>
+          </Panel>
+        ) : null}
+
         {/* ---------- Account ---------- */}
         <Panel style={styles.panel}>
           <View style={styles.panelHeader}>
@@ -842,5 +880,28 @@ const styles = StyleSheet.create({
   accountEmail: {
     fontSize: 13,
     color: COLORS.textLight,
+  },
+  adminRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    backgroundColor: COLORS.surface2,
+  },
+  adminRowText: {
+    flex: 1,
+  },
+  adminRowTitle: {
+    fontSize: 14,
+    color: COLORS.text,
+  },
+  adminRowSub: {
+    fontSize: 11.5,
+    color: COLORS.textMuted,
+    marginTop: 1,
   },
 });
