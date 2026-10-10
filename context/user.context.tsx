@@ -8,6 +8,7 @@ import {
 } from "react";
 
 import { IUser } from "@/types/global.types";
+import { queryClient } from "@/utils/queryClient";
 import { registerPushToken } from "@/utils/registerPushToken";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
@@ -70,6 +71,10 @@ const UserProvider = ({ children }: { children: ReactNode }) => {
   const handleSetToken = async (token: string | null) => {
     setToken(token);
     if (token) {
+      // ! A new session starts from an empty cache. Clearing on login is the stronger
+      // ! guarantee than clearing on logout alone: logout can be skipped (force-kill, token
+      // ! expiry, crash), login cannot (spec 48 §A).
+      queryClient.clear();
       await AsyncStorage.setItem("token", token);
     } else {
       await AsyncStorage.removeItem("token");
@@ -81,6 +86,7 @@ const UserProvider = ({ children }: { children: ReactNode }) => {
     try {
       await AsyncStorage.removeItem("user");
       await AsyncStorage.removeItem("token");
+      queryClient.clear();
       setUser(null);
       setToken(null);
     } catch (error) {

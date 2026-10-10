@@ -6,6 +6,7 @@ import {
   RuleFade,
   ScreenHeader,
   SectionLoading,
+  SwitchField,
   confirm,
 } from "@/components/main/shared";
 import { useUserContext } from "@/context/user.context";
@@ -121,6 +122,7 @@ export function SettingsCatalog() {
   const [newMaintName, setNewMaintName] = useState("");
   const [newMaintIntervalKm, setNewMaintIntervalKm] = useState("");
   const [newMaintIntervalDays, setNewMaintIntervalDays] = useState("");
+  const [newMaintRequiresOil, setNewMaintRequiresOil] = useState(false);
   const [expandMaint, setExpandMaint] = useState(false);
 
   const [newOilName, setNewOilName] = useState("");
@@ -131,6 +133,7 @@ export function SettingsCatalog() {
   const [editMaintName, setEditMaintName] = useState("");
   const [editMaintIntervalKm, setEditMaintIntervalKm] = useState("");
   const [editMaintIntervalDays, setEditMaintIntervalDays] = useState("");
+  const [editMaintRequiresOil, setEditMaintRequiresOil] = useState(false);
 
   const [editingOilId, setEditingOilId] = useState<string | null>(null);
   const [editOilName, setEditOilName] = useState("");
@@ -152,11 +155,13 @@ export function SettingsCatalog() {
           ...(newMaintIntervalDays.trim()
             ? { defaultIntervalDays: parseInt(newMaintIntervalDays, 10) }
             : {}),
+          requiresOilType: newMaintRequiresOil,
         },
       });
       setNewMaintName("");
       setNewMaintIntervalKm("");
       setNewMaintIntervalDays("");
+      setNewMaintRequiresOil(false);
       setExpandMaint(false);
       Toast.show({
         type: "success",
@@ -182,6 +187,7 @@ export function SettingsCatalog() {
     setEditMaintIntervalDays(
       type?.defaultIntervalDays ? String(type?.defaultIntervalDays) : "",
     );
+    setEditMaintRequiresOil(!!type?.requiresOilType);
     setExpandMaint(false);
   };
 
@@ -203,6 +209,7 @@ export function SettingsCatalog() {
         defaultIntervalDays: editMaintIntervalDays.trim()
           ? parseInt(editMaintIntervalDays, 10)
           : null,
+        requiresOilType: editMaintRequiresOil,
       };
       await updateMaintType.mutateAsync({
         url: `/maintenance-types/${editingMaintId}`,
@@ -385,7 +392,7 @@ export function SettingsCatalog() {
             <View style={styles.panelTitleCol}>
               <Text style={styles.panelTitle}>Maintenance types</Text>
               <Text style={styles.panelSub}>
-                Shared catalog · used by maintenance logs and reminders
+                Your catalog · used by your maintenance logs and reminders
               </Text>
             </View>
             <PrimaryButton
@@ -428,6 +435,13 @@ export function SettingsCatalog() {
                   style={styles.rowField}
                 />
               </View>
+              <SwitchField
+                label="Needs an engine oil type"
+                description="Shows the oil-type picker when you log this service"
+                value={newMaintRequiresOil}
+                onChange={setNewMaintRequiresOil}
+                disabled={createMaintType.isPending}
+              />
               <PrimaryButton
                 onPress={handleCreateMaint}
                 loading={createMaintType.isPending}
@@ -466,6 +480,12 @@ export function SettingsCatalog() {
                         editable={!updateMaintType.isPending}
                         placeholder="Type name"
                         style={styles.editNameInput}
+                      />
+                      <SwitchField
+                        label="Needs an engine oil type"
+                        value={editMaintRequiresOil}
+                        onChange={setEditMaintRequiresOil}
+                        disabled={updateMaintType.isPending}
                       />
                       <View style={styles.editControls}>
                         <CellInput
@@ -543,7 +563,7 @@ export function SettingsCatalog() {
             <View style={styles.panelTitleCol}>
               <Text style={styles.panelTitle}>Engine oil types</Text>
               <Text style={styles.panelSub}>
-                Suggested interval pre-fills the Engine Oil service form
+                Suggested interval pre-fills the oil-change service form
               </Text>
             </View>
             <PrimaryButton

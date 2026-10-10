@@ -5,6 +5,7 @@ import { Modal, Portal, Text } from "react-native-paper";
 import Toast from "react-native-toast-message";
 import {
   DatePickerField,
+  EmptyState,
   FormActions,
   FormField,
   SectionLoading,
@@ -34,12 +35,12 @@ export function MaintenanceLogFormModal({
   bikeId,
   log,
 }: MaintenanceLogFormModalProps) {
-  const { data: mtData } = useFetchData<TMaintenanceType[]>(
+  const { data: mtData, isLoading: mtLoading } = useFetchData<TMaintenanceType[]>(
     ["maintenance-types"],
     "/maintenance-types",
     { enabled: open },
   );
-  const { data: oilData } = useFetchData<TEngineOilType[]>(
+  const { data: oilData, isLoading: oilLoading } = useFetchData<TEngineOilType[]>(
     ["engine-oil-types"],
     "/engine-oil-types",
     { enabled: open },
@@ -67,7 +68,9 @@ export function MaintenanceLogFormModal({
     () => maintenanceTypes.find((mt) => mt?._id === maintenanceType),
     [maintenanceTypes, maintenanceType],
   );
-  const isEngineOil = selectedMaintType?.name === "Engine Oil";
+  // ! Driven by the owner-set flag, not a match on the type's name — a name match only worked
+  // ! while a seeded global row existed; per-user catalogs start empty (spec 48 §B).
+  const isEngineOil = !!selectedMaintType?.requiresOilType;
 
   useEffect(() => {
     if (!isEngineOil) {
@@ -189,8 +192,17 @@ export function MaintenanceLogFormModal({
         <KeyboardAwareScrollView showsVerticalScrollIndicator={false}>
           <Text style={styles.title}>{log ? "Edit Service" : "Add Service"}</Text>
 
-          {maintenanceTypes?.length === 0 ? (
+          {mtLoading ? (
             <SectionLoading count={1} />
+          ) : mtOptions?.length === 0 ? (
+            // ! A new user's catalog starts empty, so this is the first wall they hit —
+            // ! without it the form looks broken (spec 48 §C).
+            <EmptyState
+              icon="wrench-outline"
+              title="No maintenance types yet"
+              message="Add one in Settings → Maintenance types, then come back to log this service."
+              style={styles.emptyState}
+            />
           ) : (
             <SelectPickerField
               label="Maintenance Type"
@@ -202,8 +214,12 @@ export function MaintenanceLogFormModal({
           )}
 
           {isEngineOil && (
-            oilTypes?.length === 0 ? (
+            oilLoading ? (
               <SectionLoading count={1} />
+            ) : oilOptions?.length === 0 ? (
+              <Text style={styles.hint}>
+                No oil types yet — add one in Settings → Engine oil types.
+              </Text>
             ) : (
               <SelectPickerField
                 label="Oil Type (optional)"
@@ -321,6 +337,14 @@ const styles = StyleSheet.create({
   },
   rowField: {
     flex: 1,
+  },
+  emptyState: {
+    marginBottom: 14,
+  },
+  hint: {
+    fontSize: 12.5,
+    color: COLORS.textLight,
+    marginBottom: 14,
   },
   noMarginBottom: {
     marginBottom: 14,
