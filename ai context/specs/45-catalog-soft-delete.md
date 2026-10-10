@@ -1,6 +1,6 @@
 # 45: Delete maintenance types & engine oil types (app side)
 
-Status: ⛔ Not Started — plan only, rewritten 2026-10-01 after the user confirmed the design decisions. **No code written yet.**
+Status: ✅ Complete — implemented 2026-10-01 in commit `457d8d9` (the rewritten plan below was written the same day, after the user confirmed the design decisions). **This status line and the tracker rows were not updated at the time and said "Not Started" until 2026-10-10.** The Verify checklist below was likewise never ticked, so per-item verification from 2026-10-01 is unrecorded; what was re-observed on 2026-10-10 (Expo web export against the live API): the confirm dialog, the in-use refusal toast (`"ZZ Engine Oil" is used by 1 maintenance log and can't be deleted. Remove or re-assign it first.`), and the duplicate-name conflict message. Not checked on a device.
 
 App half of a three-repo feature. **Blocked on `bikelog_server/context/specs/41-catalog-soft-delete.md` shipping first** — this spec has no endpoint to call until it does. Web counterpart (`bikelog_client-web-/context/specs/28-...`) is parity-only and not yet written.
 
