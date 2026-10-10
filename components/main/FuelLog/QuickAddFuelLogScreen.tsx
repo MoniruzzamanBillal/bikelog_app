@@ -9,10 +9,9 @@ import { StyleSheet, View } from "react-native";
 import { FuelLogFormModal } from "./FuelLogFormModal";
 
 /**
- * Prefilled quick-create route (`/bikes/[bikeId]/fuel-logs/new`) — reached by
- * manual navigation for now, and eventually by the quick-add home-screen
- * widget's deep link. Seeds fuelStation/pricePerLiter from the bike's most
- * recent fuel log; odometer/liters are always left blank.
+ * Prefilled quick-create route (`/bikes/[bikeId]/fuel-logs/new`) — reached from
+ * the bike hub's quick-add button. Seeds fuelStation/pricePerLiter from the
+ * bike's most recent fuel log; odometer/liters are always left blank.
  */
 export function QuickAddFuelLogScreen() {
   const { bikeId } = useLocalSearchParams<{ bikeId: string }>();

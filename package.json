@@ -1,6 +1,6 @@
 {
   "name": "client",
-  "main": "./index.ts",
+  "main": "expo-router/entry",
   "version": "1.0.0",
   "scripts": {
     "start": "expo start",
@@ -42,7 +42,6 @@
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-native": "0.81.5",
-    "react-native-android-widget": "^0.22.1",
     "react-native-gesture-handler": "^2.30.0",
     "react-native-gifted-charts": "^1.4.78",
     "react-native-keyboard-controller": "1.18.5",

@@ -1,3 +1,5 @@
+> **Superseded 2026-10-10:** spec 36's widget was removed (it did not work on the developer's phone), so the entry-point and click-hand-off findings below describe code that no longer exists. Kept as history.
+
 # 36a: Findings from implementing spec 36 (widget entry point + click hand-off)
 
 Per direct user instruction: "if you find any error during implementation, make an

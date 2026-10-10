@@ -19,7 +19,7 @@ export async function getLastUsedBike(): Promise<string | null> {
 }
 
 /**
- * Resolution order for "the" bike when a screen/widget needs one and none was
+ * Resolution order for "the" bike when a screen needs one and none was
  * passed explicitly: exactly one bike -> use it; otherwise a still-existing
  * stored last-used bike -> use it; otherwise null (caller routes to the bike
  * list rather than guess wrong).

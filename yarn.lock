@@ -1069,17 +1069,6 @@
     dotenv-expand "~11.0.6"
     getenv "^2.0.0"
 
-"@expo/env@~2.0.8":
-  version "2.0.8"
-  resolved "https://registry.yarnpkg.com/@expo/env/-/env-2.0.8.tgz#2aea906eed3d297b2e19608dc1a800fba0a3fe03"
-  integrity sha512-5VQD6GT8HIMRaSaB5JFtOXuvfDVU80YtZIuUT/GDhUF782usIXY13Tn3IdDz1Tm/lqA9qnRZQ1BF4t7LlvdJPA==
-  dependencies:
-    chalk "^4.0.0"
-    debug "^4.3.4"
-    dotenv "~16.4.5"
-    dotenv-expand "~11.0.6"
-    getenv "^2.0.0"
-
 "@expo/fingerprint@0.15.5":
   version "0.15.5"
   resolved "https://registry.yarnpkg.com/@expo/fingerprint/-/fingerprint-0.15.5.tgz#76968191026346657d22cea10d957aa8be97777e"
@@ -5987,11 +5976,6 @@ react-is@^19.1.0:
   version "19.2.4"
   resolved "https://registry.yarnpkg.com/react-is/-/react-is-19.2.4.tgz#a080758243c572ccd4a63386537654298c99d135"
   integrity sha512-W+EWGn2v0ApPKgKKCy/7s7WHXkboGcsrXE+2joLyVxkbyVQfO3MUEaUQDHoSmb8TFFrSKYa9mw64WZHNHSDzYA==
-
-react-native-android-widget@^0.22.1:
-  version "0.22.1"
-  resolved "https://registry.yarnpkg.com/react-native-android-widget/-/react-native-android-widget-0.22.1.tgz#a2410c3a996c0e722cc31a7065193b782e67c35e"
-  integrity sha512-BBMuqShRrxV23Z09Rn5zNHJaPegCnH3DhhZQgXbhw2GMh45Gez0RbwKTIWHftuW4nLrqWy6esz8XwecUZLiZKA==
 
 react-native-fit-image@^1.5.5:
   version "1.5.5"

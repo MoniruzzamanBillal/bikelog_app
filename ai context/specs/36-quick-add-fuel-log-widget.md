@@ -2,7 +2,7 @@
 
 ## Status
 
-🔄 In progress
+🗑 Removed 2026-10-10 — the widget did not work on the developer's phone, so the feature was deleted: `widgets/`, the custom `index.ts` entry, the `react-native-android-widget` plugin and dependency. This file is kept as history only; do not implement it as written. **Still in the app:** §1 (last-used-bike tracking) and §2 (the prefilled quick-add route), which other screens use.
 
 ## Goal
 
