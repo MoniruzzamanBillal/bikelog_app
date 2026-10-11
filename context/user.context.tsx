@@ -10,6 +10,7 @@ import {
 import { IUser } from "@/types/global.types";
 import { queryClient } from "@/utils/queryClient";
 import { registerPushToken } from "@/utils/registerPushToken";
+import { clearTokens, getAccessToken, setTokens } from "@/utils/tokenStore";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 type IUserProviderValues = {
@@ -20,7 +21,13 @@ type IUserProviderValues = {
   isLoading: boolean;
   setIsLoading: (isLoading: boolean) => void;
   handleSetUser: (user: IUser | null) => void;
-  handleSetToken: (token: string | null) => void;
+  // ! Spec 51: both tokens arrive together from login. `token` in this context value keeps
+  // ! meaning the **access** token; the refresh token is deliberately not exposed here —
+  // ! only `tokenStore` and the interceptor ever need it.
+  handleSetTokens: (tokens: {
+    accessToken: string | null;
+    refreshToken?: string | null;
+  }) => void;
   logoutFunction: () => void;
 };
 
@@ -35,7 +42,15 @@ const UserProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const loadUserData = async () => {
       const storedUser = await AsyncStorage.getItem("user");
-      const storedToken = await AsyncStorage.getItem("token");
+      // ! Spec 51 §D: hydrates through `tokenStore`, which also migrates a pre-spec-51
+      // ! install's legacy `"token"` key on the way (H-C), so an existing install is not
+      // ! logged out by the update itself.
+      // ! No expiry check and no pre-emptive refresh here, on purpose. A cold launch after a
+      // ! week simply mounts; the first query goes out on the stale access token, the server
+      // ! 401s, and the interceptor's row 3 recovers it. The cost is one doomed round trip
+      // ! before the first screen's data arrives — V4 in the spec is what measures whether
+      // ! that is visible on a device.
+      const storedToken = await getAccessToken();
 
       if (storedUser && storedToken) {
         setUser(JSON.parse(storedUser));
@@ -67,17 +82,26 @@ const UserProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  // Store token in localStorage when set
-  const handleSetToken = async (token: string | null) => {
-    setToken(token);
-    if (token) {
+  // Store both tokens when a session starts
+  const handleSetTokens = async ({
+    accessToken,
+    refreshToken,
+  }: {
+    accessToken: string | null;
+    refreshToken?: string | null;
+  }) => {
+    setToken(accessToken);
+    if (accessToken) {
       // ! A new session starts from an empty cache. Clearing on login is the stronger
       // ! guarantee than clearing on logout alone: logout can be skipped (force-kill, token
       // ! expiry, crash), login cannot (spec 48 §A).
       queryClient.clear();
-      await AsyncStorage.setItem("token", token);
+      // ! Spec 51 §E: a missing `refreshToken` is not an error. The server deploys *after*
+      // ! this build (server spec 51 §H), so every login until then answers without one, and
+      // ! that has to behave exactly as it does today — a session that dies at expiry.
+      await setTokens({ accessToken, refreshToken });
     } else {
-      await AsyncStorage.removeItem("token");
+      await clearTokens();
     }
   };
 
@@ -85,7 +109,9 @@ const UserProvider = ({ children }: { children: ReactNode }) => {
   const logoutFunction = async () => {
     try {
       await AsyncStorage.removeItem("user");
-      await AsyncStorage.removeItem("token");
+      // ! Spec 51 §D: both tokens plus the legacy key. There is no server call — the server
+      // ! stores no session, so it has nothing to invalidate (server spec 51 §A).
+      await clearTokens();
       queryClient.clear();
       setUser(null);
       setToken(null);
@@ -103,7 +129,7 @@ const UserProvider = ({ children }: { children: ReactNode }) => {
         setUser,
         setToken,
         handleSetUser,
-        handleSetToken,
+        handleSetTokens,
         setIsLoading,
         logoutFunction,
       }}
