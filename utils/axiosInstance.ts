@@ -51,42 +51,67 @@ instance?.interceptors?.request?.use(
   },
 );
 
+/**
+ * ! Spec 51b: three outcomes, not two. A refresh that the server **refuses** means the
+ * ! session is over; a refresh we could not even deliver says nothing at all about the
+ * ! session, and treating the two alike deleted a valid 15-day credential every time a
+ * ! rider's signal dropped at the wrong moment. The flow's own step 3 is the authority:
+ * ! log out when the server refuses, not when we fail to ask.
+ */
+type TRefreshOutcome =
+  | { status: "refreshed"; accessToken: string }
+  | { status: "refused" } // the server answered — the session really is over
+  | { status: "unreachable" }; // no answer at all — says nothing about the session
+
 // ! Spec 51 §C: one refresh call at a time. An expiry hits every mounted screen at once, so
 // ! without this latch a burst of 401s would fire a refresh each — and all but one would be
-// ! spending an already-used round trip. Concurrent callers share the one in-flight promise.
-let refreshInFlight: Promise<string | null> | null = null;
+// ! spending an already-used round trip. Concurrent callers share the one in-flight promise,
+// ! and since spec 51b that promise carries the outcome, so every member of a burst learns
+// ! the same thing rather than just "it didn't work".
+let refreshInFlight: Promise<TRefreshOutcome> | null = null;
 
-async function refreshAccessToken(): Promise<string | null> {
+async function refreshAccessToken(): Promise<TRefreshOutcome> {
   if (refreshInFlight) {
     return refreshInFlight;
   }
 
-  refreshInFlight = (async () => {
+  refreshInFlight = (async (): Promise<TRefreshOutcome> => {
     try {
       const refreshToken = await getRefreshToken();
+      // ! Not a transport failure: there is nothing to ask with, so the session really is
+      // ! over. This is the legacy-install case (spec 51 H-C) and V7.
       if (!refreshToken) {
-        return null;
+        return { status: "refused" };
       }
 
       // ! bare axios, NOT axiosInstance — going through the instance would re-enter these
       // ! interceptors and, on a 401 from the refresh call itself, recurse.
-      const res = await axios.post(`${getBaseUrl()}/auth/refresh-token`, {
-        refreshToken,
-      });
+      // ! The explicit timeout is load-bearing (spec 51b §3c): bare axios does NOT inherit
+      // ! `instance.defaults.timeout`, and global axios has none, so a half-open connection
+      // ! could hang here forever — taking the whole latched burst of 401ed requests with
+      // ! it, since they are all awaiting this one promise.
+      const res = await axios.post(
+        `${getBaseUrl()}/auth/refresh-token`,
+        { refreshToken },
+        { timeout: 20000 },
+      );
 
       const nextAccessToken = res?.data?.token;
+      // ! A 200 with no token is a broken contract we cannot proceed on — the server has
+      // ! answered, so this is a refusal rather than a transport failure.
       if (!nextAccessToken) {
-        return null;
+        return { status: "refused" };
       }
 
       // ! The refresh token is not rotated and not echoed back (server spec 51 §A), so only
       // ! the access token is written here.
       await setTokens({ accessToken: nextAccessToken });
-      return nextAccessToken;
-    } catch {
-      // ! Any failure — 401 on an expired/invalid refresh token, or no network at all — is
-      // ! "could not refresh". The caller turns that into the logout path.
-      return null;
+      return { status: "refreshed", accessToken: nextAccessToken };
+    } catch (error: any) {
+      // ! The one question the whole fix rests on: did the server answer at all? A 401, any
+      // ! other status, or a malformed body all carry `error.response`. DNS failure, a
+      // ! refused connection, an offline radio and the timeout above do not.
+      return error?.response ? { status: "refused" } : { status: "unreachable" };
     } finally {
       // ! Must clear on success too, or one refresh per app session is all that ever happens.
       refreshInFlight = null;
@@ -123,6 +148,9 @@ instance?.interceptors?.response?.use(
     // ! refresh, and login/register have no session to recover.
     const isAuthEndpoint = /^\/auth\//.test(error?.config?.url ?? "");
     let isStale401 = false;
+    // ! Spec 51b: set when a refresh could not be delivered at all. It bars row 4 — a
+    // ! network blip must never cost the rider their session.
+    let refreshUnreachable = false;
 
     if (error?.response?.status === 401) {
       const currentToken = await getAccessToken();
@@ -142,14 +170,19 @@ instance?.interceptors?.response?.use(
         // ! reshapes to `{ data, meta }`, which is what `utils/api.ts` unwraps. A hand-rolled
         // ! retry would return a raw axios response and break every screen in a way `tsc`
         // ! cannot catch.
-        const nextAccessToken = await refreshAccessToken();
+        const outcome = await refreshAccessToken();
 
-        if (nextAccessToken) {
+        if (outcome.status === "refreshed") {
           error.config.__isRetry = true;
           return instance.request(error.config);
         }
-        // ! Refresh failed — the refresh token is gone, expired or refused. Fall through to
-        // ! row 4, which is the pre-spec-51 behaviour, unchanged.
+
+        // ! Row 3b (spec 51b): we never got an answer, so we know nothing about the session.
+        // ! Leave both tokens alone and fall through to the inert path below — not to row 4,
+        // ! which would delete a refresh token that is almost certainly still valid.
+        refreshUnreachable = outcome.status === "unreachable";
+        // ! `refused` falls through to row 4: the refresh token is gone, expired or rejected,
+        // ! and that is the pre-spec-51 behaviour, unchanged.
       }
 
       if (
@@ -173,7 +206,7 @@ instance?.interceptors?.response?.use(
         return instance.request(error.config);
       }
 
-      if (isCurrentSession) {
+      if (isCurrentSession && !refreshUnreachable) {
         // ! Row 4: no refresh token, or the refresh was refused. Today's path, unchanged.
         await AsyncStorage.removeItem("user");
         await clearTokens();
@@ -193,6 +226,11 @@ instance?.interceptors?.response?.use(
         // ! Row 6: no current session at all (the post-logout refetches of H-D), or a stale
         // ! request that has already had its one retry. Inert: no storage write, no cache
         // ! clear, no redirect, no toast.
+        // ! Since spec 51b this also catches an undeliverable refresh, and suppressing the
+        // ! toast matters there: `errorObj.message` comes from the original 401, so without
+        // ! it the rider stays logged in and is simultaneously told "Token expired , please
+        // ! login " — a message that contradicts the screen in front of them. The request
+        // ! still rejects, so that screen shows its own error state and can be retried.
         isStale401 = true;
       }
     }
