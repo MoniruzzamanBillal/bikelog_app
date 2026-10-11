@@ -1,6 +1,6 @@
 # 51: Refresh-token auth — app half
 
-Status: 📝 Plan only — nothing implemented. Written 2026-10-11 alongside `bikelog_server` spec 51 and `bikelog_client-web-` spec 32, and revised the same day once the developer fixed the flow (see **The flow** below) and confirmed every user will install the new build. The cold-start pre-emptive refresh an earlier draft had is **gone** — the app reacts to the `401`, it never predicts expiry.
+Status: 📝 Plan only — nothing implemented. Written 2026-10-11 alongside `bikelog_server` spec 51 and `bikelog_client-web-` spec 32, and revised twice the same day: first once the developer fixed the flow (see **The flow** below) and confirmed every user will install the new build, then again once the developer chose the token store. The cold-start pre-emptive refresh an earlier draft had is **gone** — the app reacts to the `401`, it never predicts expiry. **Both open questions are now closed** (see **Decisions**): storage is **`AsyncStorage` for both tokens**, no `expo-secure-store`, so no native dep and no EAS rebuild are involved at all.
 
 **Depends on `bikelog_server` spec 51.** Read its §0 (hazards) and §A (wire contract) first; this spec does not restate the contract. Nothing here can be verified against production until that server change is deployed — and per its §H the server deploys **last**, once this build exists, so the whole verification matrix below runs against a local server.
 
@@ -10,11 +10,11 @@ Status: 📝 Plan only — nothing implemented. Written 2026-10-11 alongside `bi
 
 Hold both tokens, exchange the refresh token for a new access token when the access token expires, and only log the user out when the **refresh** token is rejected. From the rider's point of view the change should be invisible except that a session now survives 15 days of use instead of dying at 10 days flat, and a cold launch after a week still lands in the garage rather than on the login screen.
 
-Three things make this more delicate here than on the web:
+One thing makes this more delicate here than on the web:
 
-1. The app's `401` handling is already subtle — spec `48a` fixed a bug where stale `401`s logged the *next* user out. A refresh retry interacts directly with that rule and must extend it, not replace it (§C).
-2. Tokens live in `AsyncStorage` under the key `"token"`, which is not an appropriate home for a 15-day credential (§B).
-3. The app's own verification method is an `expo export --platform web` run in headless Chrome, where `expo-secure-store` does not exist (§B, H-A).
+- The app's `401` handling is already subtle — spec `48a` fixed a bug where stale `401`s logged the _next_ user out. A refresh retry interacts directly with that rule and must extend it, not replace it (§C).
+
+Two others that earlier drafts listed here have been dissolved by the storage decision: the refresh token now lives in `AsyncStorage` alongside the access token rather than in the Keychain (accepted trade-off, §B), and because nothing imports `expo-secure-store` the `expo export --platform web` verification path and `yarn web` keep working unchanged.
 
 ---
 
@@ -33,13 +33,13 @@ Unlike `bikelog_client-web-` spec 32, nothing in this app currently predicts exp
 
 ## Hazards specific to the app
 
-**H-A — `expo-secure-store` is unavailable on web, and web is how this app gets verified.** Specs 48a and 50 were both verified against a web export. A bare `SecureStore` import would break that path (and `yarn web`). The storage wrapper in §B must branch on `Platform.OS === "web"`.
+**H-A — ~~`expo-secure-store` is unavailable on web, and web is how this app gets verified~~ — no longer applies.** Kept as a record of why the storage decision went the way it did. Specs 48a and 50 were both verified against an `expo export --platform web` run, and a bare `SecureStore` import would have broken that path (and `yarn web`), forcing a `Platform.OS === "web"` branch inside `tokenStore.ts`. With `AsyncStorage` on every platform (§B) there is no branch and no platform-specific code path to verify twice.
 
-**H-B — `expo-secure-store` is a new native module.** It is bundled in Expo Go, so `yarn start` is fine, but any standalone/dev-client build must be rebuilt. An EAS build is already owed for spec 36 (the widget), so this can ride along. If the developer would rather not add a native dep at all, §B records the AsyncStorage-only fallback.
+**H-B — ~~`expo-secure-store` is a new native module~~ — no longer applies.** Also kept for the record: a new native module would have been fine in Expo Go (`yarn start`) but would have invalidated any existing standalone/dev-client build. `AsyncStorage` (`@react-native-async-storage/async-storage`) is **already a dependency and already linked**, so this spec adds **no** native dep, needs **no** `npx expo install`, and needs **no** EAS rebuild. It is independent of the EAS build still owed for spec 36 (the widget) — that build can happen before or after this, in either order.
 
-**H-C — existing installs hold a token under the legacy `"token"` key.** On first launch after the update there is an access token and no refresh token. Handle it (§B) or every existing user is silently logged out by the migration itself.
+**H-C — existing installs hold a token under the legacy `"token"` key.** On first launch after the update there is an access token and no refresh token. Handle it (§B) or every existing user is silently logged out by the migration itself. One thing the storage decision simplifies: the legacy key and both new keys live in the **same** store, so the migration is a read + write + delete within `AsyncStorage` and can never half-succeed across two stores.
 
-**H-D — `logoutFunction` still clears the query cache while screens are mounted** (spec 48a root cause 1, deliberately left in place). Those screens refetch with no token. With refresh added, those no-token `401`s must not trigger a refresh attempt — a refresh that *succeeds* right after a logout would re-arm the session the user just ended. §C's decision table closes this: no access token in storage ⇒ no refresh.
+**H-D — `logoutFunction` still clears the query cache while screens are mounted** (spec 48a root cause 1, deliberately left in place). Those screens refetch with no token. With refresh added, those no-token `401`s must not trigger a refresh attempt — a refresh that _succeeds_ right after a logout would re-arm the session the user just ended. §C's decision table closes this: no access token in storage ⇒ no refresh.
 
 **H-E — two interceptor passes over the same request.** A retried request must carry a flag, or a request whose retry also `401`s can loop. One retry, ever (§C).
 
@@ -47,25 +47,25 @@ Unlike `bikelog_client-web-` spec 32, nothing in this app currently predicts exp
 
 ## A. What already exists
 
-| File | Role today |
-| --- | --- |
-| `utils/axiosInstance.ts` | Attaches `Bearer` from `AsyncStorage.getItem("token")`; response-error handler implements spec 48a's stale-401 rule, the `409`→amber toast, and the logout-on-expiry path |
-| `context/user.context.tsx` | `user` + `token` state; `handleSetToken` (writes storage, `queryClient.clear()`), `handleSetUser`, `logoutFunction`, cold-start hydration from `AsyncStorage` |
-| `components/main/Auth/LoginForm.tsx` | Reads `result.token`, `jwtDecode`s it for `userId`/`userEmail`, calls `handleSetToken` + `handleSetUser` |
-| `utils/AuthGuard.tsx` | Redirects on `!user` once the context finishes loading |
-| `utils/isAdmin.ts` | Decodes the stored token for the `userRole` claim (spec 50) |
-| `utils/queryClient.ts` | Module-level `QueryClient` singleton, importable from the interceptor |
+| File                                 | Role today                                                                                                                                                                |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `utils/axiosInstance.ts`             | Attaches `Bearer` from `AsyncStorage.getItem("token")`; response-error handler implements spec 48a's stale-401 rule, the `409`→amber toast, and the logout-on-expiry path |
+| `context/user.context.tsx`           | `user` + `token` state; `handleSetToken` (writes storage, `queryClient.clear()`), `handleSetUser`, `logoutFunction`, cold-start hydration from `AsyncStorage`             |
+| `components/main/Auth/LoginForm.tsx` | Reads `result.token`, `jwtDecode`s it for `userId`/`userEmail`, calls `handleSetToken` + `handleSetUser`                                                                  |
+| `utils/AuthGuard.tsx`                | Redirects on `!user` once the context finishes loading                                                                                                                    |
+| `utils/isAdmin.ts`                   | Decodes the stored token for the `userRole` claim (spec 50)                                                                                                               |
+| `utils/queryClient.ts`               | Module-level `QueryClient` singleton, importable from the interceptor                                                                                                     |
 
 ---
 
 ## B. Token storage — new `utils/tokenStore.ts`
 
-One module owning both tokens, so no other file touches `AsyncStorage`/`SecureStore` for auth again:
+One module owning both tokens, so no other file touches `AsyncStorage` for auth again. **Storage is `AsyncStorage` on every platform** — decision 3 below; no `expo-secure-store`, no platform branch:
 
 ```ts
-// native: expo-secure-store (Keychain / EncryptedSharedPreferences)
-// web:    AsyncStorage — SecureStore has no web implementation, and the web export is how
-//         this app is verified (specs 48a, 50). H-A.
+// AsyncStorage on every platform, native and web alike (decision 3).
+// No expo-secure-store: no new native module, no EAS rebuild, no Platform.OS branch,
+// and the `expo export --platform web` verification path keeps working (H-A, H-B).
 const ACCESS_KEY = "accessToken";
 const REFRESH_KEY = "refreshToken";
 const LEGACY_KEY = "token"; // pre-spec-51 installs — H-C
@@ -76,12 +76,14 @@ setTokens({ accessToken, refreshToken? }): Promise<void>
 clearTokens(): Promise<void>               // both keys + the legacy key
 ```
 
-- `expo-secure-store` via `npx expo install expo-secure-store` so it lands on the SDK-54 pin (spec 49 exists precisely because a loose pin bit before).
+- `AsyncStorage` from `@react-native-async-storage/async-storage`, already in `package.json` and already used by `user.context.tsx` — no install step, so nothing for spec 49's pin discipline to worry about.
 - Every call wrapped so a storage failure degrades to "no token" rather than throwing inside an interceptor.
 - **Legacy migration (H-C):** on the first `getAccessToken()`, if `accessToken` is absent and `token` is present, copy it to `accessToken` and delete `token`. The user keeps their session with **no refresh token**, so when that 10-day token eventually expires they are logged out once — the same thing that happens today. No forced re-login at update time.
 - `clearTokens()` must remove the legacy key too, or a logout would leave a resurrectable token behind.
 
-**Fallback if the native dep is unwanted (H-B):** keep `AsyncStorage` for both keys and skip `expo-secure-store` entirely. The only loss is at-rest protection on a rooted/jailbroken device or in an ADB backup. Everything else in this spec is unchanged — `tokenStore.ts` is the seam. Recommendation is still SecureStore on native, since a 15-day credential is exactly what the Keychain is for.
+**What this costs, stated plainly.** `AsyncStorage` is unencrypted — on Android an app-private SQLite file, on iOS an app-private file in the sandbox. The 15-day refresh token is therefore readable by anyone with root/jailbreak access to the device or an ADB backup of it, which is strictly weaker than the Keychain / `EncryptedSharedPreferences` that `expo-secure-store` would have given. Accepted: the access token already lives there today under the `"token"` key, so this is not a new exposure class, only a longer-lived item in it, and the threat model (a stolen unlocked rooted phone) is not one this app otherwise defends against.
+
+**The upgrade path stays open and stays cheap.** `tokenStore.ts` is the only file that touches storage, so moving native platforms to `expo-secure-store` later is a change to that one file plus `npx expo install expo-secure-store` plus an EAS rebuild — and at that point H-A comes back and the module needs the `Platform.OS === "web"` branch. Nothing else in this spec would change. Don't pre-build the branch now.
 
 ---
 
@@ -97,20 +99,25 @@ Only change: `const token = await getAccessToken()` instead of the direct `Async
 let refreshInFlight: Promise<string | null> | null = null;
 
 async function refreshAccessToken(): Promise<string | null> {
-  if (refreshInFlight) return refreshInFlight;        // concurrent 401s share one call
+  if (refreshInFlight) return refreshInFlight; // concurrent 401s share one call
   refreshInFlight = (async () => {
     try {
       const refreshToken = await getRefreshToken();
       if (!refreshToken) return null;
       // ! bare axios, NOT axiosInstance — going through the instance would re-enter these
       // ! interceptors and, on a 401 from the refresh call itself, recurse.
-      const res = await axios.post(`${getBaseUrl()}/auth/refresh-token`, { refreshToken });
+      const res = await axios.post(`${getBaseUrl()}/auth/refresh-token`, {
+        refreshToken,
+      });
       const next = res?.data?.token;
       if (!next) return null;
-      await setTokens({ accessToken: next });          // refresh token unchanged (server §A)
+      await setTokens({ accessToken: next }); // refresh token unchanged (server §A)
       return next;
-    } catch { return null; }
-    finally { refreshInFlight = null; }
+    } catch {
+      return null;
+    } finally {
+      refreshInFlight = null;
+    }
   })();
   return refreshInFlight;
 }
@@ -122,14 +129,14 @@ async function refreshAccessToken(): Promise<string | null> {
 
 This supersedes the single `isCurrentSession` branch, and keeps spec 48a's conclusion intact: **a `401` only concerns the current session if it was sent with the current access token.**
 
-| | Condition | Action |
-| --- | --- | --- |
-| 1 | status ≠ 401 | unchanged (incl. the `409`→amber toast) |
-| 2 | 401 on `/auth/*` | unchanged — the user's own action, never stale, never refreshed (login/register/refresh-token itself) |
-| 3 | 401, `sentAuth === Bearer <current access token>`, a refresh token exists, request not yet retried | `await refreshAccessToken()`; on success retry the original request once with the new token and **return the retry's response** — no toast, no logout, caller never sees the 401; on failure → row 4 |
-| 4 | 401, `sentAuth === Bearer <current access token>`, no refresh token (or refresh failed) | today's path, unchanged: clear tokens + `"user"`, `queryClient.clear()`, `"Token expired , please login "` toast, `router.replace("/auth")` |
-| 5 | 401, `sentAuth` ≠ current access token, a current access token exists, not yet retried | **retry once with the current token.** This is the in-flight-at-refresh-time case: the request left before the refresh landed. If the retry fails, treat as row 6 |
-| 6 | 401, anything else (no current token at all — the post-logout refetches of H-D; or an already-retried stale request) | spec 48a's inert path: no storage write, no cache clear, no redirect, **no toast**, reject with `errorObj` |
+|     | Condition                                                                                                            | Action                                                                                                                                                                                               |
+| --- | -------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | status ≠ 401                                                                                                         | unchanged (incl. the `409`→amber toast)                                                                                                                                                              |
+| 2   | 401 on `/auth/*`                                                                                                     | unchanged — the user's own action, never stale, never refreshed (login/register/refresh-token itself)                                                                                                |
+| 3   | 401, `sentAuth === Bearer <current access token>`, a refresh token exists, request not yet retried                   | `await refreshAccessToken()`; on success retry the original request once with the new token and **return the retry's response** — no toast, no logout, caller never sees the 401; on failure → row 4 |
+| 4   | 401, `sentAuth === Bearer <current access token>`, no refresh token (or refresh failed)                              | today's path, unchanged: clear tokens + `"user"`, `queryClient.clear()`, `"Token expired , please login "` toast, `router.replace("/auth")`                                                          |
+| 5   | 401, `sentAuth` ≠ current access token, a current access token exists, not yet retried                               | **retry once with the current token.** This is the in-flight-at-refresh-time case: the request left before the refresh landed. If the retry fails, treat as row 6                                    |
+| 6   | 401, anything else (no current token at all — the post-logout refetches of H-D; or an already-retried stale request) | spec 48a's inert path: no storage write, no cache clear, no redirect, **no toast**, reject with `errorObj`                                                                                           |
 
 Rows 5 and 6 are 48a's `isStale401` split in two: 48a made every non-current `401` inert, which is right for a logged-out session but needlessly loses a request that merely raced a refresh. Keep 48a's `isStale401` naming and its comment block, and extend the comment rather than rewriting it.
 
@@ -142,10 +149,10 @@ One consequence worth being explicit about: in row 3 the interceptor **returns a
 ## D. `context/user.context.tsx`
 
 - Cold-start `loadUserData`: read both tokens through `tokenStore` and hydrate `user` when `storedUser` and an access token exist, exactly as today. **No expiry check and no refresh here** — an earlier draft of this spec refreshed during the splash screen if the stored access token had expired; the flow above rules that out. A cold launch after a week simply mounts, the first query goes out on the stale token, the server `401`s, and §C row 3 recovers it.
-  What this costs, stated honestly so it is not a surprise on a device: the first screen after a cold launch does one extra round trip (the doomed request) before its data arrives. The single-flight latch collapses the whole opening burst of queries into one refresh, and because row 3 returns the *retry's* response the rider never sees an error — just a slightly longer spinner on the first paint. If that turns out to be visible on a real device, the fix is a pre-emptive cold-start refresh and it is a four-line change to this function; decide it from the V4 observation, not in advance.
+  What this costs, stated honestly so it is not a surprise on a device: the first screen after a cold launch does one extra round trip (the doomed request) before its data arrives. The single-flight latch collapses the whole opening burst of queries into one refresh, and because row 3 returns the _retry's_ response the rider never sees an error — just a slightly longer spinner on the first paint. If that turns out to be visible on a real device, the fix is a pre-emptive cold-start refresh and it is a four-line change to this function; decide it from the V4 observation, not in advance.
 - `handleSetToken(token)` → `handleSetTokens({ accessToken, refreshToken })`, writing both and keeping the `queryClient.clear()`-on-login call exactly where it is (spec 48 §A: clearing on login is the stronger invariant). Keep the existing name as a thin wrapper if other call sites make that cheaper.
 - `logoutFunction` → `clearTokens()` (both keys + legacy) plus the existing `queryClient.clear()` and state reset. No server call — there is no logout endpoint (server §A).
-- `token` in the context value keeps meaning the **access** token. The refresh token should *not* be exposed on the context; only `tokenStore` and the interceptor need it, and `SettingsCatalog.tsx` reads `token` for other purposes.
+- `token` in the context value keeps meaning the **access** token. The refresh token should _not_ be exposed on the context; only `tokenStore` and the interceptor need it, and `SettingsCatalog.tsx` reads `token` for other purposes.
 
 ## E. `components/main/Auth/LoginForm.tsx`
 
@@ -159,33 +166,36 @@ Read `result.refreshToken` alongside `result.token` and pass both. `jwtDecode<TU
 
 ## Test plan
 
-Two throwaway accounts (A with data, B empty), against a **local** server with `JWT_ACCESS_EXPIRES_IN=60s` so expiry is reachable. `utils/envConfig.ts` hardcodes the deployed URL — point it at the local server for the run and **revert it before committing**. Run the matrix on the web export first (that is what this app's past verification passes used), then at minimum V1/V4/V7/V9 on a device, which also settles spec 48a's owed device pass.
+Two throwaway accounts (A with data, B empty), against a **local** server with `JWT_ACCESS_EXPIRES_IN=60s` so expiry is reachable. `utils/envConfig.ts` hardcodes the deployed URL — point it at the local server for the run and **revert it before committing**. Run the matrix on the web export first (that is what this app's past verification passes used), then at minimum V1/V4/V7/V9 on a device, which also settles spec 48a's owed device pass. Because of decision 3 the device pass runs in **Expo Go** — no dev-client or EAS build is needed to exercise any of this. All three keys sit in one store, so V1/V7/V10's storage assertions are a single `AsyncStorage.getAllKeys()` read.
 
-| # | Scenario | Expected |
-| --- | --- | --- |
-| V1 | Log in | both tokens stored under the new keys; `token` key absent |
-| V2 | Use the app for 3 minutes across several screens | no login screen, no "Token expired" toast; exactly one `/auth/refresh-token` call per expiry window, not one per query (the single-flight latch) |
-| V3 | **The flow itself, read off the network log:** sit on a fetching screen through an expiry with 3+ queries firing together | per expiry: the requests `401`, **one** `POST /auth/refresh-token` → `200`, then each request again → `200`. In that order. No toast, no navigation, nothing visible |
-| V4 | Kill the app, wait past expiry, cold launch | lands in the garage, not on `/auth`. Network order: the first query `401`s, **then** one refresh, **then** the retry succeeds — no refresh during splash (§D). No error toast. Note how long the first paint's spinner lasts; that observation is what decides whether §D's deferred pre-emptive refresh is needed |
-| V5 | Corrupt the stored **access** token, navigate | refresh fires, succeeds, navigation works (this is now a *recoverable* state, unlike today) |
-| V6 | Corrupt the stored **refresh** token, then let the access token expire | one failed refresh → logout, "Token expired" toast, `/auth`, cache cleared |
-| V7 | Delete the refresh token only, let the access token expire | logout path (row 4) — the pre-spec-51 behaviour, which is also the legacy-install case (H-C) |
-| V8 | **Spec 48a regression:** hold A's three post-logout `401`s 8s, log in as B meanwhile, release | B stays logged in, no toast, **and no refresh call fires** (H-D) |
-| V9 | A logs out → B logs in, no reload | no trace of A's data (spec 48 §A still holds) |
-| V10 | Update an install that has the legacy `token` key (simulate: write `token`, clear the new keys) | session preserved, key migrated, no login prompt; first expiry → one logout |
-| V11 | Airplane mode during a refresh | refresh fails → logout; no crash, no spinner wedged |
-| V12 | Duplicate catalog name | amber `409` toast unchanged |
-| V13 | Admin account | Settings still shows the Admin panel after a refresh has replaced the token (spec 50's claim read from the new token) |
-| V14 | `npx tsc --noEmit` + `yarn lint` | clean |
+| #   | Scenario                                                                                                                  | Expected                                                                                                                                                                                                                                                                                                           |
+| --- | ------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| V1  | Log in                                                                                                                    | both tokens stored under the new keys; `token` key absent                                                                                                                                                                                                                                                          |
+| V2  | Use the app for 3 minutes across several screens                                                                          | no login screen, no "Token expired" toast; exactly one `/auth/refresh-token` call per expiry window, not one per query (the single-flight latch)                                                                                                                                                                   |
+| V3  | **The flow itself, read off the network log:** sit on a fetching screen through an expiry with 3+ queries firing together | per expiry: the requests `401`, **one** `POST /auth/refresh-token` → `200`, then each request again → `200`. In that order. No toast, no navigation, nothing visible                                                                                                                                               |
+| V4  | Kill the app, wait past expiry, cold launch                                                                               | lands in the garage, not on `/auth`. Network order: the first query `401`s, **then** one refresh, **then** the retry succeeds — no refresh during splash (§D). No error toast. Note how long the first paint's spinner lasts; that observation is what decides whether §D's deferred pre-emptive refresh is needed |
+| V5  | Corrupt the stored **access** token, navigate                                                                             | refresh fires, succeeds, navigation works (this is now a _recoverable_ state, unlike today)                                                                                                                                                                                                                        |
+| V6  | Corrupt the stored **refresh** token, then let the access token expire                                                    | one failed refresh → logout, "Token expired" toast, `/auth`, cache cleared                                                                                                                                                                                                                                         |
+| V7  | Delete the refresh token only, let the access token expire                                                                | logout path (row 4) — the pre-spec-51 behaviour, which is also the legacy-install case (H-C)                                                                                                                                                                                                                       |
+| V8  | **Spec 48a regression:** hold A's three post-logout `401`s 8s, log in as B meanwhile, release                             | B stays logged in, no toast, **and no refresh call fires** (H-D)                                                                                                                                                                                                                                                   |
+| V9  | A logs out → B logs in, no reload                                                                                         | no trace of A's data (spec 48 §A still holds)                                                                                                                                                                                                                                                                      |
+| V10 | Update an install that has the legacy `token` key (simulate: write `token`, clear the new keys)                           | session preserved, key migrated, no login prompt; first expiry → one logout                                                                                                                                                                                                                                        |
+| V11 | Airplane mode during a refresh                                                                                            | refresh fails → logout; no crash, no spinner wedged                                                                                                                                                                                                                                                                |
+| V12 | Duplicate catalog name                                                                                                    | amber `409` toast unchanged                                                                                                                                                                                                                                                                                        |
+| V13 | Admin account                                                                                                             | Settings still shows the Admin panel after a refresh has replaced the token (spec 50's claim read from the new token)                                                                                                                                                                                              |
+| V14 | `npx tsc --noEmit` + `yarn lint`                                                                                          | clean                                                                                                                                                                                                                                                                                                              |
 
 V8 is the one that can regress a shipped fix; run it before anything else is called done.
 
 ## Decisions
 
-1. **The flow is the one above**, as stated by the developer on 2026-10-11. It also settles what used to be open question 2: there is **no** cold-start refresh — the app reacts to the `401` like everywhere else (§D).
+1. **The flow is the one above**, as stated by the developer on 2026-10-11. It also settles what an earlier draft had as an open question: there is **no** cold-start refresh — the app reacts to the `401` like everywhere else (§D).
 2. **Every user will install the new build** (server spec 51 H1), so this build is what the refresh scheme ships on; an install that predates it gets a 15-minute session once the server deploys, which is the reason the server deploys **last**.
+3. **Both tokens live in `AsyncStorage`; `expo-secure-store` is not used** — developer decision, 2026-10-11, closing former open question 1. Consequences, all of them simplifications: no new native dep, no `npx expo install`, no EAS rebuild tied to this spec, no `Platform.OS` branch in `tokenStore.ts`, and the web-export verification path is unaffected (H-A and H-B both dissolve). The cost is at-rest encryption for the 15-day refresh token, accepted and written out in §B along with the one-file upgrade path if that changes.
 
 ## Still open
 
-1. `expo-secure-store` (recommended) or AsyncStorage for both tokens (no native dep, no rebuild)? — H-B. Either way the seam is `utils/tokenStore.ts`, so this can be decided at implementation time without changing anything else in the spec.
-2. Is there an EAS build planned that this can ride along with (spec 36's is still owed)? — H-B.
+**Nothing.** Both former open questions are closed:
+
+1. ~~`expo-secure-store` or AsyncStorage?~~ → **AsyncStorage**, decision 3 above.
+2. ~~Is there an EAS build planned that this can ride along with?~~ → **moot, and worth spelling out since the question was unclear.** It only existed because of H-B: `expo-secure-store` is a *native* module, and adding one invalidates any already-installed standalone/dev-client build — Expo Go bundles it, so `yarn start` would have been fine, but a real installed APK would have needed rebuilding through EAS before the new storage code could run. Since spec 36 (the widget) already owes an EAS build, the question was simply whether to let this change ride along on that build rather than trigger one of its own. With `AsyncStorage` there is no native module, so nothing here needs a rebuild and the two specs are unrelated. Spec 36's EAS build is still owed, for spec 36's own reasons.
