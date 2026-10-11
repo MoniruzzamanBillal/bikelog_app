@@ -4,7 +4,7 @@ Status: ⛔ **Not Started.** Written 2026-10-11 from `../../../new Features/04-h
 Scope: **`bikelog_app` only.** One new hook, one new component, one one-character change to an existing query. No server change, no schema change, no new endpoint, no new dependency, no EAS build.
 Independent of `bikelog_server` spec 52 and app specs 53/54 — it can ship before, after or instead of them. It does duplicate spec 52's _rate_ calculation client-side; §0 H-F is where that is argued.
 
-**What the rider gets**, on the fuel log screen: `Half tank around 15 Oct · ~155 km to go`, plus the standing figure that full → half is **240 km** on their bike at their mileage.
+**What the rider gets**, on the fuel log screen: `Half tank around 15 Oct · ~155 km to go`, plus the standing figure — at 40 km/L on a 12 L tank, **`You can ride ~240 km on half a tank`**.
 
 ---
 
@@ -36,7 +36,7 @@ If the fetched window of recent logs does not extend to the anchor's date, some 
 It only advances when a fuel log, maintenance log, or the Settings odometer panel writes to it. So "ridden since the full tank" is understated, litres-used is understated, and the card reports **more fuel than the bike has** — the rider reaches half (and empty) earlier than told. Note the contrast with `bikelog_server` spec 52, where the same staleness produced a _late service_; the mitigation there was to floor the day count, and the same applies here. Floor `kmToHalf`, floor the day count, keep the "around" hedge, and make it easy to reach the odometer panel.
 
 **H-G — This duplicates spec 52's km-per-day rate client-side. That is allowed; duplicating a projection is not.**
-Spec 53 H-E bans the app from computing a date the server also computes, because two sources of truth for the _same_ number disagree on the same screen. Here the server computes no tank forecast at all, so only the shared _input_ — km per calendar day — exists in two places. Acceptable, on two conditions: the client implementation obeys the same three rules as `bikelog_server` spec 52 §B (divide by the **covered span**, never a nominal window; snap the span to a whole number of weeks so a 5-or-6-day riding week cannot skew it; floor, never ceil), and the duplication is recorded in Known Gaps so it is converged rather than forgotten. Open question 1 proposes the convergence.
+Spec 53 H-E bans the app from computing a date the server also computes, because two sources of truth for the _same_ number disagree on the same screen. Here the server computes no tank forecast at all, so only the shared _input_ — km per calendar day — exists in two places. Acceptable, on two conditions: the client implementation obeys the same three rules as `bikelog_server` spec 52 §B (divide by the **covered span**, never a nominal window; snap the span to a whole number of weeks so a 5-or-6-day riding week cannot skew it; floor, never ceil), and the duplication is recorded in Known Gaps so it is kept **aligned**. **Settled 2026-10-11: the rate stays client-side and is never taken from the backend** — so the duplication is permanent by decision, not pending convergence, and keeping the two in step is this app's job. In practice that means the constants below mirror spec 52's (28-day window, 14-day minimum span, whole-week snapping, floor) and V15 drift is fixed **here**, not by adding a server field. See Settled questions.
 
 **H-H — Do not try to filter full-tank logs server-side.**
 `?isFullTank=true` looks like the obvious way to find the anchor and would **fail with a 500**: `buildPrismaListQuery` drops leftover query params straight into the Prisma `where` with no coercion (`buildPrismaListQuery.ts:26-29`), so the string `"true"` meets a `Boolean` column and Prisma throws a validation error, which `globalErrorHandler` has no Prisma branch for. §B's anchor needs no filter at all.
@@ -58,7 +58,7 @@ A 12 L tank has a litre or two that the pump can't reach, and a gauge needle at 
 - **D2 — km/day comes from the same `exactRecords`.** They carry `distanceKm`, `periodStartDate` and `periodEndDate` — distance over time, which is the whole input. Zero extra requests.
 - **D3 — Widen `useFuelLogSeed`'s existing query from `limit=1` to `limit=12` instead of adding a query.** Same cache key (`["fuelLogs", bikeId, "latest"]`), same `?sort=-date`, one request serving the seed _and_ the top-up sum. `useFuelLogSeed` keeps returning `result[0]` for the seed and additionally returns the array, so `QuickAddFuelLogScreen` — the hook's other consumer — is untouched. 12 covers a full-tank interval comfortably at any realistic fill pattern; when it doesn't, H-E catches it.
 - **D4 — Mileage figure: the newest exact record, else the rolling approximate, and the card names which it used.** `exactRecords[0].mileageKmPerLiter` is specific but a single sample; `approximate.mileageKmPerLiter` is steadier and exists even for a rider who never marks a full tank. A 40 → 45 swing moves the half-range 240 → 270 km, so an unlabelled figure is an unauditable one.
-- **D5 — The threshold is fixed at `capacity / 2`.** Quarter-tank and reserve are the same arithmetic with a different constant and a different tone (alert, not forecast). A per-bike threshold is a later setting.
+- **D5 — The threshold is fixed at `capacity / 2`, and half tank is the only threshold this feature will have.** Quarter-tank and reserve were considered and **dropped on 2026-10-11** (Settled question 3) — not deferred. A per-bike threshold remains a possible later setting; a second _built-in_ threshold is not planned.
 - **D6 — All derivation lives in `hooks/useTankForecast.ts`, which re-uses the three existing query keys.** React-query dedupes identical keys, so the hook triggers no network of its own and the component stays presentational. Same shape as `useFuelLogSeed`.
 - **D7 — The card renders above the `N fill-ups` row**, and deliberately does not look like the bike hub's reminder banners — it is a forecast, not an alert.
 
@@ -92,7 +92,7 @@ days to half    = floor(154 / 43)               = 3  →  "around 14 Oct"
 
 ```ts
 const DAY_MS = 86_400_000;
-const RATE_WINDOW_DAYS = 56; // H-G: same window as bikelog_server spec 52
+const RATE_WINDOW_DAYS = 28; // H-G: same window as bikelog_server spec 52 (its D1, settled 28)
 const MIN_RATE_SPAN_DAYS = 14;
 const MIN_RATE_DISTANCE_KM = 100;
 
@@ -123,7 +123,9 @@ type TRateBasis = "exact" | "approximate";
 **km per calendar day**, from the mileage records:
 
 ```ts
-// ! H-G: mirrors bikelog_server spec 52 §B's three rules. The divisor is the span the chosen
+// ! H-G: mirrors bikelog_server spec 52 §B's three rules, and must be kept mirroring them by
+// ! hand — the server is deliberately NOT asked for this number (Settled question 1), so if
+// ! spec 52's window or minimums move, they move here too. The divisor is the span the chosen
 // ! records actually COVER — never RATE_WINDOW_DAYS, which includes the days since the last
 // ! full tank that no record speaks for. Dropping the oldest records one at a time and keeping
 // ! whichever subset lands nearest a whole number of weeks is the client-side equivalent of
@@ -223,11 +225,12 @@ Extend the hook's header comment to say _why_ 12: the tank forecast needs every 
 │  ~154 km to go                               │
 │                                              │
 │  86 km since your 9 Oct full tank            │
-│  Full → half is 240 km at 40.2 km/L (exact)  │
+│  You can ride ~240 km on half a tank         │
+│  Based on 40.2 km/L (exact)                  │
 └──────────────────────────────────────────────┘
 ```
 
-The bottom two lines are what make the top two auditable — if the date looks wrong, that is where the rider sees why.
+The bottom three lines are what make the top two auditable — if the date looks wrong, that is where the rider sees why. The range and its basis are **two lines, not one**: `You can ride ~240 km on half a tank (40.2 km/L, exact)` is ~54 characters, which does not fit a 12px line in this card at 360dp, and the half that would ellipsise is the basis.
 
 | State                         | Shown                                                                                                  |
 | ----------------------------- | ------------------------------------------------------------------------------------------------------ |
@@ -236,8 +239,8 @@ The bottom two lines are what make the top two auditable — if the date looks w
 | `live`, `daysToHalf` 1        | `Half tank around tomorrow`                                                                            |
 | `live`, `daysToHalf` 0        | `Half tank any time now`                                                                               |
 | `live`, `daysToHalf === null` | `~154 km to half` — distance only, no date                                                             |
-| `live`, `pastHalf`            | `Past half tank` + `Full → half is 240 km`                                                             |
-| `range-only`                  | `Full → half is 240 km at 40.2 km/L` + one line: mark your next fill-up as a full tank to get the date |
+| `live`, `pastHalf`            | `Past half tank` + `You can ride ~240 km on half a tank`                                               |
+| `range-only`                  | `You can ride ~240 km on half a tank` + `Based on 40.2 km/L (exact)` + one line: mark your next fill-up as a full tank to get the date |
 | `unavailable`                 | Card not rendered at all                                                                               |
 
 Copy rules, all load-bearing:
@@ -246,6 +249,7 @@ Copy rules, all load-bearing:
 - **Never a named weekend.** The Dhaka weekend is Friday–Saturday and may be the non-riding days, so a date landing there is not a day the tank drains. Same rule as spec 53 H-G.
 - **Say "half the fuel", not "half the gauge"**, once, in the card's own footnote or an info line (H-J).
 - **Never state litres.** `9.85 L` reads like a measurement; `~154 km to go` reads like what it is.
+- **State the range as rideable distance, in one fixed sentence: `You can ride ~240 km on half a tank`** (settled 2026-10-11). Not `Full → half is 240 km`, which is spec-sheet phrasing the rider has to decode. The sentence is identical in all three states that show it (`live`, `pastHalf`, `range-only`) so the number is recognisably the same number wherever it appears, and it keeps the `~` because it moves with the mileage figure.
 
 - [ ] Card built with all seven states
 - [ ] Uses `Panel` from `components/main/shared`, styled distinctly from `RemindersBanner` (D7)
@@ -273,7 +277,7 @@ Copy rules, all load-bearing:
 | #   | Scenario                                                                                                            | Expected                                                                                                                |
 | --- | ------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
 | V1  | `npx tsc --noEmit`, `yarn lint`, `npx expo export --platform web`                                                   | All clean                                                                                                               |
-| V2  | 12 L bike, 40 km/L, full tank 9 Oct at 10,000 km, odometer 10,086, no top-ups                                       | `~154 km to go`, range line `240 km`, date ≈ today + floor(154 / kmPerDay)                                              |
+| V2  | 12 L bike, 40 km/L, full tank 9 Oct at 10,000 km, odometer 10,086, no top-ups                                       | `~154 km to go`, range line `You can ride ~240 km on half a tank`, date ≈ today + floor(154 / kmPerDay)                 |
 | V3  | V2 plus a 5 L top-up dated 13 Oct                                                                                   | Litres in tank 14.85 → clamped to 12 → `240 km to go` (H-B, H-K)                                                        |
 | V4  | V2 with 300 km ridden and a 5 L top-up                                                                              | `~140 km to go`, **not** `Past half` — the headline assertion of H-B                                                    |
 | V5  | A top-up dated the **same day** as the full tank, higher odometer                                                   | Its litres are counted (H-C)                                                                                            |
@@ -283,17 +287,26 @@ Copy rules, all load-bearing:
 | V9  | Brand-new bike, no fuel logs                                                                                        | Card not rendered (`unavailable`)                                                                                       |
 | V10 | Odometer below the anchor (edited log / correction)                                                                 | `range-only`, no negative distance, no `NaN` (H-K)                                                                      |
 | V11 | 500 km ridden since full, no top-ups                                                                                | `Past half tank` (H-K)                                                                                                  |
-| V12 | Mileage records older than 56 days only                                                                             | `kmToHalf` shown, no date (`daysToHalf === null`)                                                                       |
+| V12 | Mileage records older than 28 days only                                                                             | `kmToHalf` shown, no date (`daysToHalf === null`)                                                                       |
 | V13 | Exactly one mileage record, 10-day period                                                                           | No date — `MIN_RATE_SPAN_DAYS` refuses it                                                                               |
 | V14 | A rider who never marks full tank, so no exact records                                                              | Figures come from `approximate`, card says `(estimated)` (D4)                                                           |
-| V15 | Compare the card's implied km/day against `bikelog_server` spec 52's `kmPerDay` on the same bike, if 52 has shipped | Within ~10%. A wider gap means the two implementations have genuinely diverged (H-G) and open question 1 becomes urgent |
+| V15 | Compare the card's implied km/day against `bikelog_server` spec 52's `kmPerDay` on the same bike, if 52 has shipped | Within ~10%. A wider gap is drift between two permanently separate implementations (H-G), and the fix is **in this app** — re-check the constants against spec 52 §B and the subset loop against its anchor loop. Never resolved by adding a server field (Settled question 1) |
 | V16 | 360dp width, card + `12 fill-ups` row + list                                                                        | No truncation, list still the dominant element                                                                          |
 
 V1 is claimable from here. V2–V15 are most cheaply exercised by temporarily stubbing the hook's inputs; V16 needs a device or `expo start --web`.
 
-## Open questions
+## Settled questions (developer, 2026-10-11)
 
-1. **Converge the rate with `bikelog_server` spec 52.** The cleanest fix is for the server to return `kmPerDay` on `/bikes/:bikeId/mileage` — additive, a few lines, and it deletes `computeKmPerDay` from this app. Worth doing once spec 52 has shipped and its figure is trusted; until then the duplication is deliberate (H-G) and belongs in Known Gaps.
-2. **Should `range-only` show the 240 km figure, or nothing?** 240 km is genuinely useful standing knowledge (trip planning) even with no anchor, which is the argument for showing it. The counter-argument is a card that looks broken. Decide on a device.
-3. **Reserve / quarter tank.** Same arithmetic, different constant, different tone — an alert rather than a forecast. Deliberately out of scope (D5); revisit once the half-tank figure has been checked against the real gauge a few times.
-4. **Should the card link to the Settings odometer panel?** H-F's error shrinks to nothing if the rider updates the odometer, and spec 47 already built that panel. One tap from the card would make the forecast self-correcting — but it also admits the forecast needs help.
+1. **The rate stays client-side — do not add it to the backend.** The proposal was for the server to return `kmPerDay` on `/bikes/:bikeId/mileage` so `computeKmPerDay` could be deleted here. **Rejected:** this feature is app-only and stays app-only, so the fix for any disagreement with `bikelog_server` spec 52 is made **in the frontend**.
+   - The concrete consequence, and the one thing to do before writing code: **`RATE_WINDOW_DAYS` is 28, not 56.** Spec 52 settled its window at 4 weeks the same day, and a 56-day window here would have put the two rates on different windows _and_ different tables (`MileageRecord` vs `FuelLog`), so V15 would fail for reasons that are not drift. `MIN_RATE_SPAN_DAYS = 14` then puts this loop in the same 14–28 day band spec 52 §B documents.
+   - The duplication is therefore **permanent by decision**, not a pending convergence. Known Gaps records it as a keep-in-step obligation: if spec 52's window, minimum span, snapping rule or flooring changes, §C changes with it, by hand.
+2. **`range-only` shows the figure, phrased as rideable distance.** `You can ride ~240 km on half a tank` — the number is useful standing knowledge on its own (it is trip-planning information even with no anchor), and the phrasing is what stops the card reading as broken: it is a statement, not a blank forecast. The same sentence is used in all three states that show it, and the `mark your next fill-up as a full tank` nudge stays beneath it so the missing half is legible as an instruction rather than a fault. See §E's copy rules.
+3. **Reserve / quarter tank — dropped, not deferred.** Not wanted. D5 is now final: half tank is the only built-in threshold.
+
+## Still open
+
+1. **Should the card let the rider correct the odometer, and if so how?** The card's largest error source is that `currentOdometer` is usually behind reality (H-F) — it only moves when a fuel log, a maintenance log or the Settings odometer panel writes to it — and it is behind in the **unsafe** direction, so the card claims more fuel than the bike has. That error vanishes the moment the rider updates the reading, which makes a one-tap correction the cheapest accuracy improvement available to this feature. Three options:
+   - **(a) Nothing.** The figure drifts between fill-ups and self-corrects at the next log. Simplest; keeps the card purely presentational (D6).
+   - **(b) Tap the audit line (`86 km since your 9 Oct full tank`) to update the odometer for _this_ bike,** in a small modal reusing `PATCH /bikes/:id/odometer`. One tap, right bike, no new screen.
+   - **(c) Link to the Settings screen.** Cheapest to write, worst to use: `OdometerPanel` is rendered inside `SettingsCatalog.tsx:387`, near the bottom of a long screen with no route of its own, and it carries **its own bike selector** defaulting to the last-used bike (`OdometerPanel.tsx:33-41`) — so arriving from this bike's fuel screen it may well be pointed at a different bike.
+   - Deciding (b) adds a mutation to a spec that currently has none, which is the only argument for (a).
