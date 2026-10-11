@@ -11,6 +11,24 @@ import {
   setTokens,
 } from "./tokenStore";
 
+// ! Spec 51c: the three PUBLIC /auth routes — the ones reachable without a session. A 401
+// ! from one of these is the user's own action, never a stale session, and never refreshable.
+// ! Deliberately NOT a /^\/auth\// prefix match. The server mounts authCheck-PROTECTED
+// ! routes under the same prefix (/auth/me, /auth/push-token), and those are ordinary
+// ! authenticated calls that must refresh and retry like any other. Excluding them logged the
+// ! rider out on almost every cold launch, because registerPushToken() posts to
+// ! /auth/push-token on every launch that has a stored session, with whatever access token is
+// ! stored — expired, after 15 minutes.
+// ! A whitelist on purpose: this list is closed and readable off the server's route file,
+// ! while the protected routes under /auth will grow. A route added there later gets
+// ! refresh-and-retry automatically; a blacklist would fail silently on the one someone
+// ! forgets, which is exactly how 51c happened.
+const PUBLIC_AUTH_ROUTES = [
+  "/auth/login",
+  "/auth/register",
+  "/auth/refresh-token",
+];
+
 const instance = axios.create({
   baseURL: getBaseUrl(),
   withCredentials: true,
@@ -146,7 +164,12 @@ instance?.interceptors?.response?.use(
     // ! Login/register answers are the user's own action, never "stale" — leave them alone.
     // ! They are also never refreshed: /auth/refresh-token's own 401 must not trigger another
     // ! refresh, and login/register have no session to recover.
-    const isAuthEndpoint = /^\/auth\//.test(error?.config?.url ?? "");
+    // ! Named for the property that actually matters (spec 51c). The former name read as
+    // ! "anything under /auth" — the wrong mental model, and what made /auth/push-token look
+    // ! like it belonged in this exclusion.
+    const isPublicAuthRoute = PUBLIC_AUTH_ROUTES.some((route) =>
+      (error?.config?.url ?? "").startsWith(route),
+    );
     let isStale401 = false;
     // ! Spec 51b: set when a refresh could not be delivered at all. It bars row 4 — a
     // ! network blip must never cost the rider their session.
@@ -160,7 +183,7 @@ instance?.interceptors?.response?.use(
       // ! the logout path (row 4) or the inert path (row 6) — it is never retried twice, so
       // ! an endpoint that always 401s cannot loop.
       const canRetry =
-        !!error?.config && !isAuthEndpoint && error.config.__isRetry !== true;
+        !!error?.config && !isPublicAuthRoute && error.config.__isRetry !== true;
 
       if (isCurrentSession && canRetry) {
         // ! Row 3: the current token expired. Refresh and replay the original request, so the
@@ -187,7 +210,7 @@ instance?.interceptors?.response?.use(
 
       if (
         !isCurrentSession &&
-        !isAuthEndpoint &&
+        !isPublicAuthRoute &&
         !!sentAuth &&
         !!currentToken &&
         canRetry
@@ -222,7 +245,7 @@ instance?.interceptors?.response?.use(
         });
 
         router.replace("/auth");
-      } else if (!isAuthEndpoint) {
+      } else if (!isPublicAuthRoute) {
         // ! Row 6: no current session at all (the post-logout refetches of H-D), or a stale
         // ! request that has already had its one retry. Inert: no storage write, no cache
         // ! clear, no redirect, no toast.

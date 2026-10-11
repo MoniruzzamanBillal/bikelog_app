@@ -37,7 +37,7 @@ const UserProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<IUser | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const hasRegisteredPushToken = useRef(false);
+  const registeredPushForUserId = useRef<string | null>(null);
 
   useEffect(() => {
     const loadUserData = async () => {
@@ -63,11 +63,17 @@ const UserProvider = ({ children }: { children: ReactNode }) => {
     loadUserData();
   }, []);
 
-  // ! registers this device's Expo push token once per app session, once a real session
-  // ! exists — covers both the post-login case and an already-stored session on cold launch
+  // ! registers this device's Expo push token once per user per app session, once a real
+  // ! session exists — covers both the post-login case and an already-stored session on cold
+  // ! launch.
+  // ! Keyed on the user rather than a once-ever boolean (spec 51c §5c): A logging out and B
+  // ! logging in without a force-kill left the old flag set, so B's device never registered
+  // ! and B silently got no weekly summaries. A boolean reset in `logoutFunction` would not
+  // ! have been enough either — row 4 and a refused refresh both end a session from inside
+  // ! the interceptor, outside React, where a ref cannot be touched.
   useEffect(() => {
-    if (user && token && !hasRegisteredPushToken?.current) {
-      hasRegisteredPushToken.current = true;
+    if (user && token && registeredPushForUserId.current !== user._id) {
+      registeredPushForUserId.current = user._id;
       registerPushToken();
     }
   }, [user, token]);
