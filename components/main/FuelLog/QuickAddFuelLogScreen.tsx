@@ -1,44 +1,26 @@
 import { ScreenHeader, SectionLoading } from "@/components/main/shared";
-import { useFetchData } from "@/hooks/useApi";
-import { TBike } from "@/types/bike.types";
-import { TFuelLogsApiResponse } from "@/types/fuel-log.types";
+import { useFuelLogSeed } from "@/hooks/useFuelLogSeed";
 import { COLORS } from "@/utils/colors";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useMemo } from "react";
 import { StyleSheet, View } from "react-native";
 import { FuelLogFormModal } from "./FuelLogFormModal";
 
 /**
- * Prefilled quick-create route (`/bikes/[bikeId]/fuel-logs/new`) — reached from
- * the bike hub's quick-add button. Seeds fuelStation/pricePerLiter from the
- * bike's most recent fuel log; odometer/liters are always left blank.
+ * Prefilled quick-create route (`/bikes/[bikeId]/fuel-logs/new`) — reached via
+ * deep link. Seeds station/price/tank setting from the bike's most recent fuel
+ * log and the odometer from the bike itself; liters is always left blank.
+ * The seed itself lives in `useFuelLogSeed`, shared with the Fuel logs list.
  */
 export function QuickAddFuelLogScreen() {
   const { bikeId } = useLocalSearchParams<{ bikeId: string }>();
   const router = useRouter();
 
-  const { data: bikeData, isLoading: isBikeLoading } = useFetchData<TBike>(
-    ["bikes", bikeId],
-    `/bikes/${bikeId}`,
-    { enabled: !!bikeId },
-  );
-  const bike = bikeData?.data;
-
-  const { data: lastLogData, isLoading: isLastLogLoading } =
-    useFetchData<TFuelLogsApiResponse>(
-      ["fuelLogs", bikeId, "latest"],
-      `/bikes/${bikeId}/fuel-logs?limit=1&sort=-date`,
-      { enabled: !!bikeId },
-    );
-  const lastLog = lastLogData?.data?.result?.[0];
-
-  const seedFromLastLog = useMemo(() => {
-    if (!lastLog) return undefined;
-    return {
-      fuelStation: lastLog?.fuelStation,
-      pricePerLiter: lastLog?.pricePerLiter,
-    };
-  }, [lastLog]);
+  const {
+    bike,
+    seed: seedFromLastLog,
+    odometerSeed,
+    isLoading,
+  } = useFuelLogSeed(bikeId);
 
   const handleClose = () => {
     if (router.canGoBack()) {
@@ -47,8 +29,6 @@ export function QuickAddFuelLogScreen() {
       router.replace({ pathname: "/bikes/[bikeId]", params: { bikeId } });
     }
   };
-
-  const isLoading = isBikeLoading || isLastLogLoading;
 
   return (
     <View style={styles.screen}>
@@ -70,6 +50,7 @@ export function QuickAddFuelLogScreen() {
         onClose={handleClose}
         bikeId={bikeId}
         seedFromLastLog={seedFromLastLog}
+        seedOdometer={odometerSeed}
       />
     </View>
   );
