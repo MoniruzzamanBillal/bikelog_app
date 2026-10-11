@@ -31,8 +31,8 @@ Server spec 52 H2 and H5 both bias the estimate late, and it floors the day coun
 **H-G — Avoid weekend-relative phrasing.**
 The plan file suggests copy like _"around this weekend"_. For this rider that is actively misleading: the Dhaka weekend is **Friday–Saturday**, those are plausibly the non-riding days, and the odometer does not advance on them — so a date landing on a Friday is not a day the bike will be ridden to the due reading. Use a date, or a day count. Never a named weekend.
 
-**H-H — Server spec 52's horizon means the date is always within ~14 days.**
-Reminders only appear once the projection is ≤14 days, so this line will read `around 19 Oct`, never `around 6 Dec`. Any mock, screenshot or copy review using a two-month-out date is describing something the API cannot produce. (The plan file's examples — `2,400 km left · around 24 Oct` — remain impossible even after spec 52; its 8 weeks is the _measurement window_, not the alert horizon.)
+**H-H — The date is always within ~10 days on the projection, ~14 on the calendar clock.**
+Server spec 52 settled its horizon at **10 projected days** (its D2), so a projected line reads `around 19 Oct`, never `around 6 Dec`. The `nextDueDate` clock is untouched by that spec and still fires at 14 days, so under D6 a _calendar_ line can legitimately sit up to 14 days out — that asymmetry is deliberate and is documented in spec 52 D2. Either way, any mock, screenshot or copy review using a two-month-out date is describing something the API cannot produce. (The plan file's examples — `2,400 km left · around 24 Oct` — remain impossible even after spec 52; its measurement window, now **4 weeks**, is not the alert horizon.)
 
 ---
 
@@ -41,8 +41,12 @@ Reminders only appear once the projection is ≤14 days, so this line will read 
 - **D1 — Two lines, not one.** H-B decides it. The row grows ~15px; with one to three reminders that is unnoticeable, and it protects the actionable half from truncation.
 - **D2 — A new `getProjectionLine()` beside `getDistanceLine()`, not a rewrite of it.** `getDistanceLine`'s header comment says it mirrors the web client's own `getDistanceLine`; leaving it untouched keeps that claim true and keeps the diff reviewable.
 - **D3 — Relative copy under a week, absolute from a week out.** "in about 4 days" is what you act on at close range; "around 24 Oct" is what you act on at two weeks. The switchover is 7 days.
-- **D4 — `kmPerDay` is received but not displayed in this spec.** It is in the payload (server D6) and is what a future "based on your last 8 weeks" hint would use. Showing it now would put a third number in a row that already has two.
+- **D4 — `kmPerDay` is received but not displayed in this spec.** It is in the payload (server D6) and is what a future "based on your last 4 weeks" hint would use. Showing it now would put a third number in a row that already has two.
 - **D5 — No change to the pill.** It stays `Upcoming` / `Overdue`. A date in a status pill reads as a deadline, which is exactly the false precision H-F warns about.
+- **D6 — When a type has both clocks, the third line prints whichever comes first** (settled 2026-10-11; this answers server spec 52's open question 3, which deliberately left the fix to the client). A service can be due at an odometer reading _and_ on a date — oil at 20,000 km or in 6 months, whichever first. Today `getDistanceLine` prints the km line and never looks at `daysRemaining` once `nextDueOdometer` exists, so a service 5 calendar days from due reads `400 km left` and the nearer deadline is invisible. The fix compares `projectedDueDate` against `nextDueDate` and prints the earlier.
+  - **`getDistanceLine` is still not touched** — the comparison lives entirely in `getProjectionLine` (§C), so D2 holds and its "mirrors the web client" header comment stays true. The web client keeps today's behaviour and is one line behind by choice; nothing there breaks (server spec 52 H9).
+  - **The two branches are worded differently on purpose.** A projected date is an estimate and keeps the "around" hedge (H-F); `nextDueDate` is a stored fact and gets none — `due 18 Oct`, not `around 18 Oct`. Hedging a real date is the same dishonesty as H-F pointed the other way.
+  - **Date-only reminders still get no third line.** Line 2 already reads `18 days left` for them, so the calendar branch would merely repeat it. This line exists to surface the clock the distance line _hides_, so it runs only when `nextDueOdometer` is present.
 
 ---
 
@@ -66,18 +70,48 @@ Reminders only appear once the projection is ≤14 days, so this line will read 
 
 ## §C New `getProjectionLine`
 
-`RemindersBanner.tsx`, directly below `getDistanceLine` (so the pair reads together):
+`RemindersBanner.tsx`, directly below `getDistanceLine` (so the pair reads together). Two functions: a date parser that cannot throw, and the line itself.
 
 ```ts
 /**
- * The projected due date, or null when there is nothing honest to say.
- * ! Server spec 52 only sends this for `upcoming` distance-based reminders, and only when
- * ! the bike has enough fuel history. Absent is the normal case, not an error — see H-A.
+ * ! H-A: a server predating spec 52 omits these fields, and a malformed string must never
+ * ! reach `format` and render "Invalid Date". One guard, shared by both branches below.
+ */
+function toDate(value?: string | null): Date | null {
+  if (value == null) return null;
+  const d = new Date(value);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
+/**
+ * The due date of whichever clock comes first, or null when there is nothing honest to say.
+ * ! Server spec 52 sends the projection only for `upcoming` distance-based reminders, and
+ * ! only when the bike has enough fuel history. Absent is the normal case, not an error — H-A.
+ * ! D6: a type can be due by odometer AND by date; the earlier one is printed. The calendar
+ * ! date is a stored fact and is NOT hedged — the projected one is an estimate and is.
  */
 function getProjectionLine(r: TReminder): string | null {
   if (r?.status === "overdue") return null; // H-C
-  if (r?.projectedDaysRemaining == null) return null; // H-A: `!= null`, not undefined
-  if (r?.projectedDueDate == null) return null;
+
+  // ! D6: date-only reminders already say "18 days left" on line 2 — repeating it here adds
+  // ! nothing. This line exists to surface the clock the distance line hides.
+  if (r?.nextDueOdometer == null) return null;
+
+  const projected = toDate(r?.projectedDueDate);
+  const calendar = toDate(r?.nextDueDate);
+
+  // ! D6: `<=` so an exact tie resolves to the calendar date — a fact beats an estimate.
+  if (calendar && (!projected || calendar.getTime() <= projected.getTime())) {
+    const days = r?.daysRemaining;
+    if (days != null) {
+      if (days <= 0) return "due today"; // defensive: the server calls this overdue
+      if (days === 1) return "due tomorrow";
+      if (days < 7) return `due in ${days} days`; // D3, unhedged per D6
+    }
+    return `due ${format(calendar, "d MMM")}`;
+  }
+
+  if (!projected || r?.projectedDaysRemaining == null) return null; // H-A: `!= null`
 
   const days = r?.projectedDaysRemaining;
 
@@ -86,18 +120,17 @@ function getProjectionLine(r: TReminder): string | null {
   if (days <= 0) return "due any day now";
   if (days === 1) return "around tomorrow";
   if (days < 7) return `in about ${days} days`; // D3
-
-  const due = new Date(r?.projectedDueDate);
-  if (Number.isNaN(due.getTime())) return null; // H-A: never render Invalid Date
-  return `around ${format(due, "d MMM")}`;
+  return `around ${format(projected, "d MMM")}`;
 }
 ```
 
 Needs `import { format } from "date-fns";` — already a dependency, used the same way in `BikeDetailPage.tsx:25`.
 
-- [ ] `getProjectionLine` added
+- [ ] `toDate` added, and used for **both** dates — no bare `new Date(...)` reaching `format`
+- [ ] `getProjectionLine` added, with the D6 and H-F comments kept
 - [ ] `date-fns` `format` imported
-- [ ] `NaN` date guard present — a malformed string from a future/older server must not reach `format`
+- [ ] The `nextDueOdometer == null` early return present — without it, date-only rows grow a duplicate third line (V9 catches this)
+- [ ] Calendar branch unhedged, projection branch hedged — not harmonised into one wording
 
 ## §D Render it
 
@@ -144,10 +177,17 @@ Resulting row:
 │     around 24 Oct                           │
 └─────────────────────────────────────────────┘
 ┌─────────────────────────────────────────────┐
+│ 🕐  Air filter                    [Upcoming]│
+│     900 km left                             │
+│     due 18 Oct                              │   ← D6: the calendar clock is the earlier one
+└─────────────────────────────────────────────┘
+┌─────────────────────────────────────────────┐
 │ ⚠  Chain lube                     [Overdue]│
 │     340 km past due                         │   ← H-C: no third line
 └─────────────────────────────────────────────┘
 ```
+
+Note the middle row: `900 km left` is far past the 10-day projected horizon, so it is on screen only because its **date** clock fired — and before D6 its third line would have been absent while line 2 said nothing about the deadline that put it there.
 
 - [ ] Conditional third line added, computed once
 - [ ] `styles.projection` added
@@ -155,16 +195,20 @@ Resulting row:
 
 ## §E Copy table
 
-| `projectedDaysRemaining` | Shown                     |
-| ------------------------ | ------------------------- |
-| `null` / absent          | _(line omitted entirely)_ |
-| 0                        | `due any day now`         |
-| 1                        | `around tomorrow`         |
-| 2–6                      | `in about 4 days`         |
-| 7–14                     | `around 24 Oct`           |
-| any, status `overdue`    | _(line omitted — H-C)_    |
+| Case | Shown |
+| --- | --- |
+| status `overdue` | _(line omitted — H-C)_ |
+| no `nextDueOdometer` (date-only reminder) | _(omitted — D6; line 2 already speaks in days)_ |
+| distance clock, but no projection and no `nextDueDate` | _(omitted — H-A; the normal state against a pre-52 server)_ |
+| **projection is the earlier clock**, `projectedDaysRemaining` 0 | `due any day now` |
+| … 1 | `around tomorrow` |
+| … 2–6 | `in about 4 days` |
+| … 7–10 | `around 24 Oct` |
+| **`nextDueDate` is the earlier clock**, `daysRemaining` 1 | `due tomorrow` |
+| … 2–6 | `due in 4 days` |
+| … 7–14 | `due 24 Oct` |
 
-Never: a named weekend (H-G), a bare date with no hedge (H-F), a time of day, or a date more than ~14 days out (H-H).
+Never: a named weekend (H-G), an unhedged _projection_ (H-F), an "around" on a stored `nextDueDate` (D6 — that hedge is a lie in the other direction), a time of day, or a date more than ~14 days out (H-H).
 
 ---
 
@@ -188,10 +232,20 @@ Never: a named weekend (H-G), a bare date with no hedge (H-F), a time of day, or
 | V12 | Maintenance screen (`MaintenanceLog:92`)                              | Same rows, same text, log list below unaffected (H-D)                                                                                     |
 | V13 | Three reminders at once, one overdue                                  | Overdue sorts first (unchanged `:82-84`), mixed two-line and three-line rows align acceptably                                             |
 
-V5–V10 need either a server with spec 52 or a temporary hardcoded reminder object; V11–V13 need a device or `expo start --web` at phone width. V1–V3 are claimable from here.
+| V14 | **D6**: both clocks — `nextDueDate` in 5 days, projection in 9 | `due in 5 days` — the calendar clock wins, unhedged |
+| V15 | **D6**: both clocks — `nextDueDate` in 12 days, projection in 8 | `around <date>` — the projection wins, hedged |
+| V16 | **D6**: both clocks — `nextDueDate` in 11 days, **no** projection sent (900 km out, past the 10-day horizon) | `due <date>` — the row is on screen because of its date clock and now says so. This is the case D6 exists for |
+| V17 | **D6**: both clocks landing on the same day | `due <date>` — the tie resolves to the calendar date (`<=`) |
 
-## Open questions
+V5–V10 and V14–V17 need either a server with spec 52 or a temporary hardcoded reminder object; V11–V13 need a device or `expo start --web` at phone width. V1–V3 are claimable from here.
 
-1. **Tone of the projection line.** Dim grey (as specced) treats it as supporting detail; `tint(tone, 0.85)` — amber for upcoming — treats it as the actionable part. The pill already carries the tone, which is the argument for dim. Decide on a device.
-2. **Should the hub show only the _nearest_ reminder?** With three reminders the hub now spends three 3-line panels above the tile grid. If that crowds the screen, the hub variant could cap at one or two rows while the maintenance screen shows all. Out of scope here; note it if V11 looks cramped.
-3. **The dashboard/garage extension** from the plan file — surfacing the nearest due item without opening a bike — stays a separate spec. Different screen, own layout questions.
+## Settled questions (developer, 2026-10-11)
+
+All three were answered before implementation. Two resolve to "ship as specced, with a named fallback if the device disagrees" — the fallback is written down here so it is not re-derived at V11.
+
+1. **Tone of the projection line — ship dim, as §D specs it (`tint(COLORS.textLight, 0.85)`).** The row's `tone` (`:89`) already paints the icon, the panel border and the pill; a fourth amber element turns a three-reminder hub into warning stripes and the colour stops carrying information.
+   - **If it reads as ignorable on device (V11), fix it with hierarchy, not colour:** give the date line the 12px `styles.line` size and drop the km line to 11.5px dim — i.e. swap the two. That promotes the actionable half without adding a fourth amber element. **Do not** reach for `tint(tone, 0.85)`.
+2. **Hub reminder count — ship uncapped.** Every reminder renders on both screens, exactly as today.
+   - **If V11 looks cramped, add a `maxRows` prop (the hub passes `2`) plus a `+N more` row tapping through to the maintenance screen — not nearest-only.** One row cannot represent two overdue services, and the existing overdue-first sort (`:82-84`) is no substitute for saying there are others. A cap is a prop change on a component with two call sites (H-D), which is exactly why it is a fallback rather than a guess made up front.
+3. **The dashboard/garage extension — keep it out, and do not write its spec yet.** It stays separate work, and it is a _server_ change first: reminders are per-bike (`GET /api/bikes/:bikeId/reminders`), so a garage listing N bikes would need N requests to draw one line. It needs a multi-bike summary endpoint or a `nearestReminder` on the bikes-list response, not a tweak to this component.
+   - **Gate: wait until specs 52 and 53 are live and the projected dates have proven accurate on real riding.** Server spec 52 H2 and H5 both bias the estimate late; if the dates come out laggy or jumpy, that is not a number to fan out across the garage screen as well.
