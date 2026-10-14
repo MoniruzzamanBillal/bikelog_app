@@ -24,6 +24,7 @@ import {
 import { Text } from "react-native-paper";
 import { FuelLogCard } from "./FuelLogCard";
 import { FuelLogFormModal } from "./FuelLogFormModal";
+import { TankForecastCard } from "./TankForecastCard";
 
 const LIMIT = 10;
 
@@ -120,6 +121,11 @@ export function FuelLog() {
         }
         showsVerticalScrollIndicator={false}
       >
+        {/* ! Spec 55 §F: above the fill-up count row, and deliberately unlike the bike
+            ! hub's reminder banners — a forecast, not an alert (D7). It renders nothing
+            ! when the bike has no usable mileage figure. */}
+        <TankForecastCard bikeId={bikeId} />
+
         <View style={styles.topRow}>
           <Text style={styles.count}>
             {isLoading ? "" : `${totalCount} fill-ups`}

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { StyleSheet, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { Modal, Portal, Text } from "react-native-paper";
@@ -13,7 +13,7 @@ import {
 } from "@/components/main/shared";
 import { useFetchData, usePatch, usePost } from "@/hooks/useApi";
 import { COLORS } from "@/utils/colors";
-import { format } from "date-fns";
+import { addDays, format } from "date-fns";
 import { TMaintenanceType, TEngineOilType } from "@/types/catalog.types";
 import {
   TCreateMaintenanceLogPayload,
@@ -60,9 +60,23 @@ export function MaintenanceLogFormModal({
   const [partsReplaced, setPartsReplaced] = useState("");
   const [notes, setNotes] = useState("");
 
+  // ! D1: what the catalog seed itself last wrote into each field. The field is safe to
+  // ! re-seed only while it still holds that exact value — anything else is the rider's
+  // ! own typing and must survive a type change (H-A). Same seeded-vs-typed distinction
+  // ! spec 52 §G introduced on the fuel form.
+  const seededInterval = useRef<string | null>(null);
+  const seededNextDueDate = useRef<string | null>(null);
+
   const createMutation = usePost([["maintenanceLogs", bikeId], ["reminders", bikeId]]);
   const updateMutation = usePatch([["maintenanceLogs", bikeId], ["reminders", bikeId]]);
   const isPending = createMutation?.isPending || updateMutation?.isPending;
+
+  // ! §C: shown only while the value is still the seed's own, so it disappears on the
+  // ! rider's first keystroke. A prefilled value nobody noticed is its own hazard (spec 52 §G).
+  const intervalIsSeeded =
+    intervalKmUsed !== "" && intervalKmUsed === seededInterval.current;
+  const nextDueDateIsSeeded =
+    nextDueDate !== "" && nextDueDate === seededNextDueDate.current;
 
   const selectedMaintType = useMemo(
     () => maintenanceTypes.find((mt) => mt?._id === maintenanceType),
@@ -77,6 +91,63 @@ export function MaintenanceLogFormModal({
       setOilType(null);
     }
   }, [isEngineOil]);
+
+  const selectedOilType = useMemo(
+    () => oilTypes.find((ot) => ot?._id === oilType),
+    [oilTypes, oilType],
+  );
+
+  // ! Seeds the interval from the catalog. H-A: only ever replaces a value this effect
+  // ! itself wrote (tracked in seededInterval), so a hand-typed number always survives a
+  // ! type change. H-C: the oil type's suggestion is more specific than the maintenance
+  // ! type's default, so it wins — but neither beats typed input.
+  useEffect(() => {
+    if (!open || log) return; // H-B: create only
+
+    const suggested =
+      selectedOilType?.suggestedIntervalKm ??
+      selectedMaintType?.defaultIntervalKm;
+
+    const isSeed =
+      intervalKmUsed === "" || intervalKmUsed === seededInterval.current;
+    if (!isSeed) return; // H-A
+
+    // ! 54a: "" is a legitimate seed value, so a missing suggestion CLEARS the field
+    // ! rather than returning early. Returning early left the previous selection's seed
+    // ! on screen — the stuck oil suggestion V12 asserts against (H-D, H-E).
+    const next = suggested == null ? "" : String(Math.round(suggested)); // H-G
+    if (next === intervalKmUsed) return; // also what stops this effect looping on its own write
+
+    seededInterval.current = next === "" ? null : next;
+    setIntervalKmUsed(next);
+  }, [open, log, selectedMaintType, selectedOilType, intervalKmUsed]);
+
+  // ! H-F: serviceDate is the base and the rider can change it after the fact, so re-seed
+  // ! whenever it moves — but only while the date is still a seed.
+  useEffect(() => {
+    if (!open || log) return;
+
+    const days = selectedMaintType?.defaultIntervalDays;
+
+    const isSeed =
+      nextDueDate === "" || nextDueDate === seededNextDueDate.current;
+    if (!isSeed) return;
+
+    // ! 54a, with one asymmetry against the interval effect above: an unparseable
+    // ! serviceDate means "can't recompute", which is a reason to leave a correct seed
+    // ! alone — only a missing defaultIntervalDays clears it.
+    let next = "";
+    if (days != null) {
+      if (!serviceDate) return;
+      const base = new Date(`${serviceDate}T00:00:00`);
+      if (Number.isNaN(base.getTime())) return;
+      next = format(addDays(base, days), "yyyy-MM-dd");
+    }
+    if (next === nextDueDate) return;
+
+    seededNextDueDate.current = next === "" ? null : next;
+    setNextDueDate(next);
+  }, [open, log, selectedMaintType, serviceDate, nextDueDate]);
 
   const mtOptions = useMemo(
     () => maintenanceTypes.map((mt) => ({ label: mt?.name, value: mt?._id })),
@@ -94,6 +165,10 @@ export function MaintenanceLogFormModal({
     if (!open) return;
 
     if (log) {
+      // ! H-B: the edit path never seeds, so nothing on it is a seed.
+      seededInterval.current = null;
+      seededNextDueDate.current = null;
+
       const mtId = typeof log?.maintenanceType === "object"
         ? log?.maintenanceType?._id
         : log?.maintenanceType;
@@ -113,6 +188,9 @@ export function MaintenanceLogFormModal({
       setPartsReplaced(log?.partsReplaced?.join(", ") || "");
       setNotes(log?.notes || "");
     } else {
+      seededInterval.current = null;
+      seededNextDueDate.current = null;
+
       setMaintenanceType(null);
       setOdometerReading("");
       setOilType(null);
@@ -262,15 +340,20 @@ export function MaintenanceLogFormModal({
                 style={styles.noMarginBottom}
               />
             </View>
-            <FormField
-              label="Interval km (opt)"
-              placeholder="1200"
-              value={intervalKmUsed}
-              onChangeText={setIntervalKmUsed}
-              keyboardType="decimal-pad"
-              editable={!isPending}
-              style={styles.rowField}
-            />
+            <View style={styles.rowField}>
+              <FormField
+                label="Interval km (opt)"
+                placeholder="1200"
+                value={intervalKmUsed}
+                onChangeText={setIntervalKmUsed}
+                keyboardType="decimal-pad"
+                editable={!isPending}
+                style={intervalIsSeeded ? styles.seededFieldTight : undefined}
+              />
+              {intervalIsSeeded && (
+                <Text style={styles.seedHintText}>From your catalog default</Text>
+              )}
+            </View>
           </View>
 
           <DatePickerField
@@ -278,7 +361,11 @@ export function MaintenanceLogFormModal({
             value={nextDueDate}
             onChange={setNextDueDate}
             disabled={isPending}
+            style={nextDueDateIsSeeded ? styles.seededFieldTight : undefined}
           />
+          {nextDueDateIsSeeded && (
+            <Text style={styles.seedHintText}>From your catalog default</Text>
+          )}
 
           <FormField
             label="Service Center"
@@ -347,6 +434,18 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
   noMarginBottom: {
+    marginBottom: 14,
+  },
+  // ! §C: the seeded-field marker reuses spec 52 §G's `seedHintText` typography and the
+  // ! `accentForeground` token rather than introducing a second hint style — the modal's
+  // ! own `hint` above is a muted empty-state note, which would not read as "seeded".
+  seededFieldTight: {
+    marginBottom: 4,
+  },
+  seedHintText: {
+    fontSize: 11.5,
+    lineHeight: 16,
+    color: COLORS.accentForeground,
     marginBottom: 14,
   },
 });

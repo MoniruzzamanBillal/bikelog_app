@@ -23,6 +23,14 @@ export type TFuelLogSeed = {
  * ! also advance it, and the server validates a new reading against the higher
  * ! of the two. So `currentOdometer` is the floor of the accepted range — the
  * ! least typing and the furthest from a 400.
+ *
+ * ! The window is `limit=12`, not `limit=1`, for `useTankForecast` (spec 55 D3):
+ * ! the tank forecast has to sum every fill-up back to the last full tank, and
+ * ! `FuelLog.tsx`'s own list query is paginated and therefore unusable for it
+ * ! (spec 55 H-D). 12 covers a full-tank interval at any realistic fill pattern;
+ * ! when it doesn't, that hook's H-E check degrades the card instead of guessing.
+ * ! Same cache key, same request count, so the seed is unaffected — it still
+ * ! reads `result[0]`.
  */
 export function useFuelLogSeed(bikeId: string) {
   const { data: bikeData, isLoading: isBikeLoading } = useFetchData<TBike>(
@@ -35,10 +43,11 @@ export function useFuelLogSeed(bikeId: string) {
   const { data: lastLogData, isLoading: isLastLogLoading } =
     useFetchData<TFuelLogsApiResponse>(
       ["fuelLogs", bikeId, "latest"],
-      `/bikes/${bikeId}/fuel-logs?limit=1&sort=-date`,
+      `/bikes/${bikeId}/fuel-logs?limit=12&sort=-date`,
       { enabled: !!bikeId },
     );
-  const lastLog = lastLogData?.data?.result?.[0];
+  const recentLogs = lastLogData?.data?.result ?? [];
+  const lastLog = recentLogs[0];
 
   const seed = useMemo<TFuelLogSeed | undefined>(() => {
     if (!lastLog) return undefined;
@@ -53,6 +62,7 @@ export function useFuelLogSeed(bikeId: string) {
     seed,
     odometerSeed: bike?.currentOdometer,
     bike,
+    recentLogs,
     isLoading: isBikeLoading || isLastLogLoading,
   };
 }

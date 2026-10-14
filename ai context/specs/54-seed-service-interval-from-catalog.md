@@ -1,6 +1,6 @@
 # 54: Seed the service interval from the catalog
 
-Status: ⛔ **Not Started.** Written 2026-10-11 while planning spec 53, which it unblocks. **Revised the same day: all three open questions are settled (see Settled questions at the end), and §D adds the one-time catch-up that has to happen alongside the code.**
+Status: ✅ **Code complete** (2026-10-14) — **§D's one-time catch-up is still owed, and until it is done this spec is a no-op.** Written 2026-10-11 while planning spec 53, which it unblocks. **Revised the same day: all three open questions are settled (see Settled questions at the end), and §D adds the one-time catch-up that has to happen alongside the code.**
 Scope: `components/main/MaintenanceLog/MaintenanceLogFormModal.tsx`. One file. No type change, no server change, no new dependency.
 Independently shippable and independently useful — it is specced separately so it can land first, on its own, without waiting for `bikelog_server` spec 52.
 
@@ -113,11 +113,11 @@ Reset both refs in the existing open/log effect — `null` in the edit branch (`
 
 `addDays` comes from `date-fns`, already a dependency; `format` is already imported in this file (`:122` uses it).
 
-- [ ] Two refs added
-- [ ] `selectedOilType` memo added
-- [ ] Interval seeding effect added, with the H-A/H-C comment intact
-- [ ] `nextDueDate` seeding effect added, with the H-F comment intact
-- [ ] Both refs reset in both branches of the `[log, open]` effect
+- [x] Two refs added
+- [x] `selectedOilType` memo added
+- [x] Interval seeding effect added, with the H-A/H-C comment intact
+- [x] `nextDueDate` seeding effect added, with the H-F comment intact
+- [x] Both refs reset in both branches of the `[log, open]` effect
 
 ## §C The hint
 
@@ -133,8 +133,8 @@ On the interval input (`:268`), while the value is a seed:
 
 Same treatment for `nextDueDate` if D3 lands. Match whatever helper-text style spec 52 §G introduced on the fuel form rather than inventing a second one — check `FuelLogFormModal.tsx` first and reuse it.
 
-- [ ] Hint rendered under the interval input
-- [ ] Style reused from spec 52's seeded-field hint, not duplicated
+- [x] Hint rendered under the interval input
+- [x] Style reused from spec 52's seeded-field hint, not duplicated
 
 ---
 
@@ -159,7 +159,7 @@ How to find them: the maintenance card renders a `Cost / Interval / Next due` gr
 
 **Order of work:** step 1 → step 2 → this spec's code. The catalog has to hold the numbers before either the hand edits or the seed can use them.
 
-- [ ] Step 1 done — km and/or days defaults set on every type the rider actually services
+- [ ] Step 1 done — km and/or days defaults set on every type the rider actually services **← owed, developer-only**
 - [ ] Noted whether any oil-requiring type carries a km default (settles D0 for this catalog)
 - [ ] Step 2 done — newest log per type carries an interval, each verified via its `Next due` cell
 
@@ -197,3 +197,32 @@ All three of this spec's original open questions are closed. Kept here with thei
 ## Still open
 
 Nothing blocking. One thing to watch rather than decide: if the rider turns out to service a type at a distance that differs from both catalog numbers often enough to retype it every time, the seed is noise rather than help — and the honest response would be to let the *log* update the catalog default on save, not to seed harder. Judge after a few real services, not before.
+
+---
+
+## Implementation notes (2026-10-14)
+
+One file, as scoped: `components/main/MaintenanceLogFormModal.tsx` gained two refs, a `selectedOilType` memo, two effects, two derived booleans, two hint lines and two styles. No type change, no server change, no new dependency — `addDays` joined the existing `date-fns` `format` import.
+
+**§B's two code blocks were not shipped literally.** Reading them against this spec's own **V12** found a defect, which is written up as **`54a-clear-a-stale-seed-when-the-suggestion-disappears.md`** and fixed in the same pass, so no build ever carried the original. In short: both effects returned early when the selected catalog row carried no default, which is right for an empty or a hand-typed field and wrong for one holding a value the seed itself put there — it left the previous selection's number on screen, with the `From your catalog default` hint still claiming it came from a catalog default that no longer exists. Since the server writes `nextDueOdometer` from `intervalKmUsed`, that stale number would have become the basis of a real reminder. The fix folds "no suggestion" into the normal seed path as `""`, with the `isSeed` check moved ahead of it so H-A's protection of typed input is untouched. See 54a for the reproduction, the reasoning and its extra test rows.
+
+Two other details worth recording:
+
+- **The hint reuses spec 52 §G's `seedHintText` typography and the `accentForeground` token**, as §C instructs, rather than the modal's own `hint` style — that one is a muted `textLight` empty-state note ("No oil types yet…") and would not read as a seeded-field marker. The layout follows the house pattern spec 52 established for a note under a field (`totalFieldTight` + `totalNote`): the field drops to `marginBottom: 4` while the hint is showing, and the hint carries the 14. The interval `FormField` is inside a two-field row, so it is now wrapped in the `rowField` `View` with the hint beneath it; the row's geometry is unchanged.
+- **The hint's visibility is derived from a ref but never goes stale.** Every write to `seededInterval.current` happens immediately before a `setState`, and the rider's own typing is a `setState` too, so there is always a re-render to recompute it.
+
+### What was verified, and how
+
+V1 clean: `npx tsc --noEmit`, `yarn lint`, `npx expo export --platform web` (20 routes, unchanged).
+
+**V2–V14 were then exercised for real, including all of 54a's new rows.** There is no test renderer in this project and this spec forbids adding a dependency, so the two effect **bodies were sliced verbatim out of the source file** (programmatically, by index — not re-typed), wrapped in a harness that supplies the state they close over and re-runs each effect to a fixed point the way React does after its own `setState`, and driven through 17 assertions. All 17 pass:
+
+- **V4, the headline assertion** — a hand-typed `2500` survives picking a type with a 5000 default, and shows no hint. V5 likewise for a value typed *over* a seed.
+- **V2, V3 and D0** — the 5000 seed, the oil type moving it to 3000, and specificity beating recency even when the oil-requiring type *also* carries a km default (the collision §D step 1 checks for).
+- **V6** empty stays empty, **V7** edit mode never seeds.
+- **V12a / V12b / V13 — 54a's three rows.** V12b is the one that would have failed on §B's literal code: the stale `3000` is now cleared and the hint goes with it, while V13 confirms the clear path still cannot touch typed input.
+- **V8–V10 and V14** for the date half, including H-F's re-seed when the service date is backdated 30 days, a hand-edited `nextDueDate` surviving a service-date change, and 54a's deliberate asymmetry — an unparseable `serviceDate` leaves a correct seed alone rather than clearing it.
+
+The harness also **proves neither effect loops**: it throws if the state has not reached a fixed point within ten re-runs, which is the failure mode an effect that both reads and writes `intervalKmUsed` could plausibly have had.
+
+**Still owed, and it is the part that decides whether any of this is visible:** §D, in order — the catalog defaults (step 1), then the newest log per type by hand (step 2). Both are developer-only, neither is code, and a blank catalog makes this spec a no-op by design (H-E). Per §D, verify a hand edit on the maintenance card's `Next due` cell, **not** on the reminders banner. Also owed is a device pass on the hint's appearance inside the two-field row, which no static check can speak to.

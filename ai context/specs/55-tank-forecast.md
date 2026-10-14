@@ -1,6 +1,6 @@
 # 55: Tank forecast — the half-tank date and range
 
-Status: ⛔ **Not Started.** Written 2026-10-11 from `../../../new Features/04-half-tank-forecast.md`.
+Status: ✅ **Complete** (2026-10-14). Written 2026-10-11 from `../../../new Features/04-half-tank-forecast.md`.
 Scope: **`bikelog_app` only.** One new hook, one new component, one one-character change to an existing query. No server change, no schema change, no new endpoint, no new dependency, no EAS build.
 Independent of `bikelog_server` spec 52 and app specs 53/54 — it can ship before, after or instead of them. It does duplicate spec 52's _rate_ calculation client-side; §0 H-F is where that is argued.
 
@@ -86,7 +86,7 @@ km to half      = floor((9.85 - 6) * 40)        = 154 km
 days to half    = floor(154 / 43)               = 3  →  "around 14 Oct"
 ```
 
-- [ ] Arithmetic implemented in the order above (clamping before subtraction, flooring last)
+- [x] Arithmetic implemented in the order above (clamping before subtraction, flooring last)
 
 ## §C `hooks/useTankForecast.ts`
 
@@ -192,10 +192,10 @@ State selection:
 - no `exactRecords[0]`, or `ridden < 0`, or `!windowReachesAnchor` → `range-only`
 - otherwise → `live`, with `pastHalf = litersInTank <= capacity / 2` and `kmToHalf` clamped at 0
 
-- [ ] `useTankForecast.ts` created, re-using the keys `["bikes", bikeId]`, `["mileage","history",bikeId]`, `["fuelLogs",bikeId,"latest"]`
-- [ ] `computeKmPerDay` carries the H-G comment verbatim — it is the only record of why the subset loop exists
-- [ ] Top-up tie-break carries the H-C comment
-- [ ] Every branch of H-K lands on a declared state
+- [x] `useTankForecast.ts` created, re-using the keys `["bikes", bikeId]`, `["mileage","history",bikeId]`, `["fuelLogs",bikeId,"latest"]`
+- [x] `computeKmPerDay` carries the H-G comment verbatim — it is the only record of why the subset loop exists
+- [x] Top-up tie-break carries the H-C comment
+- [x] Every branch of H-K lands on a declared state
 
 ## §D `useFuelLogSeed` — one query widened
 
@@ -210,10 +210,10 @@ return { seed, odometerSeed: bike?.currentOdometer, bike, recentLogs, isLoading 
 
 Extend the hook's header comment to say _why_ 12: the tank forecast needs every fill-up back to the last full tank, and `FuelLog.tsx`'s own list query is paginated and therefore unusable for it (H-D).
 
-- [ ] `limit=12`, key unchanged
-- [ ] `recentLogs` returned; `seed` logic untouched
-- [ ] `QuickAddFuelLogScreen` verified unaffected (it consumes `seed` / `odometerSeed` only)
-- [ ] Header comment extended
+- [x] `limit=12`, key unchanged
+- [x] `recentLogs` returned; `seed` logic untouched
+- [x] `QuickAddFuelLogScreen` verified unaffected (it consumes `seed` / `odometerSeed` only)
+- [x] Header comment extended
 
 ## §E `components/main/FuelLog/TankForecastCard.tsx`
 
@@ -251,9 +251,9 @@ Copy rules, all load-bearing:
 - **Never state litres.** `9.85 L` reads like a measurement; `~154 km to go` reads like what it is.
 - **State the range as rideable distance, in one fixed sentence: `You can ride ~240 km on half a tank`** (settled 2026-10-11). Not `Full → half is 240 km`, which is spec-sheet phrasing the rider has to decode. The sentence is identical in all three states that show it (`live`, `pastHalf`, `range-only`) so the number is recognisably the same number wherever it appears, and it keeps the `~` because it moves with the mileage figure.
 
-- [ ] Card built with all seven states
-- [ ] Uses `Panel` from `components/main/shared`, styled distinctly from `RemindersBanner` (D7)
-- [ ] `date-fns` `format(due, "d MMM")`, matching spec 53 §C
+- [x] Card built with all seven states
+- [x] Uses `Panel` from `components/main/shared`, styled distinctly from `RemindersBanner` (D7)
+- [x] `date-fns` `format(due, "d MMM")`, matching spec 53 §C
 
 ## §F Placement
 
@@ -265,8 +265,8 @@ Copy rules, all load-bearing:
 <View style={styles.topRow}>
 ```
 
-- [ ] Rendered above the fill-up count row
-- [ ] Nothing else in `FuelLog.tsx` changed — the paginated list query, `buildLockMap` and the modal wiring are untouched
+- [x] Rendered above the fill-up count row
+- [x] Nothing else in `FuelLog.tsx` changed — the paginated list query, `buildLockMap` and the modal wiring are untouched
 
 ---
 
@@ -307,3 +307,30 @@ V1 is claimable from here. V2–V15 are most cheaply exercised by temporarily st
    - **What this costs, stated plainly:** between logs the card is optimistic — it reports more fuel than the bike has, and the longer since the last log, the further out the half-tank date sits. With no logs for 5 days and 215 km ridden on a 12 L / 40 km/L bike it says `240 km to go` when the truth is ~25 km. That is tolerated, and it is exactly why H-F's flooring, the "around" hedge and §E's audit lines are mandatory rather than decorative: an unhedged date here would be a measurement-shaped lie. If the drift turns out to be annoying in practice, the fix is a separate spec and option (b) above is the shape it should take.
 
 _All four questions are now settled; nothing in this spec is open._
+
+---
+
+## Implementation notes (2026-10-14)
+
+Shipped as specced. Three files: `hooks/useTankForecast.ts` and `components/main/FuelLog/TankForecastCard.tsx` are new, `hooks/useFuelLogSeed.ts` widened to `limit=12`, and `FuelLog.tsx` gained the one render line §F asks for.
+
+- **`useFuelLogSeed`'s other consumer is genuinely untouched.** `QuickAddFuelLogScreen:18-23` destructures `bike`, `seed`, `odometerSeed` and `isLoading` only, and `seed` still reads `result[0]` off the same key with the same `?sort=-date` — so widening the limit changes neither its value nor the request count.
+- **The derivation is a plain function call, not a `useMemo`.** `exactRecords` and `recentLogs` are fresh array identities on every render (`?? []`), so a memo keyed on them would never hit while still costing the dependency bookkeeping. The work is a dozen logs and a handful of records. Noted in the hook.
+- **`daysToHalf` is suppressed when `pastHalf`**, on top of §C's conditions — a day count to a threshold already crossed is noise, and §E's `pastHalf` row shows no date anyway.
+- **One copy deviation, resolved toward §E:** the `daysToHalf === null` headline is `~154 km to go`, the same words as the sub-line it replaces, rather than a reworded "to half". §E's table is explicit about this string.
+- **The basis label renders as `(exact)` / `(estimated)`**, per V14 — `basis` itself stays `"exact" | "approximate"` as §C declares, and the card maps it.
+
+### What was verified, and how
+
+V1 clean on all three: `tsc --noEmit`, `yarn lint` (plus `npx eslint hooks/` directly — **`expo lint` only covers `app/` and `components/`, so a new hook is not linted by `yarn lint`**, which is worth knowing beyond this spec), and `expo export --platform web` bundling the same 20 routes.
+
+**V2–V5 and V7–V13 were then exercised for real as pure functions**, which matters more here than on spec 53 because this spec is almost entirely arithmetic. `deriveForecast` and `computeKmPerDay` were sliced verbatim out of the source (programmatically, by index — not re-typed), compiled, and driven through 18 assertions. All 18 pass, including:
+
+- **V2** exactly reproducing §B's worked example — `154 km to go`, `240 km` range, `riddenSinceAnchorKm` 86, and `daysToHalf = floor(154 / 45.26) = 3`.
+- **V4, the headline assertion of H-B** — 300 km ridden plus a 5 L top-up gives `140 km to go` and **not** `Past half` — together with its control: the same ride with the top-up ignored *does* read `pastHalf`, so the test demonstrates the inversion H-B warns about rather than just asserting the fixed behaviour.
+- **V5 both ways** — a same-day top-up at a higher odometer is counted, and one at the anchor's own odometer (i.e. the full-tank fill itself) is not.
+- **V3** clamping 14.85 L to the 12 L tank, **V10** a below-anchor odometer, **V11** `pastHalf`, **V12** stale records giving a distance but no date, **V13** `MIN_RATE_SPAN_DAYS` refusing a 10-day span, plus `kmPerLiter: 0` and a malformed log date — every one landing on a declared state with no `NaN`, `Infinity` or `Invalid Date`.
+
+**A correction worth recording, because it is a trap for the next person writing a fixture for this hook:** the first run of V3/V4 failed, and the code was right — the fixtures were wrong. They listed only the top-ups, with no log at the anchor, which trips H-E's `windowReachesAnchor` check and correctly degrades to `range-only`. In real data the anchor's own full-tank fill **is** a fuel log and is therefore always inside a 12-log window unless 12+ fills have happened since (which is precisely V7). Any fixture for this hook must include it.
+
+**Still owed:** V6 (paginate to page 2 and confirm the card does not move — the H-D regression), V16 (360dp layout), and **V15**, which needs a live server with spec 52 and is the standing obligation H-G creates. V15 is a drift check between two permanently separate implementations, and per Settled question 1 any gap is fixed **here**, never by adding a server field. The constants were cross-read against `bikelog_server`'s own `maintenanceLog.service.ts:296-298` during implementation and currently agree exactly: 28-day window, 14-day minimum span, 100 km minimum distance, whole-week snapping with ties to the longer span, and flooring.

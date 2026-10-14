@@ -1,6 +1,6 @@
 # 53: Service due-date projection — app half
 
-Status: ⛔ **Not Started.** Written 2026-10-11 from `../../../new Features/02-service-due-dates.md`.
+Status: ✅ **Complete** (2026-10-14). Written 2026-10-11 from `../../../new Features/02-service-due-dates.md`.
 Pairs with `bikelog_server` spec 52, which does the substantive half. Prerequisite for anyone _seeing_ this: `54-seed-service-interval-from-catalog.md`.
 Scope: `components/main/MaintenanceLog/RemindersBanner.tsx` and `types/maintenance-log.types.ts`. Two files. No new screen, no new query, no new dependency, no native change, no EAS build.
 
@@ -65,8 +65,8 @@ Server spec 52 settled its horizon at **10 projected days** (its D2), so a proje
 
 `projectedDueDate` is a **string** here — it is an ISO date over the wire, not a `Date`, same as `nextDueDate` two lines above it.
 
-- [ ] Three fields added with the comment
-- [ ] `projectedDueDate` typed as `string | null`, not `Date`
+- [x] Three fields added with the comment
+- [x] `projectedDueDate` typed as `string | null`, not `Date`
 
 ## §C New `getProjectionLine`
 
@@ -126,11 +126,11 @@ function getProjectionLine(r: TReminder): string | null {
 
 Needs `import { format } from "date-fns";` — already a dependency, used the same way in `BikeDetailPage.tsx:25`.
 
-- [ ] `toDate` added, and used for **both** dates — no bare `new Date(...)` reaching `format`
-- [ ] `getProjectionLine` added, with the D6 and H-F comments kept
-- [ ] `date-fns` `format` imported
-- [ ] The `nextDueOdometer == null` early return present — without it, date-only rows grow a duplicate third line (V9 catches this)
-- [ ] Calendar branch unhedged, projection branch hedged — not harmonised into one wording
+- [x] `toDate` added, and used for **both** dates — no bare `new Date(...)` reaching `format`
+- [x] `getProjectionLine` added, with the D6 and H-F comments kept
+- [x] `date-fns` `format` imported
+- [x] The `nextDueOdometer == null` early return present — without it, date-only rows grow a duplicate third line (V9 catches this)
+- [x] Calendar branch unhedged, projection branch hedged — not harmonised into one wording
 
 ## §D Render it
 
@@ -189,9 +189,9 @@ Resulting row:
 
 Note the middle row: `900 km left` is far past the 10-day projected horizon, so it is on screen only because its **date** clock fired — and before D6 its third line would have been absent while line 2 said nothing about the deadline that put it there.
 
-- [ ] Conditional third line added, computed once
-- [ ] `styles.projection` added
-- [ ] Nothing else in the component touched — no change to sorting, keys, the pill, or `getDistanceLine`
+- [x] Conditional third line added, computed once
+- [x] `styles.projection` added
+- [x] Nothing else in the component touched — no change to sorting, keys, the pill, or `getDistanceLine`
 
 ## §E Copy table
 
@@ -249,3 +249,22 @@ All three were answered before implementation. Two resolve to "ship as specced, 
    - **If V11 looks cramped, add a `maxRows` prop (the hub passes `2`) plus a `+N more` row tapping through to the maintenance screen — not nearest-only.** One row cannot represent two overdue services, and the existing overdue-first sort (`:82-84`) is no substitute for saying there are others. A cap is a prop change on a component with two call sites (H-D), which is exactly why it is a fallback rather than a guess made up front.
 3. **The dashboard/garage extension — keep it out, and do not write its spec yet.** It stays separate work, and it is a _server_ change first: reminders are per-bike (`GET /api/bikes/:bikeId/reminders`), so a garage listing N bikes would need N requests to draw one line. It needs a multi-bike summary endpoint or a `nearestReminder` on the bikes-list response, not a tweak to this component.
    - **Gate: wait until specs 52 and 53 are live and the projected dates have proven accurate on real riding.** Server spec 52 H2 and H5 both bias the estimate late; if the dates come out laggy or jumpy, that is not a number to fan out across the garage screen as well.
+
+---
+
+## Implementation notes (2026-10-14)
+
+Implemented exactly as specced; no decision was revisited and no hazard turned out to be wrong.
+
+- **Two files, as scoped.** `types/maintenance-log.types.ts` gained the three fields on `TReminder`; `RemindersBanner.tsx` gained `toDate`, `getProjectionLine`, the `date-fns` import, one line in the `map` callback, one conditional `<Text>` and one style. `getDistanceLine` is byte-identical (D2), so its "mirrors the web client" header comment still holds.
+- **`getProjectionLine` is called once per row** into a local `const projection`, per §D's note — not twice as the illustrative snippet shows.
+- **`tint(COLORS.textLight, 0.85)` works as written**: `COLORS.textLight` is `#9397ab`, a hex literal, which is what `tint` requires (it returns a non-hex input unchanged).
+- **Server spec 52 is already implemented**, so the field names were cross-checked against `bikelog_server/src/app/modules/maintenanceLog/maintenanceLog.service.ts:457-481` rather than taken from this spec alone. They match, the server sends them only on `upcoming` + distance-based reminders (its D4), and `projectedDueDate` serialises as an ISO string — so §B's `string | null` is right.
+
+### What was verified, and how
+
+V1–V3 all clean: `npx tsc --noEmit`, `yarn lint`, and `npx expo export --platform web` bundling the same **20** routes as spec 51 (no route added, so spec 51a's stale-typed-route trap does not apply).
+
+Beyond that, **§E's whole copy table plus V5–V10 and V14–V17 were exercised as pure functions.** With no test runner in this project, `getProjectionLine` was sliced verbatim out of the source file (programmatically, by line range — not re-typed), compiled, and driven through 19 assertions in the scratchpad. All 19 pass, including both sides of the 7-day boundary (6 → relative, 7 → absolute), the D6 tie resolving to the calendar date, V16's no-projection case, V10's malformed date, and two assertions on the wording asymmetry itself — that the calendar branch never contains "around" and the projection branch always does. The harness is scratch, not committed; it is reproducible from this note.
+
+**Still owed: V4 and V11–V13**, which are the ones that need a real screen. V4 (a pre-52 server) is no longer the default state, since server spec 52 is live. V11–V13 need a device or `expo start --web` at 360dp to confirm the three-line row does not truncate and the hub's tile grid is not pushed off-screen — and they are what settle the two fallbacks the Settled questions pre-authorised (swap the font sizes if the dim line reads as ignorable; add `maxRows` + `+N more` if the hub looks cramped). Neither fallback was applied, per "ship as specced".
