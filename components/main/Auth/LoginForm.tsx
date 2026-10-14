@@ -18,12 +18,18 @@ type TLoginResponse = {
   success: boolean;
   message: string;
   data: null;
+  // ! The access token. The field name is unchanged on purpose — that is the whole
+  // ! back-compat story for the rollout (server spec 51 §A).
   token: string;
+  // ! Spec 51 §E: optional, and a missing one must not break login. The server deploys
+  // ! *after* this build (server spec 51 §H), so every login until then answers without a
+  // ! refresh token and has to behave exactly as it does today.
+  refreshToken?: string;
 };
 
 export function LoginForm() {
   const router = useRouter();
-  const { handleSetToken, handleSetUser } = useUserContext();
+  const { handleSetTokens, handleSetUser } = useUserContext();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -73,7 +79,10 @@ export function LoginForm() {
       if (result?.token) {
         const decoded = jwtDecode<TUserToken>(result?.token);
 
-        handleSetToken(result?.token);
+        handleSetTokens({
+          accessToken: result?.token,
+          refreshToken: result?.refreshToken,
+        });
         handleSetUser({ _id: decoded?.userId, email: decoded?.userEmail });
 
         Toast.show({

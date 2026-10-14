@@ -1,7 +1,8 @@
 import { DatePickerField, FormActions, FormField, SwitchField } from "@/components/main/shared";
 import { usePatch, usePost } from "@/hooks/useApi";
+import { TFuelLogSeed } from "@/hooks/useFuelLogSeed";
 import { TCreateFuelLogPayload, TFuelLog } from "@/types/fuel-log.types";
-import { COLORS } from "@/utils/colors";
+import { COLORS, tint } from "@/utils/colors";
 import { setLastUsedBike } from "@/utils/lastUsedBike";
 import { format } from "date-fns";
 import { useEffect, useState } from "react";
@@ -12,12 +13,42 @@ import Toast from "react-native-toast-message";
 
 const DECIMAL_REGEX = /^\d+(\.\d{0,2})?$/;
 
+/** Which pre-filled fields are still untouched, so §G can mark them. */
+type TSeededFields = {
+  odometer: boolean;
+  price: boolean;
+  station: boolean;
+  fullTank: boolean;
+};
+
+const NO_SEEDED_FIELDS: TSeededFields = {
+  odometer: false,
+  price: false,
+  station: false,
+  fullTank: false,
+};
+
+/** Money is always 2dp; liters is capped at 2dp by `DECIMAL_REGEX`. */
+const formatMoney = (value: number) => value.toFixed(2);
+const round2 = (value: number) => parseFloat(value.toFixed(2));
+
+/** ["price", "station", "tank setting"] -> "Price, station and tank setting" */
+const toSentence = (items: string[]) => {
+  const joined =
+    items?.length > 1
+      ? `${items.slice(0, -1).join(", ")} and ${items[items.length - 1]}`
+      : items[0];
+  return joined.charAt(0).toUpperCase() + joined.slice(1);
+};
+
 interface FuelLogFormModalProps {
   open: boolean;
   onClose: () => void;
   bikeId: string;
   initialFuelLog?: TFuelLog;
-  seedFromLastLog?: { fuelStation?: string; pricePerLiter: number };
+  seedFromLastLog?: TFuelLogSeed;
+  /** The bike's `currentOdometer` — the floor of the server's accepted range. */
+  seedOdometer?: number;
 }
 
 export function FuelLogFormModal({
@@ -26,14 +57,17 @@ export function FuelLogFormModal({
   bikeId,
   initialFuelLog,
   seedFromLastLog,
+  seedOdometer,
 }: FuelLogFormModalProps) {
   const [odometer, setOdometer] = useState("");
   const [liters, setLiters] = useState("");
+  const [total, setTotal] = useState("");
   const [isFullTank, setIsFullTank] = useState(false);
   const [pricePerLiter, setPricePerLiter] = useState("");
   const [station, setStation] = useState("");
   const [date, setDate] = useState("");
   const [notes, setNotes] = useState("");
+  const [seeded, setSeeded] = useState<TSeededFields>(NO_SEEDED_FIELDS);
 
   const createMutation = usePost([
     ["fuelLogs"],
@@ -56,6 +90,8 @@ export function FuelLogFormModal({
   useEffect(() => {
     if (!open) return;
 
+    // ! The edit path must never seed (spec 52 H-E) — this branch wins, and
+    // ! every seed prop is read only inside the `else`.
     if (initialFuelLog) {
       setOdometer(initialFuelLog?.odometerReading?.toString());
       setLiters(initialFuelLog?.litersAdded?.toString());
@@ -64,23 +100,121 @@ export function FuelLogFormModal({
       setStation(initialFuelLog?.fuelStation || "");
       setDate(initialFuelLog?.date?.split("T")[0]);
       setNotes(initialFuelLog?.notes || "");
+      const editTotal =
+        initialFuelLog?.litersAdded * initialFuelLog?.pricePerLiter;
+      setTotal(Number.isFinite(editTotal) ? formatMoney(editTotal) : "");
+      setSeeded(NO_SEEDED_FIELDS);
     } else {
-      setOdometer("");
+      const seededOdometer = seedOdometer?.toString() ?? "";
+      setOdometer(seededOdometer);
       setLiters("");
-      setIsFullTank(false);
+      setTotal("");
+      setIsFullTank(seedFromLastLog?.isFullTank ?? false);
       setPricePerLiter(seedFromLastLog?.pricePerLiter?.toString() ?? "");
       setStation(seedFromLastLog?.fuelStation ?? "");
       setDate(format(new Date(), "yyyy-MM-dd"));
       setNotes("");
+      setSeeded({
+        odometer: !!seededOdometer,
+        price: seedFromLastLog?.pricePerLiter !== undefined,
+        station: !!seedFromLastLog?.fuelStation,
+        fullTank: seedFromLastLog?.isFullTank === true,
+      });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialFuelLog, open]);
+
+  /** A field you've edited is no longer a suggestion, so drop its marker. */
+  const clearSeeded = (field: keyof TSeededFields) =>
+    setSeeded((prev) => (prev?.[field] ? { ...prev, [field]: false } : prev));
 
   const parsedLiters = parseFloat(liters);
   const parsedPrice = parseFloat(pricePerLiter);
   const computedTotal =
     Number.isFinite(parsedLiters) && Number.isFinite(parsedPrice)
       ? parsedLiters * parsedPrice
+      : null;
+
+  const handleOdometerChange = (value: string) => {
+    setOdometer(value);
+    clearSeeded("odometer");
+  };
+
+  const handleLitersChange = (value: string) => {
+    setLiters(value);
+    const nextLiters = parseFloat(value);
+    if (Number.isFinite(nextLiters) && Number.isFinite(parsedPrice)) {
+      setTotal(formatMoney(nextLiters * parsedPrice));
+    } else if (!value.trim()) {
+      setTotal("");
+    }
+  };
+
+  // ! Price/L is the anchor and is never derived (spec 52 §F): a price computed
+  // ! from two 2dp-rounded inputs lands on values like 124.6883, which would
+  // ! then be stored *and* become the next fill-up's seed. Liters is the
+  // ! measured quantity, so changing the price keeps it and recomputes total.
+  const handlePriceChange = (value: string) => {
+    setPricePerLiter(value);
+    clearSeeded("price");
+    const nextPrice = parseFloat(value);
+    if (Number.isFinite(parsedLiters) && Number.isFinite(nextPrice)) {
+      setTotal(formatMoney(parsedLiters * nextPrice));
+    }
+  };
+
+  /**
+   * Total is the number you actually know at the pump, so liters derives from
+   * it — and derives *before* validation runs, or `handleSubmit` would reject a
+   * form that looks complete.
+   */
+  const handleTotalChange = (value: string) => {
+    setTotal(value);
+    const nextTotal = parseFloat(value);
+    if (
+      Number.isFinite(nextTotal) &&
+      Number.isFinite(parsedPrice) &&
+      parsedPrice > 0
+    ) {
+      setLiters(round2(nextTotal / parsedPrice).toString());
+    } else if (!value.trim()) {
+      setLiters("");
+    }
+  };
+
+  // ! H-G: `totalCost` is server-derived from the 2dp liters, so ৳500 at
+  // ! ৳124.70/L really stores ৳500.05. Snap the field to the figure that will
+  // ! actually be stored once you've finished typing — rewriting it on every
+  // ! keystroke would fight the keyboard.
+  const handleTotalBlur = () => {
+    if (computedTotal !== null) setTotal(formatMoney(computedTotal));
+  };
+
+  const handleStationChange = (value: string) => {
+    setStation(value);
+    clearSeeded("station");
+  };
+
+  const handleFullTankChange = (value: boolean) => {
+    setIsFullTank(value);
+    clearSeeded("fullTank");
+  };
+
+  const carriedOver = [
+    seeded?.price ? "price" : null,
+    seeded?.station ? "station" : null,
+    seeded?.fullTank ? "tank setting" : null,
+  ].filter((item): item is string => !!item);
+
+  const showSeedHint =
+    !initialFuelLog && (seeded?.odometer || carriedOver?.length > 0);
+
+  // The typed total and the stored total can differ by a few poisha (H-G) —
+  // show the real figure rather than echoing back what was typed.
+  const storedTotal = computedTotal !== null ? formatMoney(computedTotal) : null;
+  const totalNote =
+    storedTotal && total.trim() && formatMoney(parseFloat(total)) !== storedTotal
+      ? `Stores ৳${storedTotal} — liters round to 2 decimals`
       : null;
 
   const handleSubmit = async () => {
@@ -187,12 +321,32 @@ export function FuelLogFormModal({
             {initialFuelLog ? "Edit Fuel Log" : "Add Fill-up"}
           </Text>
 
+          {/* ! §G — a prefilled value you didn't notice is a wrong value you
+              ! didn't notice (H-F). Each line disappears once you edit the
+              ! fields it describes. */}
+          {showSeedHint && (
+            <View style={styles.seedHint}>
+              {seeded?.odometer && (
+                <Text style={styles.seedHintText}>
+                  Odometer starts at this bike’s current reading — change it if
+                  you’re backdating.
+                </Text>
+              )}
+              {carriedOver?.length > 0 && (
+                <Text style={styles.seedHintText}>
+                  {toSentence(carriedOver)} carried over from your last fill-up
+                  — check before saving.
+                </Text>
+              )}
+            </View>
+          )}
+
           <View style={styles.row}>
             <FormField
               label="Odometer (km)"
               placeholder="1550"
               value={odometer}
-              onChangeText={setOdometer}
+              onChangeText={handleOdometerChange}
               keyboardType="decimal-pad"
               editable={!isPending}
               style={styles.rowField}
@@ -214,7 +368,7 @@ export function FuelLogFormModal({
               label="Liters Added"
               placeholder="8.5"
               value={liters}
-              onChangeText={setLiters}
+              onChangeText={handleLitersChange}
               keyboardType="decimal-pad"
               editable={!isPending}
               style={styles.rowField}
@@ -223,25 +377,30 @@ export function FuelLogFormModal({
               label="Price/L (৳)"
               placeholder="125.5"
               value={pricePerLiter}
-              onChangeText={setPricePerLiter}
+              onChangeText={handlePriceChange}
               keyboardType="decimal-pad"
               editable={!isPending}
               style={styles.rowField}
             />
           </View>
 
-          {computedTotal !== null && (
-            <View style={styles.totalBox}>
-              <Text style={styles.totalLabel}>Total cost</Text>
-              <Text style={styles.totalValue}>৳{computedTotal.toFixed(2)}</Text>
-            </View>
-          )}
+          <FormField
+            label="Total paid (৳)"
+            placeholder="500"
+            value={total}
+            onChangeText={handleTotalChange}
+            onBlur={handleTotalBlur}
+            keyboardType="decimal-pad"
+            editable={!isPending}
+            style={totalNote ? styles.totalFieldTight : undefined}
+          />
+          {totalNote && <Text style={styles.totalNote}>{totalNote}</Text>}
 
           <FormField
             label="Fuel Station"
             placeholder="Padma Filling Station"
             value={station}
-            onChangeText={setStation}
+            onChangeText={handleStationChange}
             editable={!isPending}
           />
 
@@ -257,9 +416,13 @@ export function FuelLogFormModal({
 
           <SwitchField
             label="Full Tank"
-            description="Triggers mileage calculation"
+            description={
+              seeded?.fullTank
+                ? "Carried over from your last fill-up · triggers mileage calculation"
+                : "Triggers mileage calculation"
+            }
             value={isFullTank}
-            onChange={setIsFullTank}
+            onChange={handleFullTankChange}
             disabled={isPending}
           />
 
@@ -298,27 +461,28 @@ const styles = StyleSheet.create({
   noMarginBottom: {
     marginBottom: 14,
   },
-  totalBox: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    backgroundColor: COLORS.surface2,
+  seedHint: {
+    backgroundColor: tint(COLORS.accent, 0.1),
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: tint(COLORS.accent, 0.28),
     borderRadius: 8,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    marginBottom: 14,
+    paddingVertical: 9,
+    paddingHorizontal: 11,
+    marginBottom: 16,
+    gap: 4,
   },
-  totalLabel: {
-    fontSize: 13,
-    fontWeight: "500",
+  seedHintText: {
+    fontSize: 11.5,
+    lineHeight: 16,
+    color: COLORS.accentForeground,
+  },
+  totalFieldTight: {
+    marginBottom: 4,
+  },
+  totalNote: {
+    fontSize: 11,
     color: COLORS.textLight,
-  },
-  totalValue: {
-    fontSize: 16,
-    fontWeight: "500",
-    color: COLORS.text,
+    marginBottom: 14,
     fontVariant: ["tabular-nums"],
   },
 });

@@ -63,6 +63,12 @@ export type TReminder = {
   status: "overdue" | "upcoming";
   kmRemaining?: number | null;
   daysRemaining?: number | null;
+  // ! Server spec 52. Optional AND nullable: `utils/envConfig.ts` points at a deployed
+  // ! backend that may predate spec 52, and the backend sends explicit nulls for unset
+  // ! reminder fields. Guard with `!= null`. Present only for `upcoming` + distance-based.
+  projectedDaysRemaining?: number | null;
+  projectedDueDate?: string | null;
+  kmPerDay?: number | null;
 };
 
 export type TMaintenanceLogsApiResponse = {

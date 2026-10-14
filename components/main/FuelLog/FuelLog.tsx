@@ -6,7 +6,7 @@ import {
   SectionLoading,
 } from "@/components/main/shared";
 import { useFetchData } from "@/hooks/useApi";
-import { TBike } from "@/types/bike.types";
+import { useFuelLogSeed } from "@/hooks/useFuelLogSeed";
 import { TFuelLog, TFuelLogsApiResponse } from "@/types/fuel-log.types";
 import { TMileageHistoryResponse, TMileageRecord } from "@/types/mileage.types";
 import { COLORS } from "@/utils/colors";
@@ -24,6 +24,7 @@ import {
 import { Text } from "react-native-paper";
 import { FuelLogCard } from "./FuelLogCard";
 import { FuelLogFormModal } from "./FuelLogFormModal";
+import { TankForecastCard } from "./TankForecastCard";
 
 const LIMIT = 10;
 
@@ -63,12 +64,10 @@ export function FuelLog() {
   const [modalOpen, setModalOpen] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
-  const { data: bikeData } = useFetchData<TBike>(
-    ["bikes", bikeId],
-    `/bikes/${bikeId}`,
-    { enabled: !!bikeId },
-  );
-  const bike = bikeData?.data;
+  // Owns the bike query *and* the newest-log seed for the Add Fill-up modal.
+  // ! Deliberately not seeded from `fuelLogs` below — on page 2 its first row
+  // ! is not the newest log (spec 52 H-B).
+  const { bike, seed, odometerSeed } = useFuelLogSeed(bikeId);
 
   const { data, isLoading, isError, refetch } =
     useFetchData<TFuelLogsApiResponse>(
@@ -122,6 +121,11 @@ export function FuelLog() {
         }
         showsVerticalScrollIndicator={false}
       >
+        {/* ! Spec 55 §F: above the fill-up count row, and deliberately unlike the bike
+            ! hub's reminder banners — a forecast, not an alert (D7). It renders nothing
+            ! when the bike has no usable mileage figure. */}
+        <TankForecastCard bikeId={bikeId} />
+
         <View style={styles.topRow}>
           <Text style={styles.count}>
             {isLoading ? "" : `${totalCount} fill-ups`}
@@ -207,6 +211,8 @@ export function FuelLog() {
         open={modalOpen}
         onClose={() => setModalOpen(false)}
         bikeId={bikeId}
+        seedFromLastLog={seed}
+        seedOdometer={odometerSeed}
       />
     </View>
   );
