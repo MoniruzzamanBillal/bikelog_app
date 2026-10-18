@@ -44,8 +44,8 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Allow $(PRODUCT_NAME) to access your photos to attach receipt/service/damage photos.",
-          "cameraPermission": "Allow $(PRODUCT_NAME) to access your camera to take receipt/service/damage photos."
+          "photosPermission": "Allow $(PRODUCT_NAME) to access your photos to attach receipt/service/damage photos or set your profile photo.",
+          "cameraPermission": "Allow $(PRODUCT_NAME) to access your camera to take receipt/service/damage photos or your profile photo."
         }
       ],
       "expo-notifications"

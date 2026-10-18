@@ -33,6 +33,7 @@ import { Text } from "react-native-paper";
 import Toast from "react-native-toast-message";
 import { OdometerPanel } from "./OdometerPanel";
 import { PanelIcon } from "./PanelIcon";
+import { ProfilePanel } from "./ProfilePanel";
 
 /** Compact inline-edit input used inside a catalog table row. */
 function CellInput(props: React.ComponentProps<typeof NativeTextInput>) {
@@ -95,7 +96,7 @@ const cellStyles = StyleSheet.create({
 const dash = (n?: number | null) => (n ? n.toLocaleString() : "—");
 
 export function SettingsCatalog() {
-  const { user, token, logoutFunction } = useUserContext();
+  const { token, logoutFunction } = useUserContext();
   const {
     data: maintData,
     isLoading: maintLoading,
@@ -383,6 +384,11 @@ export function SettingsCatalog() {
         contentContainerStyle={styles.page}
         showsVerticalScrollIndicator={false}
       >
+        {/* ---------- Profile (spec 56) ---------- */}
+        {/* First, because identity belongs at the top of Settings. It owns the name, the
+            photo and the email; the Account panel below is now logout only. */}
+        <ProfilePanel />
+
         {/* ---------- Odometer ---------- */}
         <OdometerPanel />
 
@@ -735,9 +741,10 @@ export function SettingsCatalog() {
             <PanelIcon name="account-circle-outline" color={COLORS.primary} />
             <View style={styles.panelTitleCol}>
               <Text style={styles.panelTitle}>Account</Text>
-              {user?.email ? (
-                <Text style={styles.accountEmail}>{user?.email}</Text>
-              ) : null}
+              {/* ! Spec 56: the email moved to ProfilePanel, which shows it beside the
+                  ! avatar and the name. Printing it twice on one short screen read as a
+                  ! mistake. This panel is logout only now. */}
+              <Text style={styles.panelSub}>Sign out of this device</Text>
             </View>
           </View>
           <PrimaryButton
@@ -876,10 +883,6 @@ const styles = StyleSheet.create({
   },
   editActions: {
     flexDirection: "row",
-  },
-  accountEmail: {
-    fontSize: 13,
-    color: COLORS.textLight,
   },
   adminRow: {
     flexDirection: "row",
