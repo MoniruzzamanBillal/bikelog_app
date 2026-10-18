@@ -6,7 +6,6 @@ import {
   RuleFade,
   ScreenHeader,
   SectionLoading,
-  SwitchField,
   confirm,
 } from "@/components/main/shared";
 import { useUserContext } from "@/context/user.context";
@@ -124,7 +123,6 @@ export function SettingsCatalog() {
   const [newMaintName, setNewMaintName] = useState("");
   const [newMaintIntervalKm, setNewMaintIntervalKm] = useState("");
   const [newMaintIntervalDays, setNewMaintIntervalDays] = useState("");
-  const [newMaintRequiresOil, setNewMaintRequiresOil] = useState(false);
   const [expandMaint, setExpandMaint] = useState(false);
 
   const [newOilName, setNewOilName] = useState("");
@@ -135,7 +133,6 @@ export function SettingsCatalog() {
   const [editMaintName, setEditMaintName] = useState("");
   const [editMaintIntervalKm, setEditMaintIntervalKm] = useState("");
   const [editMaintIntervalDays, setEditMaintIntervalDays] = useState("");
-  const [editMaintRequiresOil, setEditMaintRequiresOil] = useState(false);
 
   const [editingOilId, setEditingOilId] = useState<string | null>(null);
   const [editOilName, setEditOilName] = useState("");
@@ -157,13 +154,11 @@ export function SettingsCatalog() {
           ...(newMaintIntervalDays.trim()
             ? { defaultIntervalDays: parseInt(newMaintIntervalDays, 10) }
             : {}),
-          requiresOilType: newMaintRequiresOil,
         },
       });
       setNewMaintName("");
       setNewMaintIntervalKm("");
       setNewMaintIntervalDays("");
-      setNewMaintRequiresOil(false);
       setExpandMaint(false);
       Toast.show({
         type: "success",
@@ -189,7 +184,6 @@ export function SettingsCatalog() {
     setEditMaintIntervalDays(
       type?.defaultIntervalDays ? String(type?.defaultIntervalDays) : "",
     );
-    setEditMaintRequiresOil(!!type?.requiresOilType);
     setExpandMaint(false);
   };
 
@@ -211,7 +205,6 @@ export function SettingsCatalog() {
         defaultIntervalDays: editMaintIntervalDays.trim()
           ? parseInt(editMaintIntervalDays, 10)
           : null,
-        requiresOilType: editMaintRequiresOil,
       };
       await updateMaintType.mutateAsync({
         url: `/maintenance-types/${editingMaintId}`,
@@ -264,7 +257,10 @@ export function SettingsCatalog() {
   const handleDeleteOil = (oil: TEngineOilType) => {
     confirm({
       title: "Delete oil type?",
-      message: `"${oil?.name}" will be removed from the catalog. Maintenance logs that already used it keep their history.`,
+      // ! spec 57 H-P: server §G widened the 409 in-use guard to count engine_oil_logs,
+      // ! so this delete is REFUSED while any oil change still references the type — the
+      // ! old copy promised a delete it will not get.
+      message: `"${oil?.name}" can only be removed if no oil change uses it. Oil changes that already used it keep their history.`,
       confirmLabel: "Delete",
       tone: "danger",
       icon: "trash-can-outline",
@@ -442,13 +438,6 @@ export function SettingsCatalog() {
                   style={styles.rowField}
                 />
               </View>
-              <SwitchField
-                label="Needs an engine oil type"
-                description="Shows the oil-type picker when you log this service"
-                value={newMaintRequiresOil}
-                onChange={setNewMaintRequiresOil}
-                disabled={createMaintType.isPending}
-              />
               <PrimaryButton
                 onPress={handleCreateMaint}
                 loading={createMaintType.isPending}
@@ -487,12 +476,6 @@ export function SettingsCatalog() {
                         editable={!updateMaintType.isPending}
                         placeholder="Type name"
                         style={styles.editNameInput}
-                      />
-                      <SwitchField
-                        label="Needs an engine oil type"
-                        value={editMaintRequiresOil}
-                        onChange={setEditMaintRequiresOil}
-                        disabled={updateMaintType.isPending}
                       />
                       <View style={styles.editControls}>
                         <CellInput

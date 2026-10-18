@@ -5,6 +5,11 @@ export type TMaintenanceLog = {
   bike: string;
   maintenanceType: { _id: string; name: string } | string;
   odometerReading: number;
+  // ! HISTORY ONLY since spec 57 §F. Engine oil has its own module and its own screen,
+  // ! and the maintenance form no longer sends or renders this. It stays because the
+  // ! soft-deleted source rows server §H imported keep their oil type, which is what
+  // ! makes that import reversible with one UPDATE — deleting this would make those rows
+  // ! unreadable if anyone ever un-deletes them. The maintenance API still accepts it.
   oilType?:
     | { _id: string; name: string; suggestedIntervalKm: number }
     | string

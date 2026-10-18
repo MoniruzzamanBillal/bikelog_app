@@ -6,7 +6,7 @@ import {
 import { confirmDelete } from "@/components/main/shared/ConfirmDelete";
 import { toneStyle } from "@/components/main/shared/StatusBadge";
 import { useDelete, usePut } from "@/hooks/useApi";
-import { TEngineOilType, TMaintenanceType } from "@/types/catalog.types";
+import { TMaintenanceType } from "@/types/catalog.types";
 import { TMaintenanceLog } from "@/types/maintenance-log.types";
 import { COLORS } from "@/utils/colors";
 import { formatApiDate } from "@/utils/formatApiDate";
@@ -22,7 +22,6 @@ interface MaintenanceLogCardProps {
   log: TMaintenanceLog;
   bikeId: string;
   maintenanceTypes: TMaintenanceType[];
-  oilTypes: TEngineOilType[];
 }
 
 function getTypeName(
@@ -37,22 +36,10 @@ function getTypeName(
   return maintenanceTypes.find((t) => t?._id === typeId)?.name ?? "Maintenance";
 }
 
-function getOilTypeName(
-  log: TMaintenanceLog,
-  oilTypes: TEngineOilType[],
-): string | undefined {
-  if (typeof log?.oilType === "object" && log?.oilType?.name) {
-    return log?.oilType?.name;
-  }
-  const oilId = typeof log?.oilType === "string" ? log?.oilType : undefined;
-  return oilId ? oilTypes.find((o) => o?._id === oilId)?.name : undefined;
-}
-
 export function MaintenanceLogCard({
   log,
   bikeId,
   maintenanceTypes,
-  oilTypes,
 }: MaintenanceLogCardProps) {
   const [editOpen, setEditOpen] = useState(false);
 
@@ -116,9 +103,7 @@ export function MaintenanceLogCard({
     });
   };
 
-  const oilTypeName = getOilTypeName(log, oilTypes);
   const parts = log?.partsReplaced?.filter(Boolean) ?? [];
-  const oilTone = toneStyle("accent");
   const neutralTone = toneStyle("neutral");
 
   // ! `!= null`, not `!== undefined`: the backend sends an explicit `null` for an
@@ -145,17 +130,13 @@ export function MaintenanceLogCard({
           />
 
           <View style={styles.titleCol}>
+            {/* ! spec 57 §F: the oil-type tag is gone — engine oil has its own screen
+                ! and its own card. `titleLine` now holds a single child, so `typeName`
+                ! keeps `numberOfLines` to truncate rather than stretch the row. */}
             <View style={styles.titleLine}>
               <Text style={styles.typeName} numberOfLines={1}>
                 {getTypeName(log, maintenanceTypes)}
               </Text>
-              {oilTypeName ? (
-                <View style={[styles.tag, { backgroundColor: oilTone.bg }]}>
-                  <Text style={[styles.tagText, { color: oilTone.text }]}>
-                    {oilTypeName}
-                  </Text>
-                </View>
-              ) : null}
             </View>
             <Text style={styles.meta}>
               {formatApiDate(log?.serviceDate, "dd MMM yyyy")} ·{" "}

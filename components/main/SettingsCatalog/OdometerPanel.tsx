@@ -24,7 +24,10 @@ const DECIMAL_REGEX = /^\d+(\.\d{0,2})?$/;
 export function OdometerPanel() {
   const { data } = useFetchData<TBike[]>(["bikes"], "/bikes");
   // prefix keys: ["bikes"] also covers ["bikes", bikeId], ["reminders"] covers ["reminders", bikeId]
-  const updateOdometer = usePatch([["bikes"], ["reminders"]]);
+  // ! ["engineOilStatus"] (spec 57 §E): the oil status card's "km on this oil" and its
+  // ! projected due date are both measured against the bike's current reading, so without
+  // ! this the Engine oil screen keeps yesterday's figures until the app is restarted.
+  const updateOdometer = usePatch([["bikes"], ["reminders"], ["engineOilStatus"]]);
 
   const bikes = data?.data ?? [];
 
