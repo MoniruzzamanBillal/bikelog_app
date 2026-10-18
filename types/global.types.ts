@@ -1,8 +1,15 @@
+import { TCloudinaryImage } from "@/types/image.types";
+
 export type IUser = {
   _id: string;
   name?: string;
   email: string;
-  profilePicture?: string;
+  // ! Spec 56: was `string` and read by nothing. `bikelog_server` spec 53 stores and returns
+  // ! `{ url, publicId }` — the same `TCloudinaryImage` shape as every other image in this
+  // ! app — so the picker/viewer conventions apply to it unchanged. `null` is what the server
+  // ! sends after a remove; `undefined` is a session stored before this spec, which is why
+  // ! the Settings panel distinguishes the two when choosing a source to render from.
+  profilePicture?: TCloudinaryImage | null;
   createdAt?: string;
   updatedAt?: string;
   __v?: number;

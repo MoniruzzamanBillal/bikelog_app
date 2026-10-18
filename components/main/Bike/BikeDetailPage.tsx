@@ -13,6 +13,7 @@ import { confirmDelete } from "@/components/main/shared/ConfirmDelete";
 import { useDelete, useFetchData } from "@/hooks/useApi";
 import { TBike } from "@/types/bike.types";
 import { TMaintenanceType } from "@/types/catalog.types";
+import { TEngineOilStatus } from "@/types/engine-oil-log.types";
 import {
   TLifetimeMileage,
   TMileageHistoryResponse,
@@ -37,6 +38,8 @@ type TTile = {
 
 const TILES: TTile[] = [
   { label: "Fuel Logs", icon: "gas-station", segment: "fuel-logs" },
+  // ! D6: beside fuel, not after Documents — those are the two the rider opens weekly.
+  { label: "Engine Oil", icon: "oil", segment: "engine-oil" },
   { label: "Mileage", icon: "speedometer-medium", segment: "mileage" },
   { label: "Maintenance", icon: "wrench-outline", segment: "maintenance-logs" },
   { label: "Spending", icon: "cash-multiple", segment: "spending" },
@@ -112,6 +115,13 @@ export function BikeDetailPage() {
     `/bikes/${bikeId}/spending-summary?period=month&targetMonth=${targetMonth}`,
     { enabled: !!bikeId },
   );
+  // ! spec 57 §E item 5 — the SAME key the Engine oil screen uses, so react-query serves
+  // ! it from cache and the hub makes no extra request once either screen has loaded.
+  const { data: oilStatusData } = useFetchData<TEngineOilStatus>(
+    ["engineOilStatus", bikeId],
+    `/bikes/${bikeId}/engine-oil-logs/status`,
+    { enabled: !!bikeId },
+  );
 
   useEffect(() => {
     if (bikeId) setLastUsedBike(bikeId);
@@ -166,6 +176,10 @@ export function BikeDetailPage() {
   const avgMileage = getAvgMileage(historyData?.data);
   const lifetimeKm = lifetimeData?.data?.totalDistanceKm;
   const monthSpend = spendingData?.data?.totalSpending;
+  // ! Hidden entirely when there is no oil change — a bike with none shows the strip
+  // ! exactly as before rather than a tile reading "0 km".
+  const oilStatus = oilStatusData?.data;
+  const kmOnThisOil = oilStatus?.lastChange ? oilStatus?.kmSinceChange : null;
 
   return (
     <View style={styles.screen}>
@@ -238,6 +252,16 @@ export function BikeDetailPage() {
                   : `${lifetimeKm.toLocaleString()} km`}
               </Text>
             </View>
+            {/* ! D7: the web's oil-name sub-label is dropped — there is no room for it at
+                ! 360dp, and the Engine oil screen one tap away says which oil it is. */}
+            {kmOnThisOil != null && (
+              <View style={styles.miniStat}>
+                <Text style={styles.miniLabel}>On this oil</Text>
+                <Text style={styles.miniValue}>
+                  {`${kmOnThisOil.toLocaleString()} km`}
+                </Text>
+              </View>
+            )}
           </View>
         </Panel>
 
@@ -319,13 +343,18 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: COLORS.textLight,
   },
+  // ! D7: four `flex: 1` columns do not fit a ~328dp panel at 360dp — each would get
+  // ! ~78dp, which `Avg mileage` at 12px already nearly fills. `flexWrap` + `minWidth`
+  // ! degrade the strip to a clean 2×2 instead of ellipsising all four labels (V24).
   miniStats: {
     flexDirection: "row",
+    flexWrap: "wrap",
     gap: 8,
+    rowGap: 10,
   },
   miniStat: {
     flex: 1,
-    minWidth: 0,
+    minWidth: 74,
   },
   miniLabel: {
     fontSize: 12,

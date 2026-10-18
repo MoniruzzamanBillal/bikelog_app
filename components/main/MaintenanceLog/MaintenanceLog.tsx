@@ -7,7 +7,7 @@ import {
 } from "@/components/main/shared";
 import { useFetchData } from "@/hooks/useApi";
 import { TBike } from "@/types/bike.types";
-import { TEngineOilType, TMaintenanceType } from "@/types/catalog.types";
+import { TMaintenanceType } from "@/types/catalog.types";
 import { TMaintenanceLogsApiResponse } from "@/types/maintenance-log.types";
 import { COLORS } from "@/utils/colors";
 import { useLocalSearchParams } from "expo-router";
@@ -42,14 +42,8 @@ export function MaintenanceLog() {
     ["maintenance-types"],
     "/maintenance-types",
   );
-  const { data: oilData } = useFetchData<TEngineOilType[]>(
-    ["engine-oil-types"],
-    "/engine-oil-types",
-  );
-
   const logs = data?.data?.result ?? [];
   const maintenanceTypes = mtData?.data ?? [];
-  const oilTypes = oilData?.data ?? [];
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -118,7 +112,6 @@ export function MaintenanceLog() {
                 log={log}
                 bikeId={bikeId}
                 maintenanceTypes={maintenanceTypes}
-                oilTypes={oilTypes}
               />
             ))}
           </View>

@@ -14,7 +14,7 @@ import {
 import { useFetchData, usePatch, usePost } from "@/hooks/useApi";
 import { COLORS } from "@/utils/colors";
 import { addDays, format } from "date-fns";
-import { TMaintenanceType, TEngineOilType } from "@/types/catalog.types";
+import { TMaintenanceType } from "@/types/catalog.types";
 import {
   TCreateMaintenanceLogPayload,
   TMaintenanceLog,
@@ -40,18 +40,11 @@ export function MaintenanceLogFormModal({
     "/maintenance-types",
     { enabled: open },
   );
-  const { data: oilData, isLoading: oilLoading } = useFetchData<TEngineOilType[]>(
-    ["engine-oil-types"],
-    "/engine-oil-types",
-    { enabled: open },
-  );
 
   const maintenanceTypes = useMemo(() => mtData?.data ?? [], [mtData]);
-  const oilTypes = useMemo(() => oilData?.data ?? [], [oilData]);
 
   const [maintenanceType, setMaintenanceType] = useState<string | null>(null);
   const [odometerReading, setOdometerReading] = useState("");
-  const [oilType, setOilType] = useState<string | null>(null);
   const [intervalKmUsed, setIntervalKmUsed] = useState("");
   const [cost, setCost] = useState("");
   const [serviceDate, setServiceDate] = useState("");
@@ -82,31 +75,18 @@ export function MaintenanceLogFormModal({
     () => maintenanceTypes.find((mt) => mt?._id === maintenanceType),
     [maintenanceTypes, maintenanceType],
   );
-  // ! Driven by the owner-set flag, not a match on the type's name — a name match only worked
-  // ! while a seeded global row existed; per-user catalogs start empty (spec 48 §B).
-  const isEngineOil = !!selectedMaintType?.requiresOilType;
-
-  useEffect(() => {
-    if (!isEngineOil) {
-      setOilType(null);
-    }
-  }, [isEngineOil]);
-
-  const selectedOilType = useMemo(
-    () => oilTypes.find((ot) => ot?._id === oilType),
-    [oilTypes, oilType],
-  );
 
   // ! Seeds the interval from the catalog. H-A: only ever replaces a value this effect
   // ! itself wrote (tracked in seededInterval), so a hand-typed number always survives a
-  // ! type change. H-C: the oil type's suggestion is more specific than the maintenance
-  // ! type's default, so it wins — but neither beats typed input.
+  // ! type change.
+  // ! Spec 57 D9: spec 54 H-C let a picked oil type's `suggestedIntervalKm` outrank this
+  // ! default. With engine oil moved to its own screen there is no oil select here, so the
+  // ! maintenance type's own default is now the only source. The oil-type suggestion did
+  // ! not vanish — it is the ONLY source on `EngineOilLogFormModal`.
   useEffect(() => {
     if (!open || log) return; // H-B: create only
 
-    const suggested =
-      selectedOilType?.suggestedIntervalKm ??
-      selectedMaintType?.defaultIntervalKm;
+    const suggested = selectedMaintType?.defaultIntervalKm;
 
     const isSeed =
       intervalKmUsed === "" || intervalKmUsed === seededInterval.current;
@@ -120,7 +100,7 @@ export function MaintenanceLogFormModal({
 
     seededInterval.current = next === "" ? null : next;
     setIntervalKmUsed(next);
-  }, [open, log, selectedMaintType, selectedOilType, intervalKmUsed]);
+  }, [open, log, selectedMaintType, intervalKmUsed]);
 
   // ! H-F: serviceDate is the base and the rider can change it after the fact, so re-seed
   // ! whenever it moves — but only while the date is still a seed.
@@ -153,13 +133,6 @@ export function MaintenanceLogFormModal({
     () => maintenanceTypes.map((mt) => ({ label: mt?.name, value: mt?._id })),
     [maintenanceTypes],
   );
-  const oilOptions = useMemo(
-    () => oilTypes.map((ot) => ({
-      label: `${ot?.name} (${ot?.suggestedIntervalKm} km)`,
-      value: ot?._id,
-    })),
-    [oilTypes],
-  );
 
   useEffect(() => {
     if (!open) return;
@@ -174,12 +147,6 @@ export function MaintenanceLogFormModal({
         : log?.maintenanceType;
       setMaintenanceType(mtId);
       setOdometerReading(log?.odometerReading?.toString());
-      const oilId = typeof log?.oilType === "object" && log?.oilType
-        ? log?.oilType?._id
-        : typeof log?.oilType === "string"
-          ? log?.oilType
-          : "";
-      setOilType(oilId || null);
       setIntervalKmUsed(log?.intervalKmUsed?.toString() ?? "");
       setCost(log?.cost?.toString());
       setServiceDate(log?.serviceDate ? log?.serviceDate?.split("T")[0] : "");
@@ -193,7 +160,6 @@ export function MaintenanceLogFormModal({
 
       setMaintenanceType(null);
       setOdometerReading("");
-      setOilType(null);
       setIntervalKmUsed("");
       setCost("");
       setServiceDate(format(new Date(), "yyyy-MM-dd"));
@@ -232,7 +198,6 @@ export function MaintenanceLogFormModal({
       odometerReading: parseFloat(odometerReading),
       intervalKmUsed: intervalKmUsed.trim() ? parseFloat(intervalKmUsed.trim()) : undefined,
       cost: parseFloat(cost),
-      oilType: oilType || undefined,
       serviceDate: serviceDate || format(new Date(), "yyyy-MM-dd"),
       nextDueDate: nextDueDate || undefined,
       serviceCenter: serviceCenter.trim() || undefined,
@@ -289,23 +254,6 @@ export function MaintenanceLogFormModal({
               options={mtOptions}
               required
             />
-          )}
-
-          {isEngineOil && (
-            oilLoading ? (
-              <SectionLoading count={1} />
-            ) : oilOptions?.length === 0 ? (
-              <Text style={styles.hint}>
-                No oil types yet — add one in Settings → Engine oil types.
-              </Text>
-            ) : (
-              <SelectPickerField
-                label="Oil Type (optional)"
-                value={oilType}
-                onChange={setOilType}
-                options={oilOptions}
-              />
-            )
           )}
 
           <View style={styles.row}>
@@ -426,11 +374,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   emptyState: {
-    marginBottom: 14,
-  },
-  hint: {
-    fontSize: 12.5,
-    color: COLORS.textLight,
     marginBottom: 14,
   },
   noMarginBottom: {

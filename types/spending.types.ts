@@ -17,7 +17,13 @@ export type TSpendingInsight = {
   cached: boolean;
 };
 
-export type TSpendingRecordSource = "fuel" | "maintenance";
+// ! "accessory" and "oil" were both missing from this app's copy of the union (server
+// ! H11); nothing here switches on `source`, so this is type hygiene, not behaviour.
+export type TSpendingRecordSource =
+  | "fuel"
+  | "maintenance"
+  | "accessory"
+  | "oil";
 
 export type TSpendingRecord = {
   date: string;
