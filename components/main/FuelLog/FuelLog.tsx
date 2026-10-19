@@ -84,6 +84,8 @@ export function FuelLog() {
   const mileageRecords = mileageHistoryData?.data?.exactRecords ?? [];
   const lockMap = buildLockMap(mileageRecords);
 
+  // console.log("data = ", data?.data?.result);
+
   const fuelLogs = data?.data?.result ?? [];
   const totalCount = data?.data?.meta ?? 0;
   const totalPages = Math.ceil(totalCount / LIMIT) || 1;
