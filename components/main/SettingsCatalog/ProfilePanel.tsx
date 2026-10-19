@@ -295,9 +295,31 @@ export function ProfilePanel() {
             placeholder="Your name"
             editable={!updateName?.isPending}
           />
-          <FormField label="Email" value={displayEmail} editable={false} />
+          {/* ! Spec 58: read-only, and deliberately so — the developer's requirement is that
+              ! the rider CANNOT change their own email. `editable={false}` is the block, the
+              ! padlock is what makes it legible before the rider taps (a field that simply
+              ! does not respond reads as a bug), and the note says why. The server refuses a
+              ! submitted `email` with a 400 as well (`bikelog_server` spec 55) — this is the
+              ! polite half of a two-sided rule, not the enforcement.
+              ! Rendered as a disabled FormField rather than dropped from the editor because
+              ! "this is your address and it is fixed" is information the rider wants while
+              ! editing their profile; the collapsed row above shows it too. */}
+          <FormField
+            label="Email"
+            value={displayEmail}
+            editable={false}
+            style={styles.lockedField}
+            rightElement={
+              <MaterialCommunityIcons
+                name="lock-outline"
+                size={15}
+                color={COLORS.textMuted}
+                style={styles.lockIcon}
+              />
+            }
+          />
           <Text style={styles.emailNote}>
-            Email can&apos;t be changed from the app yet.
+            Your email is your sign-in ID and can&apos;t be changed.
           </Text>
 
           <PrimaryButton
@@ -399,5 +421,15 @@ const styles = StyleSheet.create({
     fontSize: 11.5,
     color: COLORS.textMuted,
     marginTop: -6,
+  },
+  // ! Spec 58: the disabled field reads a shade back from the editable one above it, so the
+  // ! two are told apart at a glance rather than by tapping. Opacity, not a different colour
+  // ! token — it dims the label, the box and the value together and cannot drift from
+  // ! `fieldStyles` the way a hand-picked colour would.
+  lockedField: {
+    opacity: 0.72,
+  },
+  lockIcon: {
+    marginRight: 10,
   },
 });
