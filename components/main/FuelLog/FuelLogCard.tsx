@@ -132,6 +132,22 @@ export function FuelLogCard({
             {fuelLog?.fuelStation ? ` · ${fuelLog?.fuelStation}` : ""}
           </Text>
 
+          {/* ! Spec 60: both figures come FROM THE SERVER, per list row — never derived
+              ! here. A row's tank is closed by its NEWER neighbour, which sits on the
+              ! previous page at every page boundary, so a client-side derivation would
+              ! appear and vanish as the rider pages. Guarded separately because
+              ! `kmOnThisFill` can be non-null while `costPerKm` is null, when two fill-ups
+              ! share an odometer reading. The newest fill-up has no closing neighbour and
+              ! simply stops after the odometer line — its tank is still being burned.
+              ! Same line, same order and same wording as `EngineOilLogCard`'s, which is
+              ! what the developer asked this to match. */}
+          {fuelLog?.kmOnThisFill != null && fuelLog?.costPerKm != null && (
+            <Text style={styles.subLine} numberOfLines={1}>
+              {fuelLog?.kmOnThisFill?.toLocaleString()} km on this tank · ৳
+              {fuelLog?.costPerKm?.toFixed(2)}/km
+            </Text>
+          )}
+
           {lockedNote ? (
             <Text style={styles.lockedNote} numberOfLines={2}>
               {lockedNote}
@@ -241,6 +257,13 @@ const styles = StyleSheet.create({
   odoLine: {
     fontSize: 12,
     color: COLORS.textLight,
+    fontVariant: ["tabular-nums"],
+  },
+  subLine: {
+    // ! one notch up from `EngineOilLogCard`'s 10.5, which is itself "one notch down from
+    // ! FuelLogCard throughout" (its D14) — so 11.5 keeps both cards' own scales intact
+    fontSize: 11.5,
+    color: COLORS.textMuted,
     fontVariant: ["tabular-nums"],
   },
   lockedNote: {

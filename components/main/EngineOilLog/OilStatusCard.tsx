@@ -63,6 +63,57 @@ function subLine(days: number, kmRemaining: number): string {
 }
 
 /**
+ * ! Spec 59 §B: an overdue change now gets a date too, and it is in the PAST — the day the
+ * ! oil is estimated to have hit its due point. "Was due ~ 3 Oct" is the one thing the card
+ * ! can say that tells the rider *how stale* the oil is in units they think in; "1,400 km
+ * ! past due" is true but needs mental arithmetic against their own riding to mean anything.
+ * ! Falls back to the distance when the server could not derive any rate at all.
+ */
+function overdueHeadline(projected: Date | null, kmRemaining?: number | null): string {
+  if (projected) return `Was due ~ ${format(projected, "d MMM")}`;
+  if (kmRemaining != null) {
+    return `${Math.abs(kmRemaining).toLocaleString()} km past due`;
+  }
+  return "Overdue";
+}
+
+function overdueSubLine(
+  overdueDays?: number | null,
+  kmRemaining?: number | null,
+): string | null {
+  // ! H-E again: `kmRemaining` is SIGNED and unclamped here, so take its absolute value —
+  // ! never reconstruct the overshoot from `currentOdometer - nextDueOdometer`.
+  const distance =
+    kmRemaining != null
+      ? `~${Math.abs(kmRemaining).toLocaleString()} km past due`
+      : null;
+
+  const when =
+    overdueDays == null
+      ? null
+      : overdueDays <= 0
+        ? "due now"
+        : overdueDays === 1
+          ? "1 day past due"
+          : `${overdueDays} days past due`;
+
+  const parts = [when, distance].filter(Boolean);
+  return parts.length ? parts.join(" · ") : null;
+}
+
+/**
+ * ! Spec 59 §B: the server will now project a date off a coarser figure than the strict
+ * ! 28-day rate when that rate is unavailable, and `rateBasis.source` says which. The card
+ * ! says so rather than passing a lifetime average off as this month's riding — the date is
+ * ! the same kind of estimate either way, but the rider can only judge it if they know what
+ * ! it was measured over.
+ */
+const RATE_NOTE: Record<string, string> = {
+  history: " long-run avg",
+  lifetime: " lifetime avg",
+};
+
+/**
  * The oil-change forecast: how far this oil has run, and when the next change falls due
  * (spec 57 §B). Everything it renders is computed server-side.
  *
@@ -90,29 +141,54 @@ export function OilStatusCard({ status }: OilStatusCardProps) {
   // ! icon, the explanation and the Add button; two empty boxes stacked is worse than one.
   if (!status || !last) return null;
 
-  const tone = toneStyle(STATUS_TONE[status?.status] ?? "neutral");
-  const isOverdue = status?.status === "overdue";
-
   const kmSince = status?.kmSinceChange;
-  const kmRemaining = status?.kmRemaining;
-  const percentUsed = status?.percentUsed;
-  const projected = toDate(status?.projectedDueDate);
-  const days = status?.projectedDaysRemaining;
+
+  // ! H-F row 2: one of server §H's imported changes whose source maintenance log had no
+  // ! interval, or any change logged before spec 54 started seeding `intervalKmUsed`. No
+  // ! due point is stored, so none of the real forecast fields exist.
+  const hasInterval = last?.intervalKm != null;
+
+  // ! Spec 59 §C: that used to be the end of it — the card said "set an interval to get a
+  // ! due date" and showed none, which is exactly the gap the developer reported. The
+  // ! server now sends a PROVISIONAL forecast for that case, derived from the oil type's
+  // ! current `suggestedIntervalKm`. When it is there it drives the whole card, pill
+  // ! included, and every line it produces is marked `est.` — it moves if the catalog is
+  // ! edited, so it must never be mistaken for the frozen figure a real interval gives.
+  const estimate = !hasInterval ? status?.estimate : null;
+
+  const shownStatus = estimate ? estimate.status : status?.status;
+  const tone = toneStyle(STATUS_TONE[shownStatus ?? "unknown"] ?? "neutral");
+  const isOverdue = shownStatus === "overdue";
+
+  const kmRemaining = estimate ? estimate.kmRemaining : status?.kmRemaining;
+  const percentUsed = estimate ? estimate.percentUsed : status?.percentUsed;
+  const projected = toDate(
+    estimate ? estimate.projectedDueDate : status?.projectedDueDate,
+  );
+  const days = estimate
+    ? estimate.projectedDaysRemaining
+    : status?.projectedDaysRemaining;
+  const overdueDays = estimate ? estimate.overdueDays : status?.overdueDays;
+  const intervalKm = estimate ? estimate.intervalKm : last?.intervalKm;
+
+  // ! Nothing to forecast from at all: no stored interval AND no oil type to borrow a
+  // ! suggestion from. The distance run is still worth showing, with the nudge that fixes it.
+  const nothingToProject = !hasInterval && !estimate;
 
   const oilName = last?.oilType?.name;
+  const rateNote =
+    status?.rateBasis?.source != null
+      ? (RATE_NOTE[status?.rateBasis?.source] ?? "")
+      : "";
   const sinceLine = [
     `since ${formatApiDate(last?.changeDate, "d MMM")}`,
     oilName,
-    status?.kmPerDay != null ? `${status?.kmPerDay.toFixed(1)} km/day` : null,
+    status?.kmPerDay != null
+      ? `${status?.kmPerDay.toFixed(1)} km/day${rateNote}`
+      : null,
   ]
     .filter(Boolean)
     .join(" · ");
-
-  // ! H-F row 2: one of server §H's imported changes whose source maintenance log had no
-  // ! interval. No due point exists, so there is no bar, no date and nothing to project —
-  // ! just the distance run and a nudge. Tapping the nudge is deliberately not wired; the
-  // ! rider edits the row.
-  const hasInterval = last?.intervalKm != null;
 
   return (
     <Panel style={styles.card}>
@@ -120,12 +196,13 @@ export function OilStatusCard({ status }: OilStatusCardProps) {
         <Text style={styles.heading}>Engine oil</Text>
         <View style={[styles.pill, { backgroundColor: tone.bg }]}>
           <Text style={[styles.pillText, { color: tone.text }]}>
-            {STATUS_LABEL[status?.status] ?? STATUS_LABEL.unknown}
+            {STATUS_LABEL[shownStatus ?? "unknown"] ?? STATUS_LABEL.unknown}
+            {estimate ? " · est." : ""}
           </Text>
         </View>
       </View>
 
-      {!hasInterval ? (
+      {nothingToProject ? (
         <>
           <Text style={styles.headline}>
             {kmSince != null ? `${kmSince.toLocaleString()} km on this oil` : "—"}
@@ -137,15 +214,18 @@ export function OilStatusCard({ status }: OilStatusCardProps) {
       ) : isOverdue ? (
         <>
           {/* ! H-E: `kmRemaining` from /status is SIGNED and deliberately unclamped, unlike
-              ! the reminders endpoint's `Math.max(0, …)`. Take its absolute value — never
-              ! reconstruct the overshoot from `currentOdometer - nextDueOdometer`, which
-              ! `getDistanceLine` has to do and which would double-count it here. The server
-              ! omits the projected date when overdue, so there is none to show. */}
+              ! the reminders endpoint's `Math.max(0, …)`. Spec 59 added the date, which the
+              ! server now sends for this state too — in the past. */}
           <Text style={[styles.headline, styles.overdue]}>
-            {kmRemaining != null
-              ? `${Math.abs(kmRemaining).toLocaleString()} km past due`
-              : "Overdue"}
+            {overdueHeadline(projected, kmRemaining)}
           </Text>
+          {/* ! only when the date carried the headline — otherwise the headline IS the
+              ! distance and the sub-line would just repeat it. */}
+          {projected && (
+            <Text style={styles.sub}>
+              {overdueSubLine(overdueDays, kmRemaining)}
+            </Text>
+          )}
         </>
       ) : (
         <>
@@ -179,16 +259,26 @@ export function OilStatusCard({ status }: OilStatusCardProps) {
 
       {/* ! The audit lines STAY (spec 55 D7). H-F guarantees this card will eventually read
           ! wrong — `currentOdometer` lags between logs — and the audit lines are what let
-          ! the rider see why rather than stop trusting it. */}
+          ! the rider see why rather than stop trusting it. Spec 59 gives the estimate its
+          ! own version of the first line: same figures, explicitly labelled, plus the one
+          ! sentence that says where the interval came from and how to make it real. */}
       <View style={styles.auditBlock}>
-        {kmSince != null && hasInterval && (
+        {kmSince != null && intervalKm != null && (
           <Text style={styles.audit}>
-            {kmSince.toLocaleString()} / {last?.intervalKm?.toLocaleString()} km on
-            this oil
+            {kmSince.toLocaleString()} / {intervalKm?.toLocaleString()} km on this
+            oil
             {percentUsed != null ? ` · ${Math.round(percentUsed)}%` : ""}
+            {estimate ? " · est." : ""}
           </Text>
         )}
         <Text style={styles.audit}>{sinceLine}</Text>
+        {estimate && (
+          <Text style={styles.nudge}>
+            Estimated from {oilName ?? "this oil"}&apos;s{" "}
+            {estimate.intervalKm?.toLocaleString()} km interval — set one on this
+            change to make it exact.
+          </Text>
+        )}
       </View>
     </Panel>
   );

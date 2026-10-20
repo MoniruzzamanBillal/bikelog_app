@@ -184,8 +184,8 @@ export function BikeDetailPage() {
   return (
     <View style={styles.screen}>
       <ScreenHeader
-        title={bike.nickname}
-        subtitle={`${bike.brand} ${bike.model}`}
+        title={bike?.nickname}
+        subtitle={`${bike?.brand} ${bike?.model}`}
         backLabel="Garage"
       />
 
@@ -247,9 +247,7 @@ export function BikeDetailPage() {
             <View style={styles.miniStat}>
               <Text style={styles.miniLabel}>Lifetime</Text>
               <Text style={styles.miniValue}>
-                {lifetimeKm == null
-                  ? "—"
-                  : `${lifetimeKm.toLocaleString()} km`}
+                {lifetimeKm == null ? "—" : `${lifetimeKm.toLocaleString()} km`}
               </Text>
             </View>
             {/* ! D7: the web's oil-name sub-label is dropped — there is no room for it at
@@ -309,12 +307,12 @@ const styles = StyleSheet.create({
   },
   page: {
     paddingHorizontal: 16,
-    paddingTop: 14,
+    paddingTop: 12,
     paddingBottom: 24,
-    gap: 12,
+    gap: 11,
   },
   odoPanel: {
-    padding: 16,
+    padding: 13,
     gap: 12,
   },
   odoTop: {
@@ -323,7 +321,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   kicker: {
-    fontSize: 11,
+    fontSize: 10,
     letterSpacing: 0.9,
     textTransform: "uppercase",
     color: COLORS.textLight,
@@ -334,13 +332,13 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   odoValue: {
-    fontSize: 30,
+    fontSize: 24,
     fontWeight: "500",
     color: COLORS.text,
     fontVariant: ["tabular-nums"],
   },
   odoUnit: {
-    fontSize: 14,
+    fontSize: 12,
     color: COLORS.textLight,
   },
   // ! D7: four `flex: 1` columns do not fit a ~328dp panel at 360dp — each would get
@@ -349,19 +347,19 @@ const styles = StyleSheet.create({
   miniStats: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 8,
-    rowGap: 10,
+    gap: 6,
+    rowGap: 8,
   },
   miniStat: {
     flex: 1,
     minWidth: 74,
   },
   miniLabel: {
-    fontSize: 12,
+    fontSize: 10,
     color: COLORS.textLight,
   },
   miniValue: {
-    fontSize: 15,
+    fontSize: 12,
     color: COLORS.text,
     marginTop: 2,
     fontVariant: ["tabular-nums"],
@@ -369,7 +367,7 @@ const styles = StyleSheet.create({
   tileGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 8,
+    gap: 7,
   },
   tile: {
     width: "31.7%",
@@ -383,7 +381,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   tileLabel: {
-    fontSize: 12.5,
+    fontSize: 12,
     color: COLORS.text,
   },
 });

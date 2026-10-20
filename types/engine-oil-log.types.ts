@@ -46,9 +46,38 @@ export type TEngineOilStatus = {
   percentUsed?: number | null;
   projectedDaysRemaining?: number | null;
   // ! a real instant, not a date-only field — H-C. `formatApiDate` is WRONG for it.
+  // ! Spec 59: present in the OVERDUE state too, where it is in the past — the date the oil
+  // ! is estimated to have passed its due point. `projectedDaysRemaining` stays absent when
+  // ! overdue; `overdueDays` below carries that figure as a positive number instead.
   projectedDueDate?: string | null;
+  overdueDays?: number | null;
   kmPerDay?: number | null;
-  rateBasis?: { spanDays: number; distanceKm: number } | null;
+  // ! `source` (spec 59) says which window `kmPerDay` was measured over: "recent" is the
+  // ! strict 28-day rate, "history" the bike's whole fuel history, "lifetime" its odometer
+  // ! since purchase. The last two are fallbacks the server uses for the DATE only — they
+  // ! never move `status` — so a card rendering a date off one of them should say so.
+  rateBasis?: {
+    spanDays: number;
+    distanceKm: number;
+    source?: "recent" | "history" | "lifetime" | null;
+  } | null;
+  // ! Spec 59 — the PROVISIONAL forecast for a change that carries no interval of its own
+  // ! (anything logged before app spec 54 started seeding `intervalKmUsed`, plus the
+  // ! imported rows). Derived from the oil type's CURRENT `suggestedIntervalKm`, so it moves
+  // ! if the catalog is edited, which is why the server keeps it out of the fields above.
+  // ! Present only when `lastChange.intervalKm` is absent. Anything rendered from it MUST be
+  // ! labelled an estimate.
+  estimate?: {
+    basis: "oilTypeSuggestion";
+    status: "ok" | "upcoming" | "overdue";
+    intervalKm: number;
+    nextDueOdometer: number;
+    kmRemaining: number;
+    percentUsed: number;
+    projectedDaysRemaining?: number | null;
+    projectedDueDate?: string | null;
+    overdueDays?: number | null;
+  } | null;
 };
 
 // ! H-M: server-derived fields are absent on purpose. `nextDueOdometer`, `kmOnThisOil`
