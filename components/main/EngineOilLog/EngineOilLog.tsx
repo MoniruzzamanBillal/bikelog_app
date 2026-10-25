@@ -37,9 +37,6 @@ export function EngineOilLog() {
   const [quickFillOpen, setQuickFillOpen] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
-  // Owns the bike query *and* the newest-change seed for §H's quick-fill.
-  // ! H-L: deliberately not seeded from the paginated list below — on page 2 its first
-  // ! row is a months-old change.
   const { bike, seed, odometerSeed } = useEngineOilSeed(bikeId);
 
   const { data, isLoading, isError, refetch } =
@@ -49,9 +46,6 @@ export function EngineOilLog() {
       { enabled: !!bikeId },
     );
 
-  // ! H-L: the status card reads its OWN endpoint, never the list. Deriving "your last
-  // ! change" from `result[0]` would make the card move as the rider pages through
-  // ! history — spec 55 H-D one screen over, and spec 52 H-B before it.
   const { data: statusData } = useFetchData<TEngineOilStatus>(
     ["engineOilStatus", bikeId],
     `/bikes/${bikeId}/engine-oil-logs/status`,
@@ -133,7 +127,10 @@ export function EngineOilLog() {
         {isLoading ? (
           <SectionLoading count={5} />
         ) : isError ? (
-          <ErrorState title="Couldn’t load engine oil changes" onRetry={refetch} />
+          <ErrorState
+            title="Couldn’t load engine oil changes"
+            onRetry={refetch}
+          />
         ) : logs?.length === 0 ? (
           <EmptyState
             icon="oil"
@@ -152,9 +149,9 @@ export function EngineOilLog() {
         ) : (
           <>
             <View style={styles.list}>
-              {logs.map((log) => (
+              {logs?.map((log) => (
                 <EngineOilLogCard
-                  key={log._id}
+                  key={log?._id}
                   log={log}
                   bikeId={bikeId}
                   oilTypes={oilTypes}
