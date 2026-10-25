@@ -24,6 +24,12 @@ interface EngineOilLogCardProps {
   oilTypes: TEngineOilType[];
 }
 
+/**
+ * ! The three oil-type shapes, read in the one place that knows about them: populated
+ * ! object, bare id, or null. A direct port of `MaintenanceLogCard`'s `getOilTypeName` —
+ * ! the catalog fallback stays for the reason spec 45a kept it, that a deployment
+ * ! predating the populate still sends a bare id.
+ */
 function getOilName(
   log: TEngineOilLog,
   oilTypes: TEngineOilType[],
@@ -123,7 +129,9 @@ export function EngineOilLogCard({
                 </Text>
               </View>
             ) : null}
-
+            {/* ! only when the filter WAS changed — a tag for a thing that did not happen
+                ! is noise. This is where the web's `Filter: No` table cell does not
+                ! translate: a card has no column to keep filled. */}
             {log?.oilFilterChanged ? (
               <View style={[styles.tag, { backgroundColor: filterTone.bg }]}>
                 <Text style={[styles.tagText, { color: filterTone.text }]}>
@@ -145,21 +153,29 @@ export function EngineOilLogCard({
             {log?.serviceCenter ? ` · ${log?.serviceCenter}` : ""}
           </Text>
 
+          {/* ! D11: the interval shows on EVERY row, on a line of its own. Omitted only on
+              ! one of server §H's imported rows, which genuinely has none — and omitted as
+              ! a missing line, not a `—`. The web prints a dash because it has a table
+              ! column to keep aligned; a card has nothing to align, so a dash is pure
+              ! noise. */}
           {log?.intervalKmUsed != null && (
             <Text style={styles.subLine} numberOfLines={1}>
               Interval {log?.intervalKmUsed?.toLocaleString()} km
             </Text>
           )}
 
-          {/* ! The distance shows whenever it is known; the ৳/km is appended only when the
-              ! server sent one. The OLDEST change has a distance (counted from 0) but no
-              ! ৳/km, because there is no earlier oil cost to spread over it. */}
-          {log?.kmOnThisOil != null && (
+          {/* ! §G: both figures come FROM THE SERVER, per list row — never derived here.
+              ! A row's period is closed by its newer neighbour, which sits on the previous
+              ! page at every page boundary, so a client-side derivation would appear and
+              ! vanish as the rider pages (V15). Guarded separately because `kmOnThisOil`
+              ! can be non-null while `costPerKm` is null, when two changes share an
+              ! odometer reading. The newest row has no closing neighbour and simply stops
+              ! after the interval line — the status card above is already saying how far
+              ! the current oil has run. */}
+          {log?.kmOnThisOil != null && log?.costPerKm != null && (
             <Text style={styles.subLine} numberOfLines={1}>
-              {log?.kmOnThisOil?.toLocaleString()} km on this oil
-              {log?.costPerKm != null
-                ? ` · ৳${log?.costPerKm?.toFixed(2)}/km`
-                : ""}
+              {log?.kmOnThisOil?.toLocaleString()} km on this oil · ৳
+              {log?.costPerKm?.toFixed(2)}/km
             </Text>
           )}
         </View>
