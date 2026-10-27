@@ -148,6 +148,10 @@ export function FuelLogCard({
             </Text>
           )}
 
+          {fuelLog?.notes ? (
+            <Text style={styles.notes}>{fuelLog?.notes}</Text>
+          ) : null}
+
           {lockedNote ? (
             <Text style={styles.lockedNote} numberOfLines={2}>
               {lockedNote}
@@ -265,6 +269,11 @@ const styles = StyleSheet.create({
     fontSize: 11.5,
     color: COLORS.textMuted,
     fontVariant: ["tabular-nums"],
+  },
+  notes: {
+    fontSize: 12.5,
+    lineHeight: 18,
+    color: COLORS.textLight,
   },
   lockedNote: {
     fontSize: 11.5,
