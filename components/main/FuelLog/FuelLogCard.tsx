@@ -232,6 +232,7 @@ const styles = StyleSheet.create({
   },
   date: {
     fontSize: 12,
+    fontWeight: "500",
     color: COLORS.textLight,
   },
   tag: {
@@ -241,6 +242,7 @@ const styles = StyleSheet.create({
   },
   tagText: {
     fontSize: 10.5,
+    fontWeight: "500",
   },
   costRow: {
     flexDirection: "row",
@@ -255,11 +257,13 @@ const styles = StyleSheet.create({
   },
   costDetail: {
     fontSize: 13,
+    fontWeight: "500",
     color: COLORS.textLight,
     fontVariant: ["tabular-nums"],
   },
   odoLine: {
     fontSize: 12,
+    fontWeight: "500",
     color: COLORS.textLight,
     fontVariant: ["tabular-nums"],
   },
@@ -267,16 +271,19 @@ const styles = StyleSheet.create({
     // ! one notch up from `EngineOilLogCard`'s 10.5, which is itself "one notch down from
     // ! FuelLogCard throughout" (its D14) — so 11.5 keeps both cards' own scales intact
     fontSize: 11.5,
+    fontWeight: "500",
     color: COLORS.textMuted,
     fontVariant: ["tabular-nums"],
   },
   notes: {
     fontSize: 12.5,
+    fontWeight: "500",
     lineHeight: 18,
     color: COLORS.textLight,
   },
   lockedNote: {
     fontSize: 11.5,
+    fontWeight: "500",
     color: COLORS.warning,
   },
 });

@@ -141,6 +141,7 @@ const styles = StyleSheet.create({
   },
   heading: {
     fontSize: 10,
+    fontWeight: "600",
     color: COLORS.textLight,
     textTransform: "uppercase",
     letterSpacing: 0.6,
@@ -154,11 +155,13 @@ const styles = StyleSheet.create({
   },
   sub: {
     fontSize: 11,
+    fontWeight: "500",
     color: COLORS.textLight,
     fontVariant: ["tabular-nums"],
   },
   range: {
     fontSize: 12.5,
+    fontWeight: "500",
     color: COLORS.text,
     fontVariant: ["tabular-nums"],
   },
@@ -168,16 +171,19 @@ const styles = StyleSheet.create({
   },
   audit: {
     fontSize: 10,
+    fontWeight: "500",
     color: COLORS.textMuted,
     fontVariant: ["tabular-nums"],
   },
   nudge: {
     fontSize: 10.5,
+    fontWeight: "500",
     color: COLORS.textMuted,
     marginTop: 5,
   },
   footnote: {
     fontSize: 9.5,
+    fontWeight: "500",
     color: COLORS.textMuted,
     marginTop: 6,
   },
