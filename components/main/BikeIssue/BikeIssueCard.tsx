@@ -215,6 +215,7 @@ const styles = StyleSheet.create({
   },
   date: {
     fontSize: 12,
+    fontWeight: "500",
     color: COLORS.textLight,
   },
   actions: {
@@ -229,6 +230,7 @@ const styles = StyleSheet.create({
   },
   description: {
     fontSize: 13,
+    fontWeight: "500",
     lineHeight: 19,
     color: COLORS.textLight,
   },

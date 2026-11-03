@@ -201,11 +201,13 @@ const styles = StyleSheet.create({
   },
   line: {
     fontSize: 12,
+    fontWeight: "500",
     color: COLORS.textLight,
     fontVariant: ["tabular-nums"],
   },
   projection: {
     fontSize: 11.5,
+    fontWeight: "500",
     color: tint(COLORS.textLight, 0.85),
     fontVariant: ["tabular-nums"],
   },

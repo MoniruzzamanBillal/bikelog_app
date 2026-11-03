@@ -145,7 +145,9 @@ function MonthTab({ bikeId }: { bikeId: string }) {
       showsVerticalScrollIndicator={false}
     >
       <View style={styles.controlRow}>
-        <MonthStepper targetMonth={targetMonth} onChange={setTargetMonth} />
+        <View style={styles.stepperWrap}>
+          <MonthStepper targetMonth={targetMonth} onChange={setTargetMonth} />
+        </View>
         <PdfButton
           isExporting={isExporting}
           onPress={() =>
@@ -367,9 +369,21 @@ function TrendTab({ bikeId }: { bikeId: string }) {
           xAxisThickness={0}
           hideRules
           showValuesAsTopLabel
-          topLabelTextStyle={{ color: COLORS.textLight, fontSize: 11 }}
-          yAxisTextStyle={{ color: COLORS.textLight, fontSize: 10 }}
-          xAxisLabelTextStyle={{ color: COLORS.textLight, fontSize: 11 }}
+          topLabelTextStyle={{
+            color: COLORS.textLight,
+            fontSize: 11,
+            fontWeight: "500",
+          }}
+          yAxisTextStyle={{
+            color: COLORS.textLight,
+            fontSize: 10,
+            fontWeight: "500",
+          }}
+          xAxisLabelTextStyle={{
+            color: COLORS.textLight,
+            fontSize: 11,
+            fontWeight: "500",
+          }}
           noOfSections={4}
         />
       </Panel>
@@ -497,6 +511,10 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     gap: 10,
   },
+  stepperWrap: {
+    flex: 1,
+    minWidth: 0,
+  },
   controlRowEnd: {
     flexDirection: "row",
     justifyContent: "flex-end",
@@ -538,6 +556,7 @@ const styles = StyleSheet.create({
   },
   legendValue: {
     fontSize: 12.5,
+    fontWeight: "500",
     color: COLORS.textLight,
     fontVariant: ["tabular-nums"],
   },
