@@ -54,8 +54,11 @@ const TILES: TTile[] = [
 /**
  * Avg km/l for the hub's mini-stat row — the last ≤5 exact full-tank periods,
  * else the approximate estimate. Same logic as the web's `getAvgMileage`.
+ * Returns the raw km/l number (or null when there is no data) so the caller can
+ * both render it and reuse it for the half-tank range below — formatting happens
+ * at the call site.
  */
-function getAvgMileage(history?: TMileageHistoryResponse): string {
+function getAvgMileage(history?: TMileageHistoryResponse): number | null {
   const exact = history?.exactRecords ?? [];
   if (exact?.length > 0) {
     const recent = [...exact]
@@ -65,14 +68,14 @@ function getAvgMileage(history?: TMileageHistoryResponse): string {
           new Date(a?.periodEndDate).getTime(),
       )
       .slice(0, 5);
-    const avg =
-      recent.reduce((sum, r) => sum + r?.mileageKmPerLiter, 0) / recent?.length;
-    return avg.toFixed(1);
+    return (
+      recent.reduce((sum, r) => sum + r?.mileageKmPerLiter, 0) / recent?.length
+    );
   }
   if (history?.approximate) {
-    return history?.approximate?.mileageKmPerLiter?.toFixed(1);
+    return history?.approximate?.mileageKmPerLiter ?? null;
   }
-  return "—";
+  return null;
 }
 
 export function BikeDetailPage() {
@@ -105,6 +108,13 @@ export function BikeDetailPage() {
   const { data: spendingData } = useFetchData<TSpendingSummary>(
     ["spending", bikeId, "month", targetMonth],
     `/bikes/${bikeId}/spending-summary?period=month&targetMonth=${targetMonth}`,
+    { enabled: !!bikeId },
+  );
+  // ! Lifetime spend for the "Total spent" mini-stat. Reuses the SAME key the Spending
+  // ! screen owns, so react-query serves it from cache once either screen has loaded.
+  const { data: lifetimeSpendData } = useFetchData<TSpendingSummary>(
+    ["spending", bikeId, "lifetime"],
+    `/bikes/${bikeId}/spending-summary?period=lifetime`,
     { enabled: !!bikeId },
   );
   // ! spec 57 §E item 5 — the SAME key the Engine oil screen uses, so react-query serves
@@ -167,6 +177,15 @@ export function BikeDetailPage() {
 
   const avgMileage = getAvgMileage(historyData?.data);
   const monthSpend = spendingData?.data?.totalSpending;
+  const totalSpend = lifetimeSpendData?.data?.totalSpending;
+  // ! Half-tank range: how far this bike can ride on half a tank, from its capacity and the
+  // ! SAME avg km/l shown in the "Avg mileage" tile — so the two stay internally consistent
+  // ! (6 L × 45 km/l = 270 km). Null (→ "—") when there's no mileage data or no tank capacity.
+  const tankCapacity = bike?.fuelTankCapacityLiters;
+  const halfTankRangeKm =
+    avgMileage != null && tankCapacity
+      ? (tankCapacity / 2) * avgMileage
+      : null;
   // ! Hidden entirely when there is no oil change — a bike with none shows the strip
   // ! exactly as before rather than a tile reading "0 km".
   const oilStatus = oilStatusData?.data;
@@ -226,7 +245,7 @@ export function BikeDetailPage() {
             <View style={styles.miniStat}>
               <Text style={styles.miniLabel}>Avg mileage</Text>
               <Text style={styles.miniValue}>
-                {avgMileage === "—" ? "—" : `${avgMileage} km/l`}
+                {avgMileage == null ? "—" : `${avgMileage.toFixed(1)} km/l`}
               </Text>
             </View>
             <View style={styles.miniStat}>
@@ -235,8 +254,7 @@ export function BikeDetailPage() {
                 {monthSpend == null ? "—" : formatTaka(monthSpend)}
               </Text>
             </View>
-            {/* ! D7: the web's oil-name sub-label is dropped — there is no room for it at
-                ! 360dp, and the Engine oil screen one tap away says which oil it is. */}
+
             {kmOnThisOil != null && (
               <View style={styles.miniStat}>
                 <Text style={styles.miniLabel}>On this oil</Text>
@@ -245,6 +263,21 @@ export function BikeDetailPage() {
                 </Text>
               </View>
             )}
+
+            <View style={styles.miniStat}>
+              <Text style={styles.miniLabel}>½-tank range</Text>
+              <Text style={styles.miniValue}>
+                {halfTankRangeKm == null
+                  ? "—"
+                  : `~${Math.round(halfTankRangeKm).toLocaleString()} km`}
+              </Text>
+            </View>
+            <View style={styles.miniStat}>
+              <Text style={styles.miniLabel}>Total spent</Text>
+              <Text style={styles.miniValue}>
+                {totalSpend == null ? "—" : formatTaka(totalSpend)}
+              </Text>
+            </View>
           </View>
         </Panel>
 
@@ -324,26 +357,28 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: COLORS.textLight,
   },
-  // ! At most three stats now — Avg mileage, month spend, On this oil — after the
-  // ! Lifetime tile was dropped as redundant with the odometer reading shown above.
-  // ! `flexWrap` + `minWidth` still guard ~360dp widths: a stat wraps to a new row
-  // ! rather than ellipsising its label.
+  // ! Fixed 3-column grid (Avg mileage, month spend, On this oil?, ½-tank range, Total spent).
+  // ! Each tile takes a fixed width rather than `flex: 1`, so wrapped rows line up into real
+  // ! columns and a partial last row (3+1 without oil, 3+2 with) packs left under column 1 —
+  // ! `flex: 1` made last-row tiles grow to fill their row and break the alignment.
   miniStats: {
     flexDirection: "row",
     flexWrap: "wrap",
+    justifyContent: "flex-start",
     gap: 6,
     rowGap: 8,
   },
   miniStat: {
-    flex: 1,
-    minWidth: 74,
+    width: "31.5%",
   },
   miniLabel: {
-    fontSize: 10,
+    fontSize: 9,
+    fontWeight: "600",
     color: COLORS.textLight,
   },
   miniValue: {
-    fontSize: 12,
+    fontSize: 11,
+    fontWeight: "500",
     color: COLORS.text,
     marginTop: 2,
     fontVariant: ["tabular-nums"],
