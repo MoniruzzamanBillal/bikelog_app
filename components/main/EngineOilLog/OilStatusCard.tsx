@@ -301,6 +301,7 @@ const styles = StyleSheet.create({
   },
   heading: {
     fontSize: 10,
+    fontWeight: "600",
     color: COLORS.textLight,
     textTransform: "uppercase",
     letterSpacing: 0.6,
@@ -312,6 +313,7 @@ const styles = StyleSheet.create({
   },
   pillText: {
     fontSize: 10,
+    fontWeight: "500",
     letterSpacing: 0.2,
   },
   headline: {
@@ -325,6 +327,7 @@ const styles = StyleSheet.create({
   },
   sub: {
     fontSize: 10.5,
+    fontWeight: "500",
     color: COLORS.textLight,
     fontVariant: ["tabular-nums"],
   },
@@ -345,11 +348,13 @@ const styles = StyleSheet.create({
   },
   audit: {
     fontSize: 10,
+    fontWeight: "500",
     color: COLORS.textMuted,
     fontVariant: ["tabular-nums"],
   },
   nudge: {
     fontSize: 10,
+    fontWeight: "500",
     color: COLORS.textMuted,
     marginTop: 5,
   },
