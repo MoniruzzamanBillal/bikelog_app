@@ -14,10 +14,7 @@ import { useDelete, useFetchData } from "@/hooks/useApi";
 import { TBike } from "@/types/bike.types";
 import { TMaintenanceType } from "@/types/catalog.types";
 import { TEngineOilStatus } from "@/types/engine-oil-log.types";
-import {
-  TLifetimeMileage,
-  TMileageHistoryResponse,
-} from "@/types/mileage.types";
+import { TMileageHistoryResponse } from "@/types/mileage.types";
 import { TSpendingSummary } from "@/types/spending.types";
 import { COLORS } from "@/utils/colors";
 import { formatTaka } from "@/utils/formatTaka";
@@ -105,11 +102,6 @@ export function BikeDetailPage() {
     `/bikes/${bikeId}/mileage`,
     { enabled: !!bikeId },
   );
-  const { data: lifetimeData } = useFetchData<TLifetimeMileage>(
-    ["mileage", "lifetime", bikeId],
-    `/bikes/${bikeId}/mileage/lifetime`,
-    { enabled: !!bikeId },
-  );
   const { data: spendingData } = useFetchData<TSpendingSummary>(
     ["spending", bikeId, "month", targetMonth],
     `/bikes/${bikeId}/spending-summary?period=month&targetMonth=${targetMonth}`,
@@ -174,7 +166,6 @@ export function BikeDetailPage() {
   }
 
   const avgMileage = getAvgMileage(historyData?.data);
-  const lifetimeKm = lifetimeData?.data?.totalDistanceKm;
   const monthSpend = spendingData?.data?.totalSpending;
   // ! Hidden entirely when there is no oil change — a bike with none shows the strip
   // ! exactly as before rather than a tile reading "0 km".
@@ -244,12 +235,6 @@ export function BikeDetailPage() {
                 {monthSpend == null ? "—" : formatTaka(monthSpend)}
               </Text>
             </View>
-            <View style={styles.miniStat}>
-              <Text style={styles.miniLabel}>Lifetime</Text>
-              <Text style={styles.miniValue}>
-                {lifetimeKm == null ? "—" : `${lifetimeKm.toLocaleString()} km`}
-              </Text>
-            </View>
             {/* ! D7: the web's oil-name sub-label is dropped — there is no room for it at
                 ! 360dp, and the Engine oil screen one tap away says which oil it is. */}
             {kmOnThisOil != null && (
@@ -272,8 +257,6 @@ export function BikeDetailPage() {
               key={tile.segment}
               style={styles.tile}
               activeOpacity={0.8}
-              // The generated typed-routes file can lag behind the route tree,
-              // so these drill-down pushes stay string-based (see CLAUDE.md).
               onPress={() =>
                 router.push(`/bikes/${bikeId}/${tile.segment}` as never)
               }
@@ -341,9 +324,10 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: COLORS.textLight,
   },
-  // ! D7: four `flex: 1` columns do not fit a ~328dp panel at 360dp — each would get
-  // ! ~78dp, which `Avg mileage` at 12px already nearly fills. `flexWrap` + `minWidth`
-  // ! degrade the strip to a clean 2×2 instead of ellipsising all four labels (V24).
+  // ! At most three stats now — Avg mileage, month spend, On this oil — after the
+  // ! Lifetime tile was dropped as redundant with the odometer reading shown above.
+  // ! `flexWrap` + `minWidth` still guard ~360dp widths: a stat wraps to a new row
+  // ! rather than ellipsising its label.
   miniStats: {
     flexDirection: "row",
     flexWrap: "wrap",
