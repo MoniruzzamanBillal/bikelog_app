@@ -207,6 +207,7 @@ const styles = StyleSheet.create({
   },
   kicker: {
     fontSize: 11,
+    fontWeight: "500",
     letterSpacing: 0.9,
     color: COLORS.textLight,
   },
@@ -222,6 +223,7 @@ const styles = StyleSheet.create({
   },
   pagerRange: {
     fontSize: 12.5,
+    fontWeight: "500",
     color: COLORS.textLight,
     fontVariant: ["tabular-nums"],
   },

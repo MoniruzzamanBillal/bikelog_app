@@ -301,6 +301,7 @@ const styles = StyleSheet.create({
   },
   heading: {
     fontSize: 10,
+    fontWeight: "600",
     color: COLORS.textLight,
     textTransform: "uppercase",
     letterSpacing: 0.6,
@@ -312,11 +313,12 @@ const styles = StyleSheet.create({
   },
   pillText: {
     fontSize: 10,
+    fontWeight: "500",
     letterSpacing: 0.2,
   },
   headline: {
     fontSize: 13,
-    fontWeight: "500",
+    fontWeight: "600",
     color: COLORS.text,
     fontVariant: ["tabular-nums"],
   },
@@ -325,7 +327,8 @@ const styles = StyleSheet.create({
   },
   sub: {
     fontSize: 10.5,
-    color: COLORS.textLight,
+    fontWeight: "500",
+    color: COLORS.white,
     fontVariant: ["tabular-nums"],
   },
   track: {
@@ -345,11 +348,13 @@ const styles = StyleSheet.create({
   },
   audit: {
     fontSize: 10,
-    color: COLORS.textMuted,
+    fontWeight: "500",
+    color: COLORS.text,
     fontVariant: ["tabular-nums"],
   },
   nudge: {
     fontSize: 10,
+    fontWeight: "500",
     color: COLORS.textMuted,
     marginTop: 5,
   },

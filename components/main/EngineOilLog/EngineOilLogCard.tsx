@@ -256,7 +256,8 @@ const styles = StyleSheet.create({
   },
   date: {
     fontSize: 11.5,
-    color: COLORS.textLight,
+    fontWeight: "500",
+    color: COLORS.white,
   },
   tag: {
     paddingHorizontal: 7,
@@ -265,6 +266,7 @@ const styles = StyleSheet.create({
   },
   tagText: {
     fontSize: 10,
+    fontWeight: "500",
   },
   costRow: {
     flexDirection: "row",
@@ -279,17 +281,20 @@ const styles = StyleSheet.create({
   },
   costDetail: {
     fontSize: 12,
+    fontWeight: "500",
     color: COLORS.textLight,
     fontVariant: ["tabular-nums"],
   },
   odoLine: {
     fontSize: 11.5,
-    color: COLORS.textLight,
+    fontWeight: "500",
+    color: COLORS.text,
     fontVariant: ["tabular-nums"],
   },
   subLine: {
     fontSize: 10.5,
-    color: COLORS.textMuted,
+    fontWeight: "500",
+    color: COLORS.text,
     fontVariant: ["tabular-nums"],
   },
 });

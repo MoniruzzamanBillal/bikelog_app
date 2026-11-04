@@ -146,6 +146,7 @@ const styles = StyleSheet.create({
   },
   count: {
     fontSize: 13,
+    fontWeight: "500",
     color: COLORS.textLight,
   },
   list: {

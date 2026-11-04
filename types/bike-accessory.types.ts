@@ -37,3 +37,19 @@ export type TBikeAccessoriesApiResponse = {
   result: TBikeAccessory[];
   meta: number;
 };
+
+// ! GET /bikes/:bikeId/accessories/spending-summary (server spec 59). `months` is newest-first
+// ! and contiguous from the earliest purchase to the current month — empty months are included
+// ! (total 0, accessories []). `month` / `currentMonth` are "YYYY-MM".
+export type TAccessoryMonthGroup = {
+  month: string;
+  total: number;
+  accessories: TBikeAccessory[];
+};
+
+export type TAccessorySpendingSummary = {
+  allTimeTotal: number;
+  currentMonth: string;
+  currentMonthTotal: number;
+  months: TAccessoryMonthGroup[];
+};

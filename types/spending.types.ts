@@ -44,6 +44,23 @@ export type TSpendingDetails = {
   records: TSpendingRecord[];
 };
 
+// ! Spec 62: the Month tab's accordion drill-down. One bucket per category with its
+// ! line-item records nested inside, straight from `bikelog_server` spec 60's
+// ! /spending-summary/monthly-breakdown. Month-only — the Year/Lifetime/Trend tabs still
+// ! read TSpendingSummary.
+export type TSpendingCategoryGroup = {
+  category: string;
+  total: number;
+  records: TSpendingRecord[];
+};
+
+export type TMonthlyCategoryBreakdown = {
+  period: "month";
+  targetMonth: string;
+  totalSpending: number;
+  categories: TSpendingCategoryGroup[];
+};
+
 export type TMonthlySpending = {
   targetMonth: string;
   totalSpending: number;

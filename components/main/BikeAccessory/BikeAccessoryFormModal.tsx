@@ -45,8 +45,14 @@ export function BikeAccessoryFormModal({
   const [status, setStatus] = useState<TAccessoryStatus>("pending");
   const [price, setPrice] = useState("");
 
-  const createMutation = usePost([["accessories", bikeId]]);
-  const updateMutation = usePatch([["accessories", bikeId]]);
+  // ! also refresh the Purchased tab's month-spending summary (server spec 59) — creating a
+  // ! purchased item or editing a purchased item's price moves those totals
+  const invalidateKeys = [
+    ["accessories", bikeId],
+    ["accessories-spending", bikeId],
+  ];
+  const createMutation = usePost(invalidateKeys);
+  const updateMutation = usePatch(invalidateKeys);
 
   const isPending = createMutation?.isPending || updateMutation?.isPending;
   // ! once purchased, status is a permanent, server-enforced lock (bikelog_server spec 25) —

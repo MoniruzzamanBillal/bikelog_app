@@ -15,6 +15,7 @@ import {
 import { TBike } from "@/types/bike.types";
 import { COLORS, tint } from "@/utils/colors";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { useQueryClient } from "@tanstack/react-query";
 import { useLocalSearchParams } from "expo-router";
 import { useState } from "react";
 import {
@@ -27,6 +28,7 @@ import {
 import { Text } from "react-native-paper";
 import { BikeAccessoryCard } from "./BikeAccessoryCard";
 import { BikeAccessoryFormModal } from "./BikeAccessoryFormModal";
+import { PurchasedAccessoriesList } from "./PurchasedAccessoriesList";
 
 const LIMIT = 10;
 
@@ -53,6 +55,11 @@ export function BikeAccessory() {
   const [statusFilter, setStatusFilter] = useState<TAccessoryStatus>("pending");
   const [modalOpen, setModalOpen] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const queryClient = useQueryClient();
+
+  // The Purchased tab shows a month-grouped spending view (server spec 59) instead of the
+  // flat paginated list, so it uses a different query and hides pagination + urgency chips.
+  const isPurchased = statusFilter === "purchased";
 
   const { data: bikeData } = useFetchData<TBike>(
     ["bikes", bikeId],
@@ -78,7 +85,7 @@ export function BikeAccessory() {
         statusFilter,
       ],
       `/bikes/${bikeId}/accessories?${queryString}`,
-      { enabled: !!bikeId },
+      { enabled: !!bikeId && !isPurchased },
     );
 
   const accessories = data?.data?.result ?? [];
@@ -91,7 +98,13 @@ export function BikeAccessory() {
 
   const handleRefresh = async () => {
     setRefreshing(true);
-    await refetch();
+    if (isPurchased) {
+      await queryClient.invalidateQueries({
+        queryKey: ["accessories-spending", bikeId],
+      });
+    } else {
+      await refetch();
+    }
     setRefreshing(false);
   };
 
@@ -139,30 +152,39 @@ export function BikeAccessory() {
           {addButton}
         </View>
 
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.urgencyRow}
-        >
-          {URGENCIES.map(({ key, label }) => (
-            <TouchableOpacity
-              key={label}
-              style={[styles.chip, urgencyFilter === key && styles.chipActive]}
-              onPress={() => handleUrgencyChange(key)}
-            >
-              <Text
-                style={[
-                  styles.chipText,
-                  urgencyFilter === key && styles.chipTextActive,
-                ]}
+        {/* Urgency is a wishlist-priority concept — not meaningful once bought — and the
+            Purchased tab's totals are intentionally across all purchases, so hide the chips there. */}
+        {!isPurchased && (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.urgencyRow}
+          >
+            {URGENCIES.map(({ key, label }) => (
+              <TouchableOpacity
+                key={label}
+                style={[styles.chip, urgencyFilter === key && styles.chipActive]}
+                onPress={() => handleUrgencyChange(key)}
               >
-                {label}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
+                <Text
+                  style={[
+                    styles.chipText,
+                    urgencyFilter === key && styles.chipTextActive,
+                  ]}
+                >
+                  {label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        )}
 
-        {isLoading ? (
+        {isPurchased ? (
+          <PurchasedAccessoriesList
+            bikeId={bikeId}
+            onAdd={() => setModalOpen(true)}
+          />
+        ) : isLoading ? (
           <SectionLoading count={4} />
         ) : isError ? (
           <ErrorState title="Couldn’t load accessories" onRetry={refetch} />

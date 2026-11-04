@@ -111,6 +111,7 @@ const styles = StyleSheet.create({
   },
   totalLabel: {
     fontSize: 12,
+    fontWeight: "500",
     color: COLORS.textLight,
   },
   totalValue: {
@@ -131,11 +132,13 @@ const styles = StyleSheet.create({
   },
   avgHint: {
     fontSize: 12,
+    fontWeight: "500",
     color: COLORS.textLight,
     textAlign: "right",
   },
   kicker: {
     fontSize: 11,
+    fontWeight: "500",
     letterSpacing: 0.9,
     textTransform: "uppercase",
     color: COLORS.textLight,
@@ -143,6 +146,7 @@ const styles = StyleSheet.create({
   },
   noData: {
     fontSize: 13,
+    fontWeight: "500",
     color: COLORS.textLight,
   },
   listPanel: {
@@ -191,6 +195,7 @@ const styles = StyleSheet.create({
   },
   percent: {
     fontSize: 11,
+    fontWeight: "500",
     color: COLORS.textLight,
     fontVariant: ["tabular-nums"],
     minWidth: 38,

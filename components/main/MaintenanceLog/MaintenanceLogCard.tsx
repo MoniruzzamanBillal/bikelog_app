@@ -252,6 +252,7 @@ const styles = StyleSheet.create({
   },
   meta: {
     fontSize: 12,
+    fontWeight: "500",
     color: COLORS.textLight,
     fontVariant: ["tabular-nums"],
   },
@@ -275,6 +276,7 @@ const styles = StyleSheet.create({
   },
   gridLabel: {
     fontSize: 12,
+    fontWeight: "500",
     color: COLORS.textLight,
   },
   gridValue: {
@@ -298,6 +300,7 @@ const styles = StyleSheet.create({
   },
   notes: {
     fontSize: 12.5,
+    fontWeight: "500",
     lineHeight: 18,
     color: COLORS.textLight,
   },

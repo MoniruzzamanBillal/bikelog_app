@@ -13,22 +13,15 @@ import { confirmDelete } from "@/components/main/shared/ConfirmDelete";
 import { useDelete, useFetchData } from "@/hooks/useApi";
 import { TBike } from "@/types/bike.types";
 import { TMaintenanceType } from "@/types/catalog.types";
-import { TEngineOilStatus } from "@/types/engine-oil-log.types";
-import {
-  TLifetimeMileage,
-  TMileageHistoryResponse,
-} from "@/types/mileage.types";
-import { TSpendingSummary } from "@/types/spending.types";
 import { COLORS } from "@/utils/colors";
-import { formatTaka } from "@/utils/formatTaka";
 import { setLastUsedBike } from "@/utils/lastUsedBike";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { format } from "date-fns";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
 import { Text } from "react-native-paper";
 import { BikeFormModal } from "./BikeFormModal";
+import { BikeStatStrip } from "./BikeStatStrip";
 
 type TTile = {
   label: string;
@@ -54,36 +47,10 @@ const TILES: TTile[] = [
   },
 ];
 
-/**
- * Avg km/l for the hub's mini-stat row — the last ≤5 exact full-tank periods,
- * else the approximate estimate. Same logic as the web's `getAvgMileage`.
- */
-function getAvgMileage(history?: TMileageHistoryResponse): string {
-  const exact = history?.exactRecords ?? [];
-  if (exact?.length > 0) {
-    const recent = [...exact]
-      .sort(
-        (a, b) =>
-          new Date(b?.periodEndDate).getTime() -
-          new Date(a?.periodEndDate).getTime(),
-      )
-      .slice(0, 5);
-    const avg =
-      recent.reduce((sum, r) => sum + r?.mileageKmPerLiter, 0) / recent?.length;
-    return avg.toFixed(1);
-  }
-  if (history?.approximate) {
-    return history?.approximate?.mileageKmPerLiter?.toFixed(1);
-  }
-  return "—";
-}
-
 export function BikeDetailPage() {
   const { bikeId } = useLocalSearchParams<{ bikeId: string }>();
   const router = useRouter();
   const [editOpen, setEditOpen] = useState(false);
-  const now = new Date();
-  const targetMonth = format(now, "yyyy-MM");
 
   const { data, isLoading, isError, refetch } = useFetchData<TBike>(
     ["bikes", bikeId],
@@ -97,31 +64,6 @@ export function BikeDetailPage() {
     "/maintenance-types",
   );
   const maintenanceTypes = maintenanceTypesData?.data ?? [];
-
-  // Read-only mini-stat reads. Each reuses a query key another screen already
-  // owns, so the hub shares their cache entry rather than adding one.
-  const { data: historyData } = useFetchData<TMileageHistoryResponse>(
-    ["mileage", "history", bikeId],
-    `/bikes/${bikeId}/mileage`,
-    { enabled: !!bikeId },
-  );
-  const { data: lifetimeData } = useFetchData<TLifetimeMileage>(
-    ["mileage", "lifetime", bikeId],
-    `/bikes/${bikeId}/mileage/lifetime`,
-    { enabled: !!bikeId },
-  );
-  const { data: spendingData } = useFetchData<TSpendingSummary>(
-    ["spending", bikeId, "month", targetMonth],
-    `/bikes/${bikeId}/spending-summary?period=month&targetMonth=${targetMonth}`,
-    { enabled: !!bikeId },
-  );
-  // ! spec 57 §E item 5 — the SAME key the Engine oil screen uses, so react-query serves
-  // ! it from cache and the hub makes no extra request once either screen has loaded.
-  const { data: oilStatusData } = useFetchData<TEngineOilStatus>(
-    ["engineOilStatus", bikeId],
-    `/bikes/${bikeId}/engine-oil-logs/status`,
-    { enabled: !!bikeId },
-  );
 
   useEffect(() => {
     if (bikeId) setLastUsedBike(bikeId);
@@ -173,14 +115,6 @@ export function BikeDetailPage() {
     );
   }
 
-  const avgMileage = getAvgMileage(historyData?.data);
-  const lifetimeKm = lifetimeData?.data?.totalDistanceKm;
-  const monthSpend = spendingData?.data?.totalSpending;
-  // ! Hidden entirely when there is no oil change — a bike with none shows the strip
-  // ! exactly as before rather than a tile reading "0 km".
-  const oilStatus = oilStatusData?.data;
-  const kmOnThisOil = oilStatus?.lastChange ? oilStatus?.kmSinceChange : null;
-
   return (
     <View style={styles.screen}>
       <ScreenHeader
@@ -231,36 +165,10 @@ export function BikeDetailPage() {
 
           <RuleFade />
 
-          <View style={styles.miniStats}>
-            <View style={styles.miniStat}>
-              <Text style={styles.miniLabel}>Avg mileage</Text>
-              <Text style={styles.miniValue}>
-                {avgMileage === "—" ? "—" : `${avgMileage} km/l`}
-              </Text>
-            </View>
-            <View style={styles.miniStat}>
-              <Text style={styles.miniLabel}>{format(now, "MMM")} spend</Text>
-              <Text style={styles.miniValue}>
-                {monthSpend == null ? "—" : formatTaka(monthSpend)}
-              </Text>
-            </View>
-            <View style={styles.miniStat}>
-              <Text style={styles.miniLabel}>Lifetime</Text>
-              <Text style={styles.miniValue}>
-                {lifetimeKm == null ? "—" : `${lifetimeKm.toLocaleString()} km`}
-              </Text>
-            </View>
-            {/* ! D7: the web's oil-name sub-label is dropped — there is no room for it at
-                ! 360dp, and the Engine oil screen one tap away says which oil it is. */}
-            {kmOnThisOil != null && (
-              <View style={styles.miniStat}>
-                <Text style={styles.miniLabel}>On this oil</Text>
-                <Text style={styles.miniValue}>
-                  {`${kmOnThisOil.toLocaleString()} km`}
-                </Text>
-              </View>
-            )}
-          </View>
+          <BikeStatStrip
+            bikeId={bikeId}
+            tankCapacityLiters={bike?.fuelTankCapacityLiters}
+          />
         </Panel>
 
         <RemindersBanner bikeId={bikeId} maintenanceTypes={maintenanceTypes} />
@@ -272,8 +180,6 @@ export function BikeDetailPage() {
               key={tile.segment}
               style={styles.tile}
               activeOpacity={0.8}
-              // The generated typed-routes file can lag behind the route tree,
-              // so these drill-down pushes stay string-based (see CLAUDE.md).
               onPress={() =>
                 router.push(`/bikes/${bikeId}/${tile.segment}` as never)
               }
@@ -340,29 +246,6 @@ const styles = StyleSheet.create({
   odoUnit: {
     fontSize: 12,
     color: COLORS.textLight,
-  },
-  // ! D7: four `flex: 1` columns do not fit a ~328dp panel at 360dp — each would get
-  // ! ~78dp, which `Avg mileage` at 12px already nearly fills. `flexWrap` + `minWidth`
-  // ! degrade the strip to a clean 2×2 instead of ellipsising all four labels (V24).
-  miniStats: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 6,
-    rowGap: 8,
-  },
-  miniStat: {
-    flex: 1,
-    minWidth: 74,
-  },
-  miniLabel: {
-    fontSize: 10,
-    color: COLORS.textLight,
-  },
-  miniValue: {
-    fontSize: 12,
-    color: COLORS.text,
-    marginTop: 2,
-    fontVariant: ["tabular-nums"],
   },
   tileGrid: {
     flexDirection: "row",
