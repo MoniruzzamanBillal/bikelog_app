@@ -12,6 +12,7 @@ import {
 import { useFetchData } from "@/hooks/useApi";
 import { TBike } from "@/types/bike.types";
 import {
+  TMonthlyCategoryBreakdown,
   TSpendingDetails,
   TSpendingSummary,
   TSpendingTrend,
@@ -27,6 +28,7 @@ import { BarChart, PieChart } from "react-native-gifted-charts";
 import { Text } from "react-native-paper";
 import Toast from "react-native-toast-message";
 import { AiSpendingInsightCard } from "./AiSpendingInsightCard";
+import { MonthlySpendingBreakdown } from "./MonthlySpendingBreakdown";
 import { SpendingSummaryView } from "./SpendingSummaryView";
 
 type TPeriod = "month" | "year" | "lifetime" | "trend";
@@ -111,12 +113,19 @@ function MonthTab({ bikeId }: { bikeId: string }) {
   const [refreshing, setRefreshing] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
 
-  const { data, isLoading, isError, refetch } = useFetchData<TSpendingSummary>(
-    ["spending", bikeId, "month", targetMonth],
-    `/bikes/${bikeId}/spending-summary?period=month&targetMonth=${targetMonth}`,
-    { enabled: !!bikeId && !!targetMonth },
-  );
-  const summary = data?.data;
+  // ! spec 62: the Month tab reads the category drill-down endpoint (each category + its
+  // ! nested records) instead of the plain summary, so the breakdown can render as
+  // ! accordions. A distinct cache key ("month-breakdown") — not ["spending", bikeId,
+  // ! "month", targetMonth], which BikeStatStrip already owns for the differently-shaped
+  // ! summary response — but still under the ["spending", bikeId] prefix every mutation
+  // ! invalidates.
+  const { data, isLoading, isError, refetch } =
+    useFetchData<TMonthlyCategoryBreakdown>(
+      ["spending", bikeId, "month-breakdown", targetMonth],
+      `/bikes/${bikeId}/spending-summary/monthly-breakdown?targetMonth=${targetMonth}`,
+      { enabled: !!bikeId && !!targetMonth },
+    );
+  const breakdown = data?.data;
 
   const periodLabel = format(
     parse(targetMonth, "yyyy-MM", new Date()),
@@ -124,7 +133,7 @@ function MonthTab({ bikeId }: { bikeId: string }) {
   );
   const daysElapsed = getElapsedDaysInMonth(targetMonth);
   const avgDailyExpense =
-    daysElapsed > 0 ? (summary?.totalSpending ?? 0) / daysElapsed : 0;
+    daysElapsed > 0 ? (breakdown?.totalSpending ?? 0) / daysElapsed : 0;
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -166,9 +175,9 @@ function MonthTab({ bikeId }: { bikeId: string }) {
         <SectionLoading count={3} />
       ) : isError ? (
         <ErrorState title="Couldn’t load spending" onRetry={refetch} />
-      ) : summary && summary?.totalSpending > 0 ? (
-        <SpendingSummaryView
-          summary={summary}
+      ) : breakdown && breakdown.totalSpending > 0 ? (
+        <MonthlySpendingBreakdown
+          data={breakdown}
           periodLabel={periodLabel}
           {...(daysElapsed > 0 ? { avgDailyExpense, daysElapsed } : {})}
         />
