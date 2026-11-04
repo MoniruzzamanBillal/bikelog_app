@@ -125,7 +125,7 @@ const styles = StyleSheet.create({
   monthLabel: {
     fontSize: 11,
     letterSpacing: 0.9,
-    color: COLORS.textLight,
+    color: COLORS.text,
   },
   monthTotal: {
     fontSize: 13,
