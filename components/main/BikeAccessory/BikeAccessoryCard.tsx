@@ -9,8 +9,8 @@ import { toneStyle, TStatusTone } from "@/components/main/shared/StatusBadge";
 import { useDelete, usePatch, usePut } from "@/hooks/useApi";
 import { TBikeAccessory } from "@/types/bike-accessory.types";
 import { COLORS } from "@/utils/colors";
+import { formatApiDate } from "@/utils/formatApiDate";
 import { formatTaka } from "@/utils/formatTaka";
-import { format } from "date-fns";
 import { useState } from "react";
 import { StyleSheet, View } from "react-native";
 import { Text } from "react-native-paper";
@@ -34,14 +34,18 @@ export function BikeAccessoryCard({
 }: BikeAccessoryCardProps) {
   const [editOpen, setEditOpen] = useState(false);
 
-  const deleteMutation = useDelete([["accessories", bikeId]]);
-  const markPurchasedMutation = usePatch([["accessories", bikeId]]);
-  const { mutateAsync: uploadImage, isPending: isUploading } = usePut([
+  // ! also invalidate the Purchased tab's month-spending summary (server spec 59) — marking an
+  // ! item purchased, editing its price, or deleting it all move those totals
+  const invalidateKeys = [
     ["accessories", bikeId],
-  ]);
-  const { mutateAsync: deleteImage, isPending: isDeletingImage } = useDelete([
-    ["accessories", bikeId],
-  ]);
+    ["accessories-spending", bikeId],
+  ];
+  const deleteMutation = useDelete(invalidateKeys);
+  const markPurchasedMutation = usePatch(invalidateKeys);
+  const { mutateAsync: uploadImage, isPending: isUploading } =
+    usePut(invalidateKeys);
+  const { mutateAsync: deleteImage, isPending: isDeletingImage } =
+    useDelete(invalidateKeys);
 
   const handleImageUpload = async (file: TPickedImageFile) => {
     try {
@@ -189,8 +193,7 @@ export function BikeAccessoryCard({
 
           {accessory?.status === "purchased" && accessory?.purchaseDate ? (
             <Text style={styles.purchased}>
-              Purchased{" "}
-              {format(new Date(accessory?.purchaseDate), "dd MMM yyyy")}
+              Purchased {formatApiDate(accessory.purchaseDate, "dd MMM yyyy")}
             </Text>
           ) : null}
         </View>

@@ -12,7 +12,7 @@ This directory (`bikelog_app/`) is the npm/yarn project root (`package.json`, `a
 
 ## Current state — read `progress-tracker.md` first, every time
 
-Specs **01–35 and 37–60 are complete** (plus sub-specs `36a`, `38a`, `41a`, `45a`, `48a`, `51a`, `51b`, `51c`, `54a`, `55a`); spec 36 (the Android widget) was **removed** on 2026-10-10.
+Specs **01–35 and 37–61 are complete** (plus sub-specs `36a`, `38a`, `41a`, `45a`, `48a`, `51a`, `51b`, `51c`, `54a`, `55a`); spec 36 (the Android widget) was **removed** on 2026-10-10. Spec **61** (2026-11-04) added month-based spending to the accessories Purchased tab, consuming a new `bikelog_server` spec 59 endpoint — not deployed/not device-tested yet.
 
 **Most recent: specs 58, 59 and 60 (2026-10-19)** — the Settings email field **stays read-only and now looks it** (padlock + dimming + "your sign-in ID and can't be changed"; `bikelog_server` spec 55 refuses a submitted `email` with a 400, so the block is enforced on both sides); the engine-oil status card now shows a date in *every* state, including `Was due ~ 3 Oct` when overdue and a fully-labelled `est.` forecast when the change carries no interval of its own; and every fuel-log card carries `300 km on this tank · ৳4.00/km`, server-computed per row like the oil card's. **Spec 58 was first built backwards** — as an *editable* email — from a misread of the request, then reverted the same session; its spec records the reversal, and `ProfilePanel.tsx` is otherwise untouched since spec 56. Server halves are specs 55/56/57, all unpushed; 59 and 60 guard every new field with `!= null`, so they degrade to today's rendering and the deploy order is free in both directions. All three are static-verified only; the device passes are owed.
 
