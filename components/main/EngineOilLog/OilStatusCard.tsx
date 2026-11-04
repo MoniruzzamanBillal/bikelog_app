@@ -318,7 +318,7 @@ const styles = StyleSheet.create({
   },
   headline: {
     fontSize: 13,
-    fontWeight: "500",
+    fontWeight: "600",
     color: COLORS.text,
     fontVariant: ["tabular-nums"],
   },
@@ -328,7 +328,7 @@ const styles = StyleSheet.create({
   sub: {
     fontSize: 10.5,
     fontWeight: "500",
-    color: COLORS.textLight,
+    color: COLORS.white,
     fontVariant: ["tabular-nums"],
   },
   track: {
@@ -349,7 +349,7 @@ const styles = StyleSheet.create({
   audit: {
     fontSize: 10,
     fontWeight: "500",
-    color: COLORS.textMuted,
+    color: COLORS.text,
     fontVariant: ["tabular-nums"],
   },
   nudge: {

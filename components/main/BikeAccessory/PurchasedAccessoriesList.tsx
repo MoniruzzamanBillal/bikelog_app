@@ -125,11 +125,13 @@ const styles = StyleSheet.create({
   monthLabel: {
     fontSize: 11,
     letterSpacing: 0.9,
-    color: COLORS.text,
+    color: COLORS.white,
+    fontWeight: "600",
   },
   monthTotal: {
     fontSize: 13,
-    color: COLORS.text,
+    color: COLORS.white,
+    fontWeight: "600",
     fontVariant: ["tabular-nums"],
   },
   list: {

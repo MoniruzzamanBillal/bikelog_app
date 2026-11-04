@@ -233,7 +233,7 @@ const styles = StyleSheet.create({
   date: {
     fontSize: 12,
     fontWeight: "500",
-    color: COLORS.textLight,
+    color: COLORS.white,
   },
   tag: {
     paddingHorizontal: 7,
@@ -264,7 +264,7 @@ const styles = StyleSheet.create({
   odoLine: {
     fontSize: 12,
     fontWeight: "500",
-    color: COLORS.textLight,
+    color: COLORS.text,
     fontVariant: ["tabular-nums"],
   },
   subLine: {
@@ -272,7 +272,7 @@ const styles = StyleSheet.create({
     // ! FuelLogCard throughout" (its D14) — so 11.5 keeps both cards' own scales intact
     fontSize: 11.5,
     fontWeight: "500",
-    color: COLORS.textMuted,
+    color: COLORS.text,
     fontVariant: ["tabular-nums"],
   },
   notes: {

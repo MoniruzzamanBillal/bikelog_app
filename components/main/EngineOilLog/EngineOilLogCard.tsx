@@ -257,7 +257,7 @@ const styles = StyleSheet.create({
   date: {
     fontSize: 11.5,
     fontWeight: "500",
-    color: COLORS.textLight,
+    color: COLORS.white,
   },
   tag: {
     paddingHorizontal: 7,
@@ -288,13 +288,13 @@ const styles = StyleSheet.create({
   odoLine: {
     fontSize: 11.5,
     fontWeight: "500",
-    color: COLORS.textLight,
+    color: COLORS.text,
     fontVariant: ["tabular-nums"],
   },
   subLine: {
     fontSize: 10.5,
     fontWeight: "500",
-    color: COLORS.textMuted,
+    color: COLORS.text,
     fontVariant: ["tabular-nums"],
   },
 });
