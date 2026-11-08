@@ -13,8 +13,8 @@ import { useFetchData } from "@/hooks/useApi";
 import { TBike } from "@/types/bike.types";
 import {
   TMonthlyCategoryBreakdown,
+  TPeriodCategoryBreakdown,
   TSpendingDetails,
-  TSpendingSummary,
   TSpendingTrend,
 } from "@/types/spending.types";
 import { apiGet } from "@/utils/api";
@@ -46,7 +46,7 @@ import { BarChart, PieChart } from "react-native-gifted-charts";
 import { Text } from "react-native-paper";
 import Toast from "react-native-toast-message";
 import { MonthlySpendingBreakdown } from "./MonthlySpendingBreakdown";
-import { SpendingSummaryView } from "./SpendingSummaryView";
+import { PeriodSpendingBreakdown } from "./PeriodSpendingBreakdown";
 
 type TPeriod = "month" | "year" | "lifetime" | "trend";
 
@@ -231,18 +231,23 @@ function YearTab({ bikeId }: { bikeId: string }) {
   const [refreshing, setRefreshing] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
 
-  const { data, isLoading, isError, refetch } = useFetchData<TSpendingSummary>(
-    ["spending", bikeId, "year", targetYear],
-    `/bikes/${bikeId}/spending-summary?period=year&targetYear=${targetYear}`,
-    { enabled: !!bikeId && !!targetYear },
-  );
-  const summary = data?.data;
+  // ! spec 65: the Year tab reads the category drill-down endpoint (each category + its
+  // ! per-month time buckets) so the breakdown renders as accordions. Distinct cache key
+  // ! ("year-breakdown") from BikeStatStrip's ["spending", bikeId, "year", …] summary key,
+  // ! but still under the ["spending", bikeId] prefix every mutation invalidates.
+  const { data, isLoading, isError, refetch } =
+    useFetchData<TPeriodCategoryBreakdown>(
+      ["spending", bikeId, "year-breakdown", targetYear],
+      `/bikes/${bikeId}/spending-summary/period-breakdown?period=year&targetYear=${targetYear}`,
+      { enabled: !!bikeId && !!targetYear },
+    );
+  const breakdown = data?.data;
 
   // Cost per day across the year, mirroring the Month tab: elapsed days for the
   // current year, the full year for a past one.
   const daysElapsed = getElapsedDaysInYear(targetYear);
   const avgDailyExpense =
-    daysElapsed > 0 ? (summary?.totalSpending ?? 0) / daysElapsed : 0;
+    daysElapsed > 0 ? (breakdown?.totalSpending ?? 0) / daysElapsed : 0;
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -282,9 +287,9 @@ function YearTab({ bikeId }: { bikeId: string }) {
         <SectionLoading count={3} />
       ) : isError ? (
         <ErrorState title="Couldn’t load spending" onRetry={refetch} />
-      ) : summary && summary?.totalSpending > 0 ? (
-        <SpendingSummaryView
-          summary={summary}
+      ) : breakdown && breakdown?.totalSpending > 0 ? (
+        <PeriodSpendingBreakdown
+          data={breakdown}
           periodLabel={targetYear}
           avgDailyScopeLabel="this year"
           {...(daysElapsed > 0 ? { avgDailyExpense, daysElapsed } : {})}
@@ -310,12 +315,16 @@ function LifetimeTab({
   const [refreshing, setRefreshing] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
 
-  const { data, isLoading, isError, refetch } = useFetchData<TSpendingSummary>(
-    ["spending", bikeId, "lifetime"],
-    `/bikes/${bikeId}/spending-summary?period=lifetime`,
-    { enabled: !!bikeId },
-  );
-  const summary = data?.data;
+  // ! spec 65: Lifetime tab reads the category drill-down (each category + its per-year
+  // ! time buckets) for the accordions. Distinct "lifetime-breakdown" cache key, still
+  // ! under the ["spending", bikeId] prefix every mutation invalidates.
+  const { data, isLoading, isError, refetch } =
+    useFetchData<TPeriodCategoryBreakdown>(
+      ["spending", bikeId, "lifetime-breakdown"],
+      `/bikes/${bikeId}/spending-summary/period-breakdown?period=lifetime`,
+      { enabled: !!bikeId },
+    );
+  const breakdown = data?.data;
 
   // Cost per day of ownership: total ÷ days since the bike's purchase date
   // (inclusive of the purchase day). A missing or future date hides the figure.
@@ -324,7 +333,7 @@ function LifetimeTab({
     : 0;
   const daysElapsed = rawDays > 0 ? rawDays : 0;
   const avgDailyExpense =
-    daysElapsed > 0 ? (summary?.totalSpending ?? 0) / daysElapsed : 0;
+    daysElapsed > 0 ? (breakdown?.totalSpending ?? 0) / daysElapsed : 0;
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -357,9 +366,9 @@ function LifetimeTab({
         <SectionLoading count={3} />
       ) : isError ? (
         <ErrorState title="Couldn’t load spending" onRetry={refetch} />
-      ) : summary && summary?.totalSpending > 0 ? (
-        <SpendingSummaryView
-          summary={summary}
+      ) : breakdown && breakdown?.totalSpending > 0 ? (
+        <PeriodSpendingBreakdown
+          data={breakdown}
           periodLabel="Lifetime"
           avgDailyScopeLabel="of ownership"
           {...(daysElapsed > 0 ? { avgDailyExpense, daysElapsed } : {})}
