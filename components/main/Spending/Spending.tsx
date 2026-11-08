@@ -19,15 +19,21 @@ import {
 } from "@/types/spending.types";
 import { apiGet } from "@/utils/api";
 import { CHART_COLORS, COLORS, tint } from "@/utils/colors";
+import { formatTaka } from "@/utils/formatTaka";
 import { generateSpendingPdf } from "@/utils/generateSpendingPdf";
 import { format, getDate, getDaysInMonth, isSameMonth, parse } from "date-fns";
 import { useLocalSearchParams } from "expo-router";
 import { useState } from "react";
-import { RefreshControl, ScrollView, StyleSheet, View } from "react-native";
+import {
+  LayoutChangeEvent,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  View,
+} from "react-native";
 import { BarChart, PieChart } from "react-native-gifted-charts";
 import { Text } from "react-native-paper";
 import Toast from "react-native-toast-message";
-import { AiSpendingInsightCard } from "./AiSpendingInsightCard";
 import { MonthlySpendingBreakdown } from "./MonthlySpendingBreakdown";
 import { SpendingSummaryView } from "./SpendingSummaryView";
 
@@ -188,8 +194,6 @@ function MonthTab({ bikeId }: { bikeId: string }) {
           message={EMPTY_MESSAGE}
         />
       )}
-
-      <AiSpendingInsightCard bikeId={bikeId} />
     </ScrollView>
   );
 }
@@ -253,8 +257,6 @@ function YearTab({ bikeId }: { bikeId: string }) {
           message={EMPTY_MESSAGE}
         />
       )}
-
-      <AiSpendingInsightCard bikeId={bikeId} />
     </ScrollView>
   );
 }
@@ -310,13 +312,51 @@ function LifetimeTab({ bikeId }: { bikeId: string }) {
           message={EMPTY_MESSAGE}
         />
       )}
-
-      <AiSpendingInsightCard bikeId={bikeId} />
     </ScrollView>
   );
 }
 
+// Y-axis label gutter; the bars fill whatever width is left of it.
+const TREND_Y_AXIS_WIDTH = 34;
+const TREND_INITIAL_SPACING = 12;
+const TREND_END_SPACING = 12;
+
+/**
+ * gifted-charts' BarChart does not stretch its bars to fill the container — with
+ * only 6 months the default barWidth/spacing leaves empty space on the right.
+ * Given the measured chart width we size the bars and gaps so the n bars span the
+ * whole bar region exactly: n*barWidth + (n-1)*spacing == usable width.
+ */
+function trendBarGeometry(chartWidth: number, barCount: number) {
+  const usable =
+    chartWidth -
+    TREND_Y_AXIS_WIDTH -
+    TREND_INITIAL_SPACING -
+    TREND_END_SPACING;
+  if (barCount < 1 || usable <= 0) {
+    return { barWidth: 24, spacing: 16 };
+  }
+  if (barCount === 1) {
+    return { barWidth: Math.min(56, usable), spacing: 0 };
+  }
+  const gapRatio = 0.65; // gap ≈ 65% of a bar's width before the fill clamp
+  const barWidth = Math.max(
+    14,
+    Math.min(44, usable / (barCount + (barCount - 1) * gapRatio)),
+  );
+  const spacing = Math.max(8, (usable - barCount * barWidth) / (barCount - 1));
+  return { barWidth, spacing };
+}
+
 function TrendTab({ bikeId }: { bikeId: string }) {
+  // Which month's bar is tapped; drives the highlight and the detail strip
+  // rendered ABOVE the chart (gifted-charts' own tooltip clips inside the
+  // chart's scroll container, so we render our own outside it — same pattern as
+  // the mileage Yearly tab).
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+  // Measured inner width of the chart panel, used to stretch the bars to fill it.
+  const [chartWidth, setChartWidth] = useState(0);
+
   const { data, isLoading, isError, refetch } = useFetchData<TSpendingTrend>(
     ["spending", "trend", bikeId],
     `/bikes/${bikeId}/spending-summary/trend?months=6`,
@@ -331,10 +371,30 @@ function TrendTab({ bikeId }: { bikeId: string }) {
     value: m?.totalSpending,
     label: format(parse(m?.targetMonth, "yyyy-MM", new Date()), "MMM"),
     frontColor:
-      i === monthlySummary?.length - 1
-        ? CHART_COLORS[0]
-        : tint(CHART_COLORS[0], 0.55),
+      i === selectedIndex
+        ? COLORS.accent
+        : i === monthlySummary?.length - 1
+          ? CHART_COLORS[0]
+          : tint(CHART_COLORS[0], 0.55),
   }));
+
+  const { barWidth, spacing } = trendBarGeometry(
+    chartWidth,
+    monthlySummary.length,
+  );
+
+  // The tapped month's figures for the detail strip above the chart.
+  const selected =
+    selectedIndex != null ? monthlySummary[selectedIndex] : null;
+  const selMonthLabel =
+    selected &&
+    format(parse(selected?.targetMonth, "yyyy-MM", new Date()), "MMMM yyyy");
+  const selTotal =
+    selected?.totalSpending != null ? formatTaka(selected?.totalSpending) : "—";
+  const selTopCat =
+    selected?.categoryBreakdown && selected?.categoryBreakdown?.length > 0
+      ? [...selected.categoryBreakdown].sort((a, b) => b?.total - a?.total)[0]
+      : null;
 
   const pieData = latestBreakdown.map((c, i) => ({
     value: c?.total,
@@ -364,37 +424,85 @@ function TrendTab({ bikeId }: { bikeId: string }) {
       showsVerticalScrollIndicator={false}
     >
       <Panel style={styles.chartPanel}>
-        <Text style={styles.chartTitle}>Spending, last 6 months</Text>
-        <BarChart
-          data={barData}
-          barWidth={24}
-          spacing={16}
-          initialSpacing={8}
-          endSpacing={8}
-          yAxisLabelWidth={34}
-          roundedTop
-          height={180}
-          yAxisThickness={0}
-          xAxisThickness={0}
-          hideRules
-          showValuesAsTopLabel
-          topLabelTextStyle={{
-            color: COLORS.textLight,
-            fontSize: 11,
-            fontWeight: "500",
-          }}
-          yAxisTextStyle={{
-            color: COLORS.textLight,
-            fontSize: 10,
-            fontWeight: "500",
-          }}
-          xAxisLabelTextStyle={{
-            color: COLORS.textLight,
-            fontSize: 11,
-            fontWeight: "500",
-          }}
-          noOfSections={4}
-        />
+        <View style={styles.chartHeader}>
+          <Text style={[styles.chartTitle, styles.chartTitleInRow]}>
+            Spending, last 6 months
+          </Text>
+          <Text style={styles.chartHint}>
+            {selected ? selMonthLabel : "Tap a bar for detail"}
+          </Text>
+        </View>
+
+        {/* Detail strip for the tapped bar — rendered here, outside the chart's
+            own (clipping) container, so nothing is ever cut off. */}
+        {selected ? (
+          <View style={styles.selStrip}>
+            <View style={styles.selItem}>
+              <Text style={styles.selItemLabel}>Total spent</Text>
+              <Text style={styles.selValue}>{selTotal}</Text>
+            </View>
+            <View style={styles.selItem}>
+              <Text style={styles.selItemLabel}>Top category</Text>
+              <Text style={styles.selValue} numberOfLines={1}>
+                {selTopCat ? selTopCat?.category : "—"}
+              </Text>
+              {selTopCat ? (
+                <Text style={styles.selSubValue}>
+                  {formatTaka(selTopCat?.total)}
+                </Text>
+              ) : null}
+            </View>
+          </View>
+        ) : null}
+
+        <View
+          style={styles.chartMeasure}
+          onLayout={(e: LayoutChangeEvent) =>
+            setChartWidth(e.nativeEvent.layout.width)
+          }
+        >
+          {chartWidth > 0 ? (
+            <BarChart
+              data={barData}
+              barWidth={barWidth}
+              spacing={spacing}
+              initialSpacing={TREND_INITIAL_SPACING}
+              endSpacing={TREND_END_SPACING}
+              yAxisLabelWidth={TREND_Y_AXIS_WIDTH}
+              roundedTop
+              height={180}
+              yAxisThickness={0}
+              xAxisThickness={0}
+              hideRules
+              showValuesAsTopLabel
+              topLabelTextStyle={{
+                color: COLORS.textLight,
+                fontSize: 11,
+                fontWeight: "500",
+              }}
+              yAxisTextStyle={{
+                color: COLORS.textLight,
+                fontSize: 10,
+                fontWeight: "500",
+              }}
+              xAxisLabelTextStyle={{
+                color: COLORS.textLight,
+                fontSize: 11,
+                fontWeight: "500",
+              }}
+              noOfSections={4}
+              // Tap a bar to show its month detail above; tap it again to clear.
+              focusBarOnPress
+              focusedBarIndex={selectedIndex ?? undefined}
+              focusedBarConfig={{ color: COLORS.accent }}
+              onPress={(_item: unknown, index: number) =>
+                setSelectedIndex((prev) => (prev === index ? null : index))
+              }
+            />
+          ) : (
+            <View style={styles.chartPlaceholder} />
+          )}
+        </View>
       </Panel>
 
       {pieData?.length > 0 ? (
@@ -449,8 +557,6 @@ function TrendTab({ bikeId }: { bikeId: string }) {
           message={EMPTY_MESSAGE}
         />
       )}
-
-      <AiSpendingInsightCard bikeId={bikeId} />
     </ScrollView>
   );
 }
@@ -538,6 +644,63 @@ const styles = StyleSheet.create({
     fontWeight: "500",
     color: COLORS.text,
     marginBottom: 12,
+  },
+  // The trend title sits in a flex row with the tap hint, which owns the spacing.
+  chartTitleInRow: {
+    marginBottom: 0,
+    flexShrink: 1,
+  },
+  chartHeader: {
+    flexDirection: "row",
+    alignItems: "baseline",
+    justifyContent: "space-between",
+    gap: 8,
+    marginBottom: 12,
+  },
+  chartHint: {
+    fontSize: 11,
+    color: COLORS.textLight,
+  },
+  // Wrapper whose width we measure so the bars can be stretched to fill it.
+  chartMeasure: {
+    width: "100%",
+  },
+  chartPlaceholder: {
+    height: 180,
+  },
+  // Tapped-bar detail, above the chart so it can never be clipped by the chart's
+  // internal scroll/clip container (mirrors the mileage Yearly tab).
+  selStrip: {
+    flexDirection: "row",
+    gap: 8,
+    marginBottom: 12,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: COLORS.edge,
+    backgroundColor: COLORS.surface2,
+  },
+  selItem: {
+    flex: 1,
+    gap: 2,
+  },
+  selItemLabel: {
+    fontSize: 10,
+    letterSpacing: 0.3,
+    textTransform: "uppercase",
+    color: COLORS.textLight,
+  },
+  selValue: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: COLORS.text,
+    fontVariant: ["tabular-nums"],
+  },
+  selSubValue: {
+    fontSize: 12,
+    color: COLORS.textLight,
+    fontVariant: ["tabular-nums"],
   },
   donutRow: {
     flexDirection: "row",
