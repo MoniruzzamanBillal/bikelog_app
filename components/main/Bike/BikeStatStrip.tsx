@@ -45,8 +45,9 @@ function Stat({ label, value }: { label: string; value: string }) {
 
 type TBikeStatStripProps = {
   bikeId: string;
-  /** From the already-loaded bike; drives the ½-tank range. */
-  tankCapacityLiters?: number;
+  /** From the already-loaded bike; lifetime distance = current − initial, drives Cost/km. */
+  currentOdometer?: number;
+  initialOdometer?: number;
 };
 
 /**
@@ -56,7 +57,8 @@ type TBikeStatStripProps = {
  */
 export function BikeStatStrip({
   bikeId,
-  tankCapacityLiters,
+  currentOdometer,
+  initialOdometer,
 }: TBikeStatStripProps) {
   const now = new Date();
   const targetMonth = format(now, "yyyy-MM");
@@ -87,17 +89,22 @@ export function BikeStatStrip({
   const avgMileage = getAvgMileage(historyData?.data);
   const monthSpend = spendingData?.data?.totalSpending;
   const totalSpend = lifetimeSpendData?.data?.totalSpending;
-  // ! Half-tank range: how far this bike rides on half a tank, from its capacity and the
-  // ! SAME avg km/l shown in the "Avg mileage" tile — so the two stay internally consistent
-  // ! (6 L × 45 km/l = 270 km). Null (→ "—") when there's no mileage data or no tank capacity.
-  const halfTankRangeKm =
-    avgMileage != null && tankCapacityLiters
-      ? (tankCapacityLiters / 2) * avgMileage
+  // ! Cost per km: all-in lifetime spend (fuel+maintenance+oil+accessories — the SAME figure
+  // ! as the "Total spent" tile) over lifetime distance = currentOdometer − initialOdometer.
+  // ! Null (→ "—") when there's no spend yet or no distance ridden (new bike, avoids ÷0).
+  const lifetimeDistanceKm =
+    currentOdometer != null && initialOdometer != null
+      ? currentOdometer - initialOdometer
       : null;
-  // ! "On this oil" is hidden entirely when there is no oil change — a bike with none shows
-  // ! the strip exactly as before rather than a tile reading "0 km".
+  const costPerKm =
+    totalSpend != null && lifetimeDistanceKm != null && lifetimeDistanceKm > 0
+      ? totalSpend / lifetimeDistanceKm
+      : null;
+  // ! "On this oil" / "Oil life" are hidden entirely when there is no oil change — a bike with
+  // ! none shows the strip without them rather than tiles reading "0 km" / "0% used".
   const oilStatus = oilStatusData?.data;
   const kmOnThisOil = oilStatus?.lastChange ? oilStatus?.kmSinceChange : null;
+  const oilLife = oilStatus?.lastChange ? oilStatus?.percentUsed : null;
 
   return (
     <View style={styles.miniStats}>
@@ -109,17 +116,16 @@ export function BikeStatStrip({
         label={`${format(now, "MMM")} spend`}
         value={monthSpend == null ? "—" : formatTaka(monthSpend)}
       />
+      <Stat
+        label="Cost / km"
+        value={costPerKm == null ? "—" : `${formatTaka(costPerKm)}/km`}
+      />
       {kmOnThisOil != null && (
         <Stat label="On this oil" value={`${kmOnThisOil.toLocaleString()} km`} />
       )}
-      <Stat
-        label="½-tank range"
-        value={
-          halfTankRangeKm == null
-            ? "—"
-            : `~${Math.round(halfTankRangeKm).toLocaleString()} km`
-        }
-      />
+      {oilLife != null && (
+        <Stat label="Oil life" value={`${Math.round(oilLife)}% used`} />
+      )}
       <Stat
         label="Total spent"
         value={totalSpend == null ? "—" : formatTaka(totalSpend)}
@@ -129,9 +135,9 @@ export function BikeStatStrip({
 }
 
 const styles = StyleSheet.create({
-  // ! Fixed 3-column grid (Avg mileage, month spend, On this oil?, ½-tank range, Total spent).
+  // ! Fixed 3-column grid (Avg mileage, month spend, Cost/km, On this oil?, Oil life?, Total spent).
   // ! Each tile takes a fixed width rather than `flex: 1`, so wrapped rows line up into real
-  // ! columns and a partial last row (3+1 without oil, 3+2 with) packs left under column 1 —
+  // ! columns and a partial last row (3+1 without oil, 3+3 with) packs left under column 1 —
   // ! `flex: 1` made last-row tiles grow to fill their row and break the alignment.
   miniStats: {
     flexDirection: "row",
