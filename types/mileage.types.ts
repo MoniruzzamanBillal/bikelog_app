@@ -6,6 +6,7 @@ export type TMileageRecord = {
   distanceKm: number;
   litersConsumed: number;
   mileageKmPerLiter: number;
+  totalFuelCost: number;
   periodStartDate: string;
   periodEndDate: string;
   fuelLogIds: string[];
