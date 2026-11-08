@@ -18,10 +18,21 @@ import {
   TSpendingTrend,
 } from "@/types/spending.types";
 import { apiGet } from "@/utils/api";
+import { fillBarGeometry } from "@/utils/chartGeometry";
 import { CHART_COLORS, COLORS, tint } from "@/utils/colors";
 import { formatTaka } from "@/utils/formatTaka";
 import { generateSpendingPdf } from "@/utils/generateSpendingPdf";
-import { format, getDate, getDaysInMonth, isSameMonth, parse } from "date-fns";
+import {
+  differenceInCalendarDays,
+  format,
+  getDate,
+  getDayOfYear,
+  getDaysInMonth,
+  getDaysInYear,
+  isSameMonth,
+  parse,
+  parseISO,
+} from "date-fns";
 import { useLocalSearchParams } from "expo-router";
 import { useState } from "react";
 import {
@@ -91,6 +102,23 @@ function getElapsedDaysInMonth(targetMonth: string): number {
     return 0;
   }
   return getDaysInMonth(monthDate);
+}
+
+// Year analogue of getElapsedDaysInMonth: the current year counts days elapsed so far
+// (inclusive of today), a past year counts its full 365/366, a future year counts 0 so
+// the per-day figure is hidden.
+function getElapsedDaysInYear(targetYear: string): number {
+  const year = Number(targetYear);
+  const now = new Date();
+  const currentYear = now.getFullYear();
+
+  if (year > currentYear) {
+    return 0;
+  }
+  if (year === currentYear) {
+    return getDayOfYear(now);
+  }
+  return getDaysInYear(new Date(year, 0, 1));
 }
 
 function PdfButton({
@@ -210,6 +238,12 @@ function YearTab({ bikeId }: { bikeId: string }) {
   );
   const summary = data?.data;
 
+  // Cost per day across the year, mirroring the Month tab: elapsed days for the
+  // current year, the full year for a past one.
+  const daysElapsed = getElapsedDaysInYear(targetYear);
+  const avgDailyExpense =
+    daysElapsed > 0 ? (summary?.totalSpending ?? 0) / daysElapsed : 0;
+
   const handleRefresh = async () => {
     setRefreshing(true);
     await refetch();
@@ -249,7 +283,12 @@ function YearTab({ bikeId }: { bikeId: string }) {
       ) : isError ? (
         <ErrorState title="Couldn’t load spending" onRetry={refetch} />
       ) : summary && summary?.totalSpending > 0 ? (
-        <SpendingSummaryView summary={summary} periodLabel={targetYear} />
+        <SpendingSummaryView
+          summary={summary}
+          periodLabel={targetYear}
+          avgDailyScopeLabel="this year"
+          {...(daysElapsed > 0 ? { avgDailyExpense, daysElapsed } : {})}
+        />
       ) : (
         <EmptyState
           icon="cash-multiple"
@@ -261,7 +300,13 @@ function YearTab({ bikeId }: { bikeId: string }) {
   );
 }
 
-function LifetimeTab({ bikeId }: { bikeId: string }) {
+function LifetimeTab({
+  bikeId,
+  purchaseDate,
+}: {
+  bikeId: string;
+  purchaseDate?: string;
+}) {
   const [refreshing, setRefreshing] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
 
@@ -271,6 +316,15 @@ function LifetimeTab({ bikeId }: { bikeId: string }) {
     { enabled: !!bikeId },
   );
   const summary = data?.data;
+
+  // Cost per day of ownership: total ÷ days since the bike's purchase date
+  // (inclusive of the purchase day). A missing or future date hides the figure.
+  const rawDays = purchaseDate
+    ? differenceInCalendarDays(new Date(), parseISO(purchaseDate)) + 1
+    : 0;
+  const daysElapsed = rawDays > 0 ? rawDays : 0;
+  const avgDailyExpense =
+    daysElapsed > 0 ? (summary?.totalSpending ?? 0) / daysElapsed : 0;
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -304,7 +358,12 @@ function LifetimeTab({ bikeId }: { bikeId: string }) {
       ) : isError ? (
         <ErrorState title="Couldn’t load spending" onRetry={refetch} />
       ) : summary && summary?.totalSpending > 0 ? (
-        <SpendingSummaryView summary={summary} periodLabel="Lifetime" />
+        <SpendingSummaryView
+          summary={summary}
+          periodLabel="Lifetime"
+          avgDailyScopeLabel="of ownership"
+          {...(daysElapsed > 0 ? { avgDailyExpense, daysElapsed } : {})}
+        />
       ) : (
         <EmptyState
           icon="cash-multiple"
@@ -317,36 +376,10 @@ function LifetimeTab({ bikeId }: { bikeId: string }) {
 }
 
 // Y-axis label gutter; the bars fill whatever width is left of it.
+// Bars fill whatever width is left of this y-axis label gutter (see fillBarGeometry).
 const TREND_Y_AXIS_WIDTH = 34;
 const TREND_INITIAL_SPACING = 12;
 const TREND_END_SPACING = 12;
-
-/**
- * gifted-charts' BarChart does not stretch its bars to fill the container — with
- * only 6 months the default barWidth/spacing leaves empty space on the right.
- * Given the measured chart width we size the bars and gaps so the n bars span the
- * whole bar region exactly: n*barWidth + (n-1)*spacing == usable width.
- */
-function trendBarGeometry(chartWidth: number, barCount: number) {
-  const usable =
-    chartWidth -
-    TREND_Y_AXIS_WIDTH -
-    TREND_INITIAL_SPACING -
-    TREND_END_SPACING;
-  if (barCount < 1 || usable <= 0) {
-    return { barWidth: 24, spacing: 16 };
-  }
-  if (barCount === 1) {
-    return { barWidth: Math.min(56, usable), spacing: 0 };
-  }
-  const gapRatio = 0.65; // gap ≈ 65% of a bar's width before the fill clamp
-  const barWidth = Math.max(
-    14,
-    Math.min(44, usable / (barCount + (barCount - 1) * gapRatio)),
-  );
-  const spacing = Math.max(8, (usable - barCount * barWidth) / (barCount - 1));
-  return { barWidth, spacing };
-}
 
 function TrendTab({ bikeId }: { bikeId: string }) {
   // Which month's bar is tapped; drives the highlight and the detail strip
@@ -378,10 +411,13 @@ function TrendTab({ bikeId }: { bikeId: string }) {
           : tint(CHART_COLORS[0], 0.55),
   }));
 
-  const { barWidth, spacing } = trendBarGeometry(
+  const { barWidth, spacing } = fillBarGeometry({
     chartWidth,
-    monthlySummary.length,
-  );
+    barCount: monthlySummary.length,
+    yAxisWidth: TREND_Y_AXIS_WIDTH,
+    initialSpacing: TREND_INITIAL_SPACING,
+    endSpacing: TREND_END_SPACING,
+  });
 
   // The tapped month's figures for the detail strip above the chart.
   const selected =
@@ -592,7 +628,9 @@ export function Spending() {
         <View style={styles.tabHost}>
           {activeTab === "month" && <MonthTab bikeId={bikeId} />}
           {activeTab === "year" && <YearTab bikeId={bikeId} />}
-          {activeTab === "lifetime" && <LifetimeTab bikeId={bikeId} />}
+          {activeTab === "lifetime" && (
+            <LifetimeTab bikeId={bikeId} purchaseDate={bike?.purchaseDate} />
+          )}
           {activeTab === "trend" && <TrendTab bikeId={bikeId} />}
         </View>
       </View>

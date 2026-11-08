@@ -8,13 +8,19 @@ import {
 } from "@/components/main/shared";
 import { useFetchData } from "@/hooks/useApi";
 import { TYearlyMileage } from "@/types/mileage.types";
+import { fillBarGeometry } from "@/utils/chartGeometry";
 import { CHART_COLORS, COLORS } from "@/utils/colors";
 import { formatTaka } from "@/utils/formatTaka";
 import { format, parse } from "date-fns";
 import { useState } from "react";
-import { StyleSheet, View } from "react-native";
+import { LayoutChangeEvent, StyleSheet, View } from "react-native";
 import { BarChart } from "react-native-gifted-charts";
 import { Text } from "react-native-paper";
+
+// Bars fill whatever width is left of this y-axis label gutter (see fillBarGeometry).
+const Y_AXIS_WIDTH = 34;
+const INITIAL_SPACING = 8;
+const END_SPACING = 8;
 
 interface YearlyMileageTabProps {
   bikeId: string;
@@ -37,6 +43,9 @@ export function YearlyMileageTab({ bikeId }: YearlyMileageTabProps) {
   // rendered ABOVE the chart (gifted-charts' own tooltip clips inside the
   // chart's scroll container, so we render our own outside it).
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+  // Measured inner width of the chart panel, used to stretch the 12 month bars to
+  // fill it instead of leaving empty space on the right.
+  const [chartWidth, setChartWidth] = useState(0);
 
   const { data, isLoading, isError, refetch } = useFetchData<TYearlyMileage>(
     ["mileage", "yearly", bikeId, year],
@@ -55,6 +64,16 @@ export function YearlyMileageTab({ bikeId }: YearlyMileageTabProps) {
     label: format(parse(m?.targetMonth, "yyyy-MM", new Date()), "MMM"),
     frontColor: i === selectedIndex ? COLORS.accent : CHART_COLORS[0],
   }));
+
+  // Stretch the bars to fill the measured panel width (12 months otherwise leave a
+  // gap on the right at some screen widths).
+  const { barWidth, spacing } = fillBarGeometry({
+    chartWidth,
+    barCount: barData.length,
+    yAxisWidth: Y_AXIS_WIDTH,
+    initialSpacing: INITIAL_SPACING,
+    endSpacing: END_SPACING,
+  });
 
   // The tapped month's data for the detail strip above the chart.
   const selected = selectedIndex != null ? months[selectedIndex] : null;
@@ -118,29 +137,40 @@ export function YearlyMileageTab({ bikeId }: YearlyMileageTabProps) {
               </View>
             ) : null}
 
-            <BarChart
-              data={barData}
-              barWidth={12}
-              spacing={9}
-              initialSpacing={8}
-              endSpacing={8}
-              yAxisLabelWidth={34}
-              roundedTop
-              height={140}
-              yAxisThickness={0}
-              xAxisThickness={0}
-              hideRules
-              yAxisTextStyle={{ color: COLORS.textLight, fontSize: 10 }}
-              xAxisLabelTextStyle={{ color: COLORS.textLight, fontSize: 10 }}
-              noOfSections={4}
-              // Tap a bar to show its month detail above; tap it again to clear.
-              focusBarOnPress
-              focusedBarIndex={selectedIndex ?? undefined}
-              focusedBarConfig={{ color: COLORS.accent }}
-              onPress={(_item: unknown, index: number) =>
-                setSelectedIndex((prev) => (prev === index ? null : index))
+            <View
+              style={styles.chartMeasure}
+              onLayout={(e: LayoutChangeEvent) =>
+                setChartWidth(e.nativeEvent.layout.width)
               }
-            />
+            >
+              {chartWidth > 0 ? (
+                <BarChart
+                  data={barData}
+                  barWidth={barWidth}
+                  spacing={spacing}
+                  initialSpacing={INITIAL_SPACING}
+                  endSpacing={END_SPACING}
+                  yAxisLabelWidth={Y_AXIS_WIDTH}
+                  roundedTop
+                  height={140}
+                  yAxisThickness={0}
+                  xAxisThickness={0}
+                  hideRules
+                  yAxisTextStyle={{ color: COLORS.textLight, fontSize: 10 }}
+                  xAxisLabelTextStyle={{ color: COLORS.textLight, fontSize: 10 }}
+                  noOfSections={4}
+                  // Tap a bar to show its month detail above; tap it again to clear.
+                  focusBarOnPress
+                  focusedBarIndex={selectedIndex ?? undefined}
+                  focusedBarConfig={{ color: COLORS.accent }}
+                  onPress={(_item: unknown, index: number) =>
+                    setSelectedIndex((prev) => (prev === index ? null : index))
+                  }
+                />
+              ) : (
+                <View style={styles.chartPlaceholder} />
+              )}
+            </View>
           </Panel>
 
           <Panel style={styles.listPanel}>
@@ -227,6 +257,13 @@ const styles = StyleSheet.create({
   chartHint: {
     fontSize: 11,
     color: COLORS.textLight,
+  },
+  // Wrapper whose width we measure so the bars can be stretched to fill it.
+  chartMeasure: {
+    width: "100%",
+  },
+  chartPlaceholder: {
+    height: 140,
   },
   // Tapped-bar detail, above the chart so it can never be clipped by the
   // chart's internal scroll/clip container.

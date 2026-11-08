@@ -10,6 +10,9 @@ interface SpendingSummaryViewProps {
   periodLabel?: string;
   avgDailyExpense?: number;
   daysElapsed?: number;
+  // Trailing phrase on the per-day hint ("over N days <this>"). The Year tab passes
+  // "this year", the Lifetime tab "of ownership"; defaults to the Month tab's wording.
+  avgDailyScopeLabel?: string;
 }
 
 export function SpendingSummaryView({
@@ -17,6 +20,7 @@ export function SpendingSummaryView({
   periodLabel,
   avgDailyExpense,
   daysElapsed,
+  avgDailyScopeLabel = "this month",
 }: SpendingSummaryViewProps) {
   const total = summary?.totalSpending || 0;
   const categories = [...(summary?.categoryBreakdown || [])].sort(
@@ -42,7 +46,8 @@ export function SpendingSummaryView({
           <View style={styles.avgCol}>
             <Text style={styles.avgValue}>{formatTaka(avgDailyExpense)} / day</Text>
             <Text style={styles.avgHint}>
-              over {daysElapsed} day{daysElapsed === 1 ? "" : "s"} this month
+              over {daysElapsed} day{daysElapsed === 1 ? "" : "s"}{" "}
+              {avgDailyScopeLabel}
             </Text>
           </View>
         ) : null}
