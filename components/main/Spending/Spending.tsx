@@ -519,12 +519,6 @@ function TrendTab({ bikeId }: { bikeId: string }) {
               yAxisThickness={0}
               xAxisThickness={0}
               hideRules
-              showValuesAsTopLabel
-              topLabelTextStyle={{
-                color: COLORS.textLight,
-                fontSize: 11,
-                fontWeight: "500",
-              }}
               yAxisTextStyle={{
                 color: COLORS.textLight,
                 fontSize: 10,
