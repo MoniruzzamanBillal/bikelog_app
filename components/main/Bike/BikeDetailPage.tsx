@@ -167,7 +167,8 @@ export function BikeDetailPage() {
 
           <BikeStatStrip
             bikeId={bikeId}
-            tankCapacityLiters={bike?.fuelTankCapacityLiters}
+            currentOdometer={bike?.currentOdometer}
+            initialOdometer={bike?.initialOdometer}
           />
         </Panel>
 

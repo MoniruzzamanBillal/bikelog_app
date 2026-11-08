@@ -33,6 +33,9 @@ export type TSpendingRecord = {
   vendor: string | null;
   remarks: string | null;
   source: TSpendingRecordSource;
+  // ! Spec 65 / server spec 61: litres on a fuel record, null otherwise. Additive; nothing
+  // ! that already consumes TSpendingRecord reads it.
+  liters?: number | null;
 };
 
 export type TSpendingDetails = {
@@ -59,6 +62,30 @@ export type TMonthlyCategoryBreakdown = {
   targetMonth: string;
   totalSpending: number;
   categories: TSpendingCategoryGroup[];
+};
+
+// ! Spec 65: the Year / Lifetime tabs' accordion drill-down, from `bikelog_server` spec
+// ! 61's /spending-summary/period-breakdown. A category expands to time buckets — per-month
+// ! for a year, per-year for lifetime — each with its total and (fuel only) its litres.
+export type TSpendingPeriodBucket = {
+  key: string;
+  label: string; // "Jan" / "2026" — pre-formatted server-side
+  total: number;
+  liters: number | null;
+};
+
+export type TSpendingPeriodGroup = {
+  category: string;
+  total: number;
+  totalLiters: number | null;
+  buckets: TSpendingPeriodBucket[];
+};
+
+export type TPeriodCategoryBreakdown = {
+  period: "year" | "lifetime";
+  targetYear?: string;
+  totalSpending: number;
+  categories: TSpendingPeriodGroup[];
 };
 
 export type TMonthlySpending = {

@@ -8,6 +8,7 @@ import { useFetchData } from "@/hooks/useApi";
 import { TMileageHistoryResponse } from "@/types/mileage.types";
 import { CHART_COLORS, COLORS } from "@/utils/colors";
 import { formatApiDate } from "@/utils/formatApiDate";
+import { formatTaka } from "@/utils/formatTaka";
 import { StyleSheet, View } from "react-native";
 import { Text } from "react-native-paper";
 
@@ -85,7 +86,19 @@ export function MileageHistoryTab({ bikeId }: MileageHistoryTabProps) {
           No exact records yet — log a full-tank fill to close a period.
         </Text>
       ) : (
-        records.map((record) => (
+        records.map((record) => {
+          // Guarded with `?.` / `&&` so a record with no cost — or an API that
+          // hasn't shipped totalFuelCost yet — reads "—", never "৳undefined".
+          const fuelCost =
+            record?.totalFuelCost != null
+              ? formatTaka(record?.totalFuelCost)
+              : "—";
+          // Period fuel spend ÷ distance ridden in that period.
+          const costPerKm =
+            record?.totalFuelCost != null && record?.distanceKm
+              ? `৳${(record?.totalFuelCost / record?.distanceKm).toFixed(2)}/km`
+              : "—";
+          return (
           <Panel key={record._id} style={styles.record}>
             <View style={styles.recordRow}>
               <View style={styles.recordLeft}>
@@ -96,6 +109,9 @@ export function MileageHistoryTab({ bikeId }: MileageHistoryTabProps) {
                 <Text style={styles.recordDetail}>
                   {record?.distanceKm?.toLocaleString()} km ·{" "}
                   {record?.litersConsumed?.toFixed(2)} L
+                </Text>
+                <Text style={styles.recordCost}>
+                  Fuel cost {fuelCost} · {costPerKm}
                 </Text>
               </View>
               <View style={styles.recordKmplRow}>
@@ -121,7 +137,8 @@ export function MileageHistoryTab({ bikeId }: MileageHistoryTabProps) {
               />
             </View>
           </Panel>
-        ))
+          );
+        })
       )}
     </View>
   );
@@ -201,6 +218,11 @@ const styles = StyleSheet.create({
   recordDetail: {
     fontSize: 13,
     color: COLORS.text,
+    fontVariant: ["tabular-nums"],
+  },
+  recordCost: {
+    fontSize: 12.5,
+    color: COLORS.textLight,
     fontVariant: ["tabular-nums"],
   },
   recordKmplRow: {

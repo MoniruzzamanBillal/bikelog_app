@@ -5,7 +5,6 @@ import { COLORS } from "@/utils/colors";
 import { useLocalSearchParams } from "expo-router";
 import { useState } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
-import { AiMileageInsightCard } from "./AiMileageInsightCard";
 import { LifetimeMileageTab } from "./LifetimeMileageTab";
 import { MileageHistoryTab } from "./MileageHistoryTab";
 import { MonthlyMileageTab } from "./MonthlyMileageTab";
@@ -54,8 +53,6 @@ export function Mileage() {
         {activeTab === "monthly" && <MonthlyMileageTab bikeId={bikeId} />}
         {activeTab === "yearly" && <YearlyMileageTab bikeId={bikeId} />}
         {activeTab === "lifetime" && <LifetimeMileageTab bikeId={bikeId} />}
-
-        <AiMileageInsightCard bikeId={bikeId} />
       </ScrollView>
     </View>
   );

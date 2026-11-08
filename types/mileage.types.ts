@@ -6,6 +6,7 @@ export type TMileageRecord = {
   distanceKm: number;
   litersConsumed: number;
   mileageKmPerLiter: number;
+  totalFuelCost: number;
   periodStartDate: string;
   periodEndDate: string;
   fuelLogIds: string[];
@@ -37,6 +38,7 @@ export type TMonthlyMileage = {
   targetMonth: string;
   totalDistanceKm: number;
   totalLitersConsumed: number;
+  totalFuelCost: number;
   fuelLogCount: number;
 };
 
@@ -44,6 +46,7 @@ export type TMonthlySummary = {
   targetMonth: string;
   totalDistanceKm: number;
   totalLitersConsumed: number;
+  totalFuelCost: number;
   fuelLogCount: number;
 };
 
@@ -55,6 +58,7 @@ export type TYearlyMileage = {
 export type TLifetimeMileage = {
   totalDistanceKm: number;
   totalLitersConsumed: number;
+  totalFuelCost: number;
   fuelLogCount: number;
 };
 
