@@ -7,7 +7,7 @@ import {
   Panel,
   RuleFade,
   ScreenHeader,
-  SectionLoading,
+  SkeletonBar,
 } from "@/components/main/shared";
 import { confirmDelete } from "@/components/main/shared/ConfirmDelete";
 import { useDelete, useFetchData } from "@/hooks/useApi";
@@ -22,6 +22,7 @@ import { ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
 import { Text } from "react-native-paper";
 import { BikeFormModal } from "./BikeFormModal";
 import { BikeStatStrip } from "./BikeStatStrip";
+import { BikeStatStripSkeleton } from "./BikeStatStripSkeleton";
 
 type TTile = {
   label: string;
@@ -83,7 +84,17 @@ export function BikeDetailPage() {
       <View style={styles.screen}>
         <ScreenHeader title="Loading…" backLabel="Garage" />
         <View style={styles.page}>
-          <SectionLoading count={4} />
+          <BikeStatStripSkeleton />
+          <View style={styles.tileGrid}>
+            {Array.from({ length: 6 }).map((_, i) => (
+              <SkeletonBar
+                key={i}
+                width="31.7%"
+                height={76}
+                style={styles.tileSkeleton}
+              />
+            ))}
+          </View>
         </View>
       </View>
     );
@@ -263,6 +274,9 @@ const styles = StyleSheet.create({
     padding: 12,
     alignItems: "flex-start",
     justifyContent: "space-between",
+  },
+  tileSkeleton: {
+    borderRadius: 10,
   },
   tileLabel: {
     fontSize: 12,

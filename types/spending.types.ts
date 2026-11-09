@@ -20,10 +20,7 @@ export type TSpendingInsight = {
 // ! "accessory" and "oil" were both missing from this app's copy of the union (server
 // ! H11); nothing here switches on `source`, so this is type hygiene, not behaviour.
 export type TSpendingRecordSource =
-  | "fuel"
-  | "maintenance"
-  | "accessory"
-  | "oil";
+  "fuel" | "maintenance" | "accessory" | "oil";
 
 export type TSpendingRecord = {
   date: string;
@@ -96,5 +93,8 @@ export type TMonthlySpending = {
 
 export type TSpendingTrend = {
   months: number;
+  // ! spec 63 / server spec 63: present when the trend was requested for a fixed
+  // ! calendar year (targetYear=YYYY) rather than a rolling window. Additive.
+  targetYear?: string;
   monthlySummary: TMonthlySpending[];
 };

@@ -282,8 +282,12 @@ const styles = StyleSheet.create({
     color: COLORS.textLight,
   },
   lockedNote: {
-    fontSize: 11.5,
-    fontWeight: "500",
+    // Smaller and dimmed — it's a passive "can't edit" hint, not an alert, so it
+    // reads quieter than the amber it used to be (developer asked to shrink it and
+    // lighten the colour / drop the opacity).
+    fontSize: 10,
+    fontWeight: "400",
     color: COLORS.warning,
+    opacity: 0.7,
   },
 });

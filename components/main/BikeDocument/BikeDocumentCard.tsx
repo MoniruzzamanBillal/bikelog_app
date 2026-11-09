@@ -1,4 +1,8 @@
-import { MultiFilePickerField, Panel } from "@/components/main/shared";
+import {
+  MultiFilePickerField,
+  Panel,
+  RuleFade,
+} from "@/components/main/shared";
 import { confirmDelete } from "@/components/main/shared/ConfirmDelete";
 import { toneStyle, TStatusTone } from "@/components/main/shared/StatusBadge";
 import { useDelete, usePost } from "@/hooks/useApi";
@@ -21,8 +25,12 @@ interface BikeDocumentCardProps {
 
 type TExpiryPill = { label: string; tone: TStatusTone };
 
-function getExpiryPill(expiryDate?: string): TExpiryPill | null {
-  if (!expiryDate) return null;
+// The expiry status pill. A document with no expiry date gets a neutral
+// "No expiry" pill so the card always carries a status, rather than a blank gap.
+function getExpiryPill(expiryDate?: string): TExpiryPill {
+  if (!expiryDate) {
+    return { label: "No expiry", tone: "neutral" };
+  }
 
   const daysUntil = differenceInCalendarDays(
     parseApiDate(expiryDate),
@@ -38,10 +46,7 @@ function getExpiryPill(expiryDate?: string): TExpiryPill | null {
       tone: "warning",
     };
   }
-  return {
-    label: `Expires ${formatApiDate(expiryDate, "dd MMM yyyy")}`,
-    tone: "neutral",
-  };
+  return { label: "Valid", tone: "success" };
 }
 
 export function BikeDocumentCard({ document, bikeId }: BikeDocumentCardProps) {
@@ -56,7 +61,8 @@ export function BikeDocumentCard({ document, bikeId }: BikeDocumentCardProps) {
   ]);
 
   const expiryPill = getExpiryPill(document.expiryDate);
-  const pillStyle = expiryPill ? toneStyle(expiryPill?.tone) : null;
+  const pillStyle = toneStyle(expiryPill?.tone);
+  const fileCount = document?.files?.length ?? 0;
 
   const handleAddFiles = async (pickedFiles: TPickedFile[]) => {
     try {
@@ -102,23 +108,24 @@ export function BikeDocumentCard({ document, bikeId }: BikeDocumentCardProps) {
   return (
     <>
       <Panel style={styles.card}>
-        <View style={styles.titleRow}>
-          <View style={styles.titleCol}>
-            <View style={styles.titleLine}>
-              <Text style={styles.title} numberOfLines={2}>
-                {document.title}
+        <View style={styles.header}>
+          <View style={styles.iconBadge}>
+            <MaterialCommunityIcons
+              name="file-document-outline"
+              size={20}
+              color={COLORS.accent}
+            />
+          </View>
+
+          <View style={styles.headText}>
+            <Text style={styles.title} numberOfLines={2}>
+              {document.title}
+            </Text>
+            <View style={[styles.pill, { backgroundColor: pillStyle.bg }]}>
+              <Text style={[styles.pillText, { color: pillStyle.text }]}>
+                {expiryPill?.label}
               </Text>
-              {expiryPill && pillStyle ? (
-                <View style={[styles.pill, { backgroundColor: pillStyle.bg }]}>
-                  <Text style={[styles.pillText, { color: pillStyle.text }]}>
-                    {expiryPill?.label}
-                  </Text>
-                </View>
-              ) : null}
             </View>
-            {document.description ? (
-              <Text style={styles.description}>{document.description}</Text>
-            ) : null}
           </View>
 
           <View style={styles.actions}>
@@ -147,6 +154,50 @@ export function BikeDocumentCard({ document, bikeId }: BikeDocumentCardProps) {
           </View>
         </View>
 
+        {document.description ? (
+          <Text style={styles.description}>{document.description}</Text>
+        ) : null}
+
+        {/* All the document's facts on one muted meta line — the actual expiry
+            date (the pill above only names the status), how many files are
+            attached, and when it was added. */}
+        <View style={styles.metaRow}>
+          <View style={styles.metaItem}>
+            <MaterialCommunityIcons
+              name="calendar-outline"
+              size={13}
+              color={COLORS.textLight}
+            />
+            <Text style={styles.metaText}>
+              {document.expiryDate
+                ? `Expires ${formatApiDate(document.expiryDate, "dd MMM yyyy")}`
+                : "No expiry date"}
+            </Text>
+          </View>
+          <View style={styles.metaItem}>
+            <MaterialCommunityIcons
+              name="paperclip"
+              size={13}
+              color={COLORS.textLight}
+            />
+            <Text style={styles.metaText}>
+              {fileCount} file{fileCount === 1 ? "" : "s"}
+            </Text>
+          </View>
+          <View style={styles.metaItem}>
+            <MaterialCommunityIcons
+              name="clock-outline"
+              size={13}
+              color={COLORS.textLight}
+            />
+            <Text style={styles.metaText}>
+              Added {formatApiDate(document.createdAt, "dd MMM yyyy")}
+            </Text>
+          </View>
+        </View>
+
+        <RuleFade />
+
         <MultiFilePickerField
           files={document.files ?? []}
           onAdd={handleAddFiles}
@@ -170,40 +221,60 @@ const styles = StyleSheet.create({
     padding: 14,
     gap: 10,
   },
-  titleRow: {
+  header: {
     flexDirection: "row",
     alignItems: "flex-start",
-    gap: 8,
+    gap: 10,
   },
-  titleCol: {
+  iconBadge: {
+    width: 38,
+    height: 38,
+    borderRadius: 9,
+    backgroundColor: COLORS.surface3,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  headText: {
     flex: 1,
     minWidth: 0,
-    gap: 3,
-  },
-  titleLine: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    flexWrap: "wrap",
+    gap: 5,
   },
   title: {
-    fontSize: 14,
-    fontWeight: "500",
+    fontSize: 14.5,
+    fontWeight: "600",
     color: COLORS.text,
-    flexShrink: 1,
   },
   pill: {
+    alignSelf: "flex-start",
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 6,
   },
   pillText: {
     fontSize: 11,
+    fontWeight: "500",
   },
   description: {
     fontSize: 12.5,
     lineHeight: 18,
     color: COLORS.textLight,
+  },
+  metaRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "center",
+    columnGap: 14,
+    rowGap: 4,
+  },
+  metaItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  metaText: {
+    fontSize: 11.5,
+    color: COLORS.textLight,
+    fontVariant: ["tabular-nums"],
   },
   actions: {
     flexDirection: "row",

@@ -292,9 +292,11 @@ const styles = StyleSheet.create({
     fontVariant: ["tabular-nums"],
   },
   subLine: {
-    fontSize: 10.5,
+    // The "Interval …" and "… km on this oil · ৳…/km" lines — smaller and in the
+    // muted tone so they read as secondary detail under the odometer line.
+    fontSize: 9.5,
     fontWeight: "500",
-    color: COLORS.text,
+    color: COLORS.textLight,
     fontVariant: ["tabular-nums"],
   },
 });
