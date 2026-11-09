@@ -90,6 +90,7 @@ export function MileageHistoryTab({ bikeId }: MileageHistoryTabProps) {
             key={record._id}
             record={record}
             maxKmpl={maxKmpl}
+            compact
           />
         ))
       )}
@@ -105,12 +106,12 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    gap: 12,
-    paddingHorizontal: 18,
-    paddingVertical: 16,
+    gap: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 11,
   },
   rollingLabel: {
-    fontSize: 12,
+    fontSize: 11,
     color: COLORS.textLight,
   },
   rollingValueRow: {
@@ -119,20 +120,20 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   rollingValue: {
-    fontSize: 30,
+    fontSize: 23,
     fontWeight: "500",
     color: COLORS.text,
     fontVariant: ["tabular-nums"],
   },
   rollingUnit: {
-    fontSize: 14,
+    fontSize: 12,
     color: COLORS.textLight,
   },
   rollingMeta: {
     alignItems: "flex-end",
   },
   rollingMetaText: {
-    fontSize: 12,
+    fontSize: 10.5,
     color: COLORS.textLight,
     textAlign: "right",
   },

@@ -56,23 +56,27 @@ export function LifetimeMileageTab({ bikeId }: LifetimeMileageTabProps) {
     <View style={styles.stack}>
       <View style={styles.grid}>
         <StatTile
+          compact
           label="Total distance"
           value={lifetime.totalDistanceKm.toLocaleString()}
           unit="km"
           style={styles.tile}
         />
         <StatTile
+          compact
           label="Fuel used"
           value={lifetime.totalLitersConsumed.toFixed(2)}
           unit="L"
           style={styles.tile}
         />
         <StatTile
+          compact
           label="Fill-ups"
           value={lifetime.fuelLogCount}
           style={styles.tile}
         />
         <StatTile
+          compact
           label="Average"
           value={avg}
           unit={avg === "—" ? undefined : "km/l"}
@@ -84,6 +88,7 @@ export function LifetimeMileageTab({ bikeId }: LifetimeMileageTabProps) {
         <>
           <Text style={styles.kicker}>BY YEAR</Text>
           <MileageBreakdownList
+            hidePricePerLiter
             items={years.map((y) => ({
               key: y.targetYear,
               label: y.targetYear,

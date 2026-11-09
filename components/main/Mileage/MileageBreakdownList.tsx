@@ -49,10 +49,14 @@ function Metric({
 export function MileageBreakdownList({
   items,
   compact,
+  hidePricePerLiter,
 }: {
   items: TMileagePeriod[];
   /** Tighter rows + smaller, dimmer values — used by the Yearly tab. */
   compact?: boolean;
+  /** Drop the "Price / L" metric — the Lifetime tab hides it, since a year's
+   *  average pump price blends many different prices and isn't meaningful. */
+  hidePricePerLiter?: boolean;
 }) {
   return (
     <Panel style={styles.listPanel}>
@@ -106,11 +110,13 @@ export function MileageBreakdownList({
                 <Metric label="Distance" value={distance} compact={compact} />
                 <Metric label="Fuel used" value={fuelUsed} compact={compact} />
                 <Metric label="Fuel cost" value={fuelCost} compact={compact} />
-                <Metric
-                  label="Price / L"
-                  value={pricePerLiter}
-                  compact={compact}
-                />
+                {!hidePricePerLiter && (
+                  <Metric
+                    label="Price / L"
+                    value={pricePerLiter}
+                    compact={compact}
+                  />
+                )}
                 <Metric label="Cost / km" value={costPerKm} compact={compact} />
                 <Metric label="Fill-ups" value={fills} compact={compact} />
               </View>
