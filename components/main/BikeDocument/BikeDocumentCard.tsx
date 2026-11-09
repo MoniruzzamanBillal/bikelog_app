@@ -218,18 +218,18 @@ export function BikeDocumentCard({ document, bikeId }: BikeDocumentCardProps) {
 
 const styles = StyleSheet.create({
   card: {
-    padding: 14,
-    gap: 10,
+    padding: 11,
+    gap: 8,
   },
   header: {
     flexDirection: "row",
     alignItems: "flex-start",
-    gap: 10,
+    gap: 9,
   },
   iconBadge: {
-    width: 38,
-    height: 38,
-    borderRadius: 9,
+    width: 32,
+    height: 32,
+    borderRadius: 8,
     backgroundColor: COLORS.surface3,
     alignItems: "center",
     justifyContent: "center",
@@ -237,26 +237,26 @@ const styles = StyleSheet.create({
   headText: {
     flex: 1,
     minWidth: 0,
-    gap: 5,
+    gap: 4,
   },
   title: {
-    fontSize: 14.5,
+    fontSize: 13.5,
     fontWeight: "600",
     color: COLORS.text,
   },
   pill: {
     alignSelf: "flex-start",
-    paddingHorizontal: 8,
+    paddingHorizontal: 7,
     paddingVertical: 2,
     borderRadius: 6,
   },
   pillText: {
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: "500",
   },
   description: {
-    fontSize: 12.5,
-    lineHeight: 18,
+    fontSize: 12,
+    lineHeight: 16,
     color: COLORS.textLight,
   },
   metaRow: {
@@ -272,7 +272,7 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   metaText: {
-    fontSize: 11.5,
+    fontSize: 10.5,
     color: COLORS.textLight,
     fontVariant: ["tabular-nums"],
   },
