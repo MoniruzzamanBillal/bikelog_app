@@ -6,11 +6,10 @@ import {
 } from "@/components/main/shared";
 import { useFetchData } from "@/hooks/useApi";
 import { TMileageHistoryResponse } from "@/types/mileage.types";
-import { CHART_COLORS, COLORS } from "@/utils/colors";
-import { formatApiDate } from "@/utils/formatApiDate";
-import { formatTaka } from "@/utils/formatTaka";
+import { COLORS } from "@/utils/colors";
 import { StyleSheet, View } from "react-native";
 import { Text } from "react-native-paper";
+import { MileageRecordCard } from "./MileageRecordCard";
 
 interface MileageHistoryTabProps {
   bikeId: string;
@@ -86,59 +85,14 @@ export function MileageHistoryTab({ bikeId }: MileageHistoryTabProps) {
           No exact records yet — log a full-tank fill to close a period.
         </Text>
       ) : (
-        records.map((record) => {
-          // Guarded with `?.` / `&&` so a record with no cost — or an API that
-          // hasn't shipped totalFuelCost yet — reads "—", never "৳undefined".
-          const fuelCost =
-            record?.totalFuelCost != null
-              ? formatTaka(record?.totalFuelCost)
-              : "—";
-          // Period fuel spend ÷ distance ridden in that period.
-          const costPerKm =
-            record?.totalFuelCost != null && record?.distanceKm
-              ? `৳${(record?.totalFuelCost / record?.distanceKm).toFixed(2)}/km`
-              : "—";
-          return (
-          <Panel key={record._id} style={styles.record}>
-            <View style={styles.recordRow}>
-              <View style={styles.recordLeft}>
-                <Text style={styles.recordPeriod}>
-                  {formatApiDate(record?.periodStartDate, "dd MMM")} →{" "}
-                  {formatApiDate(record?.periodEndDate, "dd MMM yyyy")}
-                </Text>
-                <Text style={styles.recordDetail}>
-                  {record?.distanceKm?.toLocaleString()} km ·{" "}
-                  {record?.litersConsumed?.toFixed(2)} L
-                </Text>
-                <Text style={styles.recordCost}>
-                  Fuel cost {fuelCost} · {costPerKm}
-                </Text>
-              </View>
-              <View style={styles.recordKmplRow}>
-                <Text style={styles.recordKmpl}>
-                  {record?.mileageKmPerLiter?.toFixed(1)}
-                </Text>
-                <Text style={styles.recordKmplUnit}>km/l</Text>
-              </View>
-            </View>
-
-            <View style={styles.barTrack}>
-              <View
-                style={[
-                  styles.barFill,
-                  {
-                    width: `${
-                      maxKmpl > 0
-                        ? (record.mileageKmPerLiter / maxKmpl) * 100
-                        : 0
-                    }%`,
-                  },
-                ]}
-              />
-            </View>
-          </Panel>
-          );
-        })
+        records.map((record) => (
+          <MileageRecordCard
+            key={record._id}
+            record={record}
+            maxKmpl={maxKmpl}
+            compact
+          />
+        ))
       )}
     </View>
   );
@@ -152,12 +106,12 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    gap: 12,
-    paddingHorizontal: 18,
-    paddingVertical: 16,
+    gap: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 11,
   },
   rollingLabel: {
-    fontSize: 12,
+    fontSize: 11,
     color: COLORS.textLight,
   },
   rollingValueRow: {
@@ -166,20 +120,20 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   rollingValue: {
-    fontSize: 30,
+    fontSize: 23,
     fontWeight: "500",
     color: COLORS.text,
     fontVariant: ["tabular-nums"],
   },
   rollingUnit: {
-    fontSize: 14,
+    fontSize: 12,
     color: COLORS.textLight,
   },
   rollingMeta: {
     alignItems: "flex-end",
   },
   rollingMetaText: {
-    fontSize: 12,
+    fontSize: 10.5,
     color: COLORS.textLight,
     textAlign: "right",
   },
@@ -193,62 +147,5 @@ const styles = StyleSheet.create({
   noRecords: {
     fontSize: 13,
     color: COLORS.textLight,
-  },
-  record: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    gap: 8,
-  },
-  recordRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 12,
-  },
-  recordLeft: {
-    flex: 1,
-    minWidth: 0,
-    gap: 2,
-  },
-  recordPeriod: {
-    fontSize: 12.5,
-    color: COLORS.textLight,
-    fontVariant: ["tabular-nums"],
-  },
-  recordDetail: {
-    fontSize: 13,
-    color: COLORS.text,
-    fontVariant: ["tabular-nums"],
-  },
-  recordCost: {
-    fontSize: 12.5,
-    color: COLORS.textLight,
-    fontVariant: ["tabular-nums"],
-  },
-  recordKmplRow: {
-    flexDirection: "row",
-    alignItems: "baseline",
-    gap: 3,
-  },
-  recordKmpl: {
-    fontSize: 17,
-    fontWeight: "500",
-    color: COLORS.text,
-    fontVariant: ["tabular-nums"],
-  },
-  recordKmplUnit: {
-    fontSize: 12,
-    color: COLORS.textLight,
-  },
-  barTrack: {
-    height: 3,
-    borderRadius: 3,
-    backgroundColor: COLORS.surface2,
-    overflow: "hidden",
-  },
-  barFill: {
-    height: 3,
-    borderRadius: 3,
-    backgroundColor: CHART_COLORS[0],
   },
 });

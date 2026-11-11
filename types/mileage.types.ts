@@ -55,11 +55,24 @@ export type TYearlyMileage = {
   monthlySummary: TMonthlySummary[];
 };
 
+// ! spec 62 / server spec 62: one entry per year the bike has fuel logs in,
+// ! newest-first. Same figures as TMonthlySummary, so the Lifetime tab renders a
+// ! per-year card exactly like the Yearly tab's per-month card.
+export type TYearlyBreakdown = {
+  targetYear: string;
+  totalDistanceKm: number;
+  totalLitersConsumed: number;
+  totalFuelCost: number;
+  fuelLogCount: number;
+};
+
 export type TLifetimeMileage = {
   totalDistanceKm: number;
   totalLitersConsumed: number;
   totalFuelCost: number;
   fuelLogCount: number;
+  // ! additive; an older server omits it, so every read is guarded with `?? []`.
+  yearlySummary?: TYearlyBreakdown[];
 };
 
 export type TMileageInsight = {

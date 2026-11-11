@@ -7,6 +7,7 @@ import { formatTaka } from "@/utils/formatTaka";
 import { format } from "date-fns";
 import { StyleSheet, View } from "react-native";
 import { Text } from "react-native-paper";
+import { MiniStatsSkeleton } from "./BikeStatStripSkeleton";
 
 /**
  * Avg km/l for the hub's mini-stat row — the last ≤5 exact full-tank periods,
@@ -63,22 +64,25 @@ export function BikeStatStrip({
   const now = new Date();
   const targetMonth = format(now, "yyyy-MM");
 
-  const { data: historyData } = useFetchData<TMileageHistoryResponse>(
-    ["mileage", "history", bikeId],
-    `/bikes/${bikeId}/mileage`,
-    { enabled: !!bikeId },
-  );
-  const { data: spendingData } = useFetchData<TSpendingSummary>(
-    ["spending", bikeId, "month", targetMonth],
-    `/bikes/${bikeId}/spending-summary?period=month&targetMonth=${targetMonth}`,
-    { enabled: !!bikeId },
-  );
+  const { data: historyData, isLoading: historyLoading } =
+    useFetchData<TMileageHistoryResponse>(
+      ["mileage", "history", bikeId],
+      `/bikes/${bikeId}/mileage`,
+      { enabled: !!bikeId },
+    );
+  const { data: spendingData, isLoading: monthLoading } =
+    useFetchData<TSpendingSummary>(
+      ["spending", bikeId, "month", targetMonth],
+      `/bikes/${bikeId}/spending-summary?period=month&targetMonth=${targetMonth}`,
+      { enabled: !!bikeId },
+    );
   // ! Lifetime spend for the "Total spent" stat — reuses the Spending screen's key.
-  const { data: lifetimeSpendData } = useFetchData<TSpendingSummary>(
-    ["spending", bikeId, "lifetime"],
-    `/bikes/${bikeId}/spending-summary?period=lifetime`,
-    { enabled: !!bikeId },
-  );
+  const { data: lifetimeSpendData, isLoading: lifetimeLoading } =
+    useFetchData<TSpendingSummary>(
+      ["spending", bikeId, "lifetime"],
+      `/bikes/${bikeId}/spending-summary?period=lifetime`,
+      { enabled: !!bikeId },
+    );
   // ! spec 57 §E item 5 — the SAME key the Engine oil screen uses.
   const { data: oilStatusData } = useFetchData<TEngineOilStatus>(
     ["engineOilStatus", bikeId],
@@ -106,6 +110,13 @@ export function BikeStatStrip({
   const kmOnThisOil = oilStatus?.lastChange ? oilStatus?.kmSinceChange : null;
   const oilLife = oilStatus?.lastChange ? oilStatus?.percentUsed : null;
 
+  // First paint, before these reused queries resolve: show the pulsing skeleton
+  // grid rather than a row of "—" that would flash and then be replaced. Gated on
+  // the three always-visible stats only; the optional oil tiles never block it.
+  if (historyLoading || monthLoading || lifetimeLoading) {
+    return <MiniStatsSkeleton count={4} />;
+  }
+
   return (
     <View style={styles.miniStats}>
       <Stat
@@ -121,7 +132,10 @@ export function BikeStatStrip({
         value={costPerKm == null ? "—" : `${formatTaka(costPerKm)}/km`}
       />
       {kmOnThisOil != null && (
-        <Stat label="On this oil" value={`${kmOnThisOil.toLocaleString()} km`} />
+        <Stat
+          label="On this oil"
+          value={`${kmOnThisOil.toLocaleString()} km`}
+        />
       )}
       {oilLife != null && (
         <Stat label="Oil life" value={`${Math.round(oilLife)}% used`} />

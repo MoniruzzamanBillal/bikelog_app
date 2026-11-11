@@ -10,6 +10,8 @@ interface StatTileProps {
   unit?: string;
   sub?: ReactNode;
   glow?: boolean;
+  /** Tighter padding and smaller text — for dense grids like the Monthly tab. */
+  compact?: boolean;
   style?: StyleProp<ViewStyle>;
 }
 
@@ -20,21 +22,38 @@ export function StatTile({
   unit,
   sub,
   glow,
+  compact,
   style,
 }: StatTileProps) {
   return (
-    <Panel glow={glow} style={[styles.tile, style]}>
-      <Text style={styles.label} numberOfLines={1}>
+    <Panel
+      glow={glow}
+      style={[styles.tile, compact && styles.tileCompact, style]}
+    >
+      <Text
+        style={[styles.label, compact && styles.labelCompact]}
+        numberOfLines={1}
+      >
         {label}
       </Text>
       <View style={styles.valueRow}>
-        <Text style={styles.value} numberOfLines={1}>
+        <Text
+          style={[styles.value, compact && styles.valueCompact]}
+          numberOfLines={1}
+        >
           {value}
         </Text>
-        {unit ? <Text style={styles.unit}>{unit}</Text> : null}
+        {unit ? (
+          <Text style={[styles.unit, compact && styles.unitCompact]}>
+            {unit}
+          </Text>
+        ) : null}
       </View>
       {sub ? (
-        <Text style={styles.sub} numberOfLines={1}>
+        <Text
+          style={[styles.sub, compact && styles.subCompact]}
+          numberOfLines={1}
+        >
           {sub}
         </Text>
       ) : null}
@@ -70,5 +89,22 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: COLORS.textLight,
     fontVariant: ["tabular-nums"],
+  },
+
+  // Compact variant: smaller padding + text for dense tile grids (Monthly tab).
+  tileCompact: {
+    padding: 11,
+  },
+  labelCompact: {
+    fontSize: 11,
+  },
+  valueCompact: {
+    fontSize: 19,
+  },
+  unitCompact: {
+    fontSize: 12,
+  },
+  subCompact: {
+    fontSize: 11,
   },
 });

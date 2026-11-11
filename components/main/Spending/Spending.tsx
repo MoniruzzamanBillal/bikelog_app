@@ -357,7 +357,13 @@ function LifetimeTab({
         <PdfButton
           isExporting={isExporting}
           onPress={() =>
-            exportSpendingPdf(bikeId, "lifetime", {}, "Lifetime", setIsExporting)
+            exportSpendingPdf(
+              bikeId,
+              "lifetime",
+              {},
+              "Lifetime",
+              setIsExporting,
+            )
           }
         />
       </View>
@@ -398,16 +404,35 @@ function TrendTab({ bikeId }: { bikeId: string }) {
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   // Measured inner width of the chart panel, used to stretch the bars to fill it.
   const [chartWidth, setChartWidth] = useState(0);
+  // The chart now shows a fixed calendar year (Jan→Dec), not a rolling window.
+  const [targetYear, setTargetYear] = useState(format(new Date(), "yyyy"));
 
   const { data, isLoading, isError, refetch } = useFetchData<TSpendingTrend>(
-    ["spending", "trend", bikeId],
-    `/bikes/${bikeId}/spending-summary/trend?months=6`,
+    ["spending", "trend", bikeId, targetYear],
+    `/bikes/${bikeId}/spending-summary/trend?targetYear=${targetYear}`,
+    { enabled: !!bikeId && !!targetYear },
   );
 
   const monthlySummary = data?.data?.monthlySummary ?? [];
-  const latest = monthlySummary[monthlySummary?.length - 1];
+  const hasAnySpending = monthlySummary.some(
+    (m) => (m?.totalSpending ?? 0) > 0,
+  );
+  // The pie reflects the most recent month in the year that actually has
+  // spending — in the current year that's the live month; in a past year it's
+  // its last active month. Future months (all zero) never win.
+  const monthsWithSpending = monthlySummary.filter(
+    (m) => (m?.totalSpending ?? 0) > 0,
+  );
+  const latest =
+    monthsWithSpending.length > 0
+      ? monthsWithSpending[monthsWithSpending.length - 1]
+      : undefined;
   const latestBreakdown = latest?.categoryBreakdown ?? [];
   const breakdownTotal = latestBreakdown.reduce((sum, c) => sum + c?.total, 0);
+  // Index of the pie's month, so the same bar reads brightest in the chart.
+  const latestIndex = latest
+    ? monthlySummary.findIndex((m) => m?.targetMonth === latest?.targetMonth)
+    : -1;
 
   const barData = monthlySummary.map((m, i) => ({
     value: m?.totalSpending,
@@ -415,7 +440,7 @@ function TrendTab({ bikeId }: { bikeId: string }) {
     frontColor:
       i === selectedIndex
         ? COLORS.accent
-        : i === monthlySummary?.length - 1
+        : i === latestIndex
           ? CHART_COLORS[0]
           : tint(CHART_COLORS[0], 0.55),
   }));
@@ -429,8 +454,7 @@ function TrendTab({ bikeId }: { bikeId: string }) {
   });
 
   // The tapped month's figures for the detail strip above the chart.
-  const selected =
-    selectedIndex != null ? monthlySummary[selectedIndex] : null;
+  const selected = selectedIndex != null ? monthlySummary[selectedIndex] : null;
   const selMonthLabel =
     selected &&
     format(parse(selected?.targetMonth, "yyyy-MM", new Date()), "MMMM yyyy");
@@ -468,133 +492,147 @@ function TrendTab({ bikeId }: { bikeId: string }) {
       contentContainerStyle={styles.tabContent}
       showsVerticalScrollIndicator={false}
     >
-      <Panel style={styles.chartPanel}>
-        <View style={styles.chartHeader}>
-          <Text style={[styles.chartTitle, styles.chartTitleInRow]}>
-            Spending, last 6 months
-          </Text>
-          <Text style={styles.chartHint}>
-            {selected ? selMonthLabel : "Tap a bar for detail"}
-          </Text>
-        </View>
+      <View style={styles.controlRow}>
+        <YearStepper year={targetYear} onChange={setTargetYear} />
+      </View>
 
-        {/* Detail strip for the tapped bar — rendered here, outside the chart's
-            own (clipping) container, so nothing is ever cut off. */}
-        {selected ? (
-          <View style={styles.selStrip}>
-            <View style={styles.selItem}>
-              <Text style={styles.selItemLabel}>Total spent</Text>
-              <Text style={styles.selValue}>{selTotal}</Text>
-            </View>
-            <View style={styles.selItem}>
-              <Text style={styles.selItemLabel}>Top category</Text>
-              <Text style={styles.selValue} numberOfLines={1}>
-                {selTopCat ? selTopCat?.category : "—"}
-              </Text>
-              {selTopCat ? (
-                <Text style={styles.selSubValue}>
-                  {formatTaka(selTopCat?.total)}
-                </Text>
-              ) : null}
-            </View>
-          </View>
-        ) : null}
-
-        <View
-          style={styles.chartMeasure}
-          onLayout={(e: LayoutChangeEvent) =>
-            setChartWidth(e.nativeEvent.layout.width)
-          }
-        >
-          {chartWidth > 0 ? (
-            <BarChart
-              data={barData}
-              barWidth={barWidth}
-              spacing={spacing}
-              initialSpacing={TREND_INITIAL_SPACING}
-              endSpacing={TREND_END_SPACING}
-              yAxisLabelWidth={TREND_Y_AXIS_WIDTH}
-              roundedTop
-              height={180}
-              yAxisThickness={0}
-              xAxisThickness={0}
-              hideRules
-              yAxisTextStyle={{
-                color: COLORS.textLight,
-                fontSize: 10,
-                fontWeight: "500",
-              }}
-              xAxisLabelTextStyle={{
-                color: COLORS.textLight,
-                fontSize: 11,
-                fontWeight: "500",
-              }}
-              noOfSections={4}
-              // Tap a bar to show its month detail above; tap it again to clear.
-              focusBarOnPress
-              focusedBarIndex={selectedIndex ?? undefined}
-              focusedBarConfig={{ color: COLORS.accent }}
-              onPress={(_item: unknown, index: number) =>
-                setSelectedIndex((prev) => (prev === index ? null : index))
-              }
-            />
-          ) : (
-            <View style={styles.chartPlaceholder} />
-          )}
-        </View>
-      </Panel>
-
-      {pieData?.length > 0 ? (
-        <Panel style={styles.chartPanel}>
-          <Text style={styles.chartTitle}>
-            By category
-            {latest
-              ? ` · ${format(
-                  parse(latest?.targetMonth, "yyyy-MM", new Date()),
-                  "MMM yyyy",
-                )}`
-              : ""}
-          </Text>
-
-          <View style={styles.donutRow}>
-            <PieChart
-              data={pieData}
-              donut
-              radius={64}
-              innerRadius={42}
-              innerCircleColor={COLORS.card}
-            />
-
-            <View style={styles.legend}>
-              {latestBreakdown.map((c, i) => {
-                const percentage =
-                  breakdownTotal > 0
-                    ? ((c?.total / breakdownTotal) * 100).toFixed(1)
-                    : "0.0";
-                return (
-                  <View key={c.category} style={styles.legendItem}>
-                    <View
-                      style={[
-                        styles.legendSwatch,
-                        { backgroundColor: CHART_COLORS[Math.min(i, 4)] },
-                      ]}
-                    />
-                    <Text style={styles.legendLabel} numberOfLines={1}>
-                      {c?.category}
-                    </Text>
-                    <Text style={styles.legendValue}>{percentage}%</Text>
-                  </View>
-                );
-              })}
-            </View>
-          </View>
-        </Panel>
-      ) : (
+      {!hasAnySpending ? (
         <EmptyState
           icon="cash-multiple"
-          title="Nothing spent this month"
+          title={`Nothing spent in ${targetYear}`}
           message={EMPTY_MESSAGE}
         />
+      ) : (
+        <>
+          <Panel style={styles.chartPanel}>
+            <View style={styles.chartHeader}>
+              <Text style={[styles.chartTitle, styles.chartTitleInRow]}>
+                Spending in {targetYear}
+              </Text>
+              <Text style={styles.chartHint}>
+                {selected ? selMonthLabel : "Tap a bar for detail"}
+              </Text>
+            </View>
+
+            {/* Detail strip for the tapped bar — rendered here, outside the chart's
+            own (clipping) container, so nothing is ever cut off. */}
+            {selected ? (
+              <View style={styles.selStrip}>
+                <View style={styles.selItem}>
+                  <Text style={styles.selItemLabel}>Total spent</Text>
+                  <Text style={styles.selValue}>{selTotal}</Text>
+                </View>
+                <View style={styles.selItem}>
+                  <Text style={styles.selItemLabel}>Top category</Text>
+                  <Text style={styles.selValue} numberOfLines={1}>
+                    {selTopCat ? selTopCat?.category : "—"}
+                  </Text>
+                  {selTopCat ? (
+                    <Text style={styles.selSubValue}>
+                      {formatTaka(selTopCat?.total)}
+                    </Text>
+                  ) : null}
+                </View>
+              </View>
+            ) : null}
+
+            <View
+              style={styles.chartMeasure}
+              onLayout={(e: LayoutChangeEvent) =>
+                setChartWidth(e.nativeEvent.layout.width)
+              }
+            >
+              {chartWidth > 0 ? (
+                <BarChart
+                  data={barData}
+                  barWidth={barWidth}
+                  spacing={spacing}
+                  initialSpacing={TREND_INITIAL_SPACING}
+                  endSpacing={TREND_END_SPACING}
+                  yAxisLabelWidth={TREND_Y_AXIS_WIDTH}
+                  roundedTop
+                  height={180}
+                  yAxisThickness={0}
+                  xAxisThickness={0}
+                  hideRules
+                  yAxisTextStyle={{
+                    color: COLORS.textLight,
+                    fontSize: 10,
+                    fontWeight: "500",
+                  }}
+                  xAxisLabelTextStyle={{
+                    color: COLORS.textLight,
+                    fontSize: 11,
+                    fontWeight: "500",
+                  }}
+                  noOfSections={4}
+                  // Tap a bar to show its month detail above; tap it again to clear.
+                  focusBarOnPress
+                  focusedBarIndex={selectedIndex ?? undefined}
+                  focusedBarConfig={{ color: COLORS.accent }}
+                  onPress={(_item: unknown, index: number) =>
+                    setSelectedIndex((prev) => (prev === index ? null : index))
+                  }
+                />
+              ) : (
+                <View style={styles.chartPlaceholder} />
+              )}
+            </View>
+          </Panel>
+
+          {pieData?.length > 0 ? (
+            <Panel style={styles.chartPanel}>
+              <Text style={styles.chartTitle}>
+                By category
+                {latest
+                  ? ` · ${format(
+                      parse(latest?.targetMonth, "yyyy-MM", new Date()),
+                      "MMM yyyy",
+                    )}`
+                  : ""}
+              </Text>
+
+              <View style={styles.donutRow}>
+                <PieChart
+                  data={pieData}
+                  donut
+                  radius={64}
+                  innerRadius={42}
+                  innerCircleColor={COLORS.card}
+                />
+
+                <View style={styles.legend}>
+                  {latestBreakdown.map((c, i) => {
+                    const percentage =
+                      breakdownTotal > 0
+                        ? ((c?.total / breakdownTotal) * 100).toFixed(1)
+                        : "0.0";
+                    return (
+                      <View key={c.category} style={styles.legendItem}>
+                        <View
+                          style={[
+                            styles.legendSwatch,
+                            { backgroundColor: CHART_COLORS[Math.min(i, 4)] },
+                          ]}
+                        />
+                        <Text style={styles.legendLabel} numberOfLines={1}>
+                          {c?.category}
+                        </Text>
+                        <Text style={styles.legendValue}>{percentage}%</Text>
+                      </View>
+                    );
+                  })}
+                </View>
+              </View>
+            </Panel>
+          ) : (
+            <EmptyState
+              icon="cash-multiple"
+              title="Nothing spent this month"
+              message={EMPTY_MESSAGE}
+            />
+          )}
+        </>
       )}
     </ScrollView>
   );
