@@ -51,8 +51,16 @@ export function PeriodSpendingBreakdown({
   // one year's open rows into another (which may not hold those categories) reads as a
   // glitch. Mirrors MonthlySpendingBreakdown.
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  // Spec 72: the SECOND level — which year rows are expanded to their months, keyed
+  // "category:bucketKey" (unique across categories). Lifetime only; on the Year tab no
+  // bucket carries children, so this stays empty and inert. Reset with the category state so
+  // a stale open month list never survives a period switch.
+  const [expandedBuckets, setExpandedBuckets] = useState<Record<string, boolean>>(
+    {},
+  );
   useEffect(() => {
     setExpanded({});
+    setExpandedBuckets({});
   }, [data?.period, data?.targetYear]);
 
   return (
@@ -147,19 +155,88 @@ export function PeriodSpendingBreakdown({
 
                 {open && (
                   <View style={styles.records}>
-                    {cat?.buckets?.map((bucket) => (
-                      <View key={bucket?.key} style={styles.recordRow}>
-                        <Text style={styles.recordLabel}>{bucket?.label}</Text>
-                        <Text style={styles.recordLiters}>
-                          {bucket?.liters != null
-                            ? formatLiters(bucket?.liters)
-                            : ""}
-                        </Text>
-                        <Text style={styles.recordAmount}>
-                          {formatTaka(bucket?.total ?? 0)}
-                        </Text>
-                      </View>
-                    ))}
+                    {cat?.buckets?.map((bucket) => {
+                      // A lifetime year bucket carries month children; a month bucket (Year
+                      // tab) carries none, so it stays a plain, non-tappable row exactly as
+                      // before — the whole second level is gated on this.
+                      const hasChildren =
+                        !!bucket?.children && bucket.children.length > 0;
+                      const bucketId = `${cat?.category}:${bucket?.key}`;
+                      const bucketOpen = hasChildren && !!expandedBuckets[bucketId];
+
+                      const rowInner = (
+                        <View style={styles.recordRow}>
+                          <Text style={styles.recordLabel}>{bucket?.label}</Text>
+                          <Text style={styles.recordLiters}>
+                            {bucket?.liters != null
+                              ? formatLiters(bucket?.liters)
+                              : ""}
+                          </Text>
+                          <Text style={styles.recordAmount}>
+                            {formatTaka(bucket?.total ?? 0)}
+                          </Text>
+                          <View style={styles.chevronSlot}>
+                            {hasChildren ? (
+                              <MaterialCommunityIcons
+                                name={bucketOpen ? "chevron-up" : "chevron-down"}
+                                size={16}
+                                color={COLORS.textLight}
+                              />
+                            ) : null}
+                          </View>
+                        </View>
+                      );
+
+                      if (!hasChildren) {
+                        return <View key={bucket?.key}>{rowInner}</View>;
+                      }
+
+                      return (
+                        <View key={bucket?.key}>
+                          <TouchableOpacity
+                            activeOpacity={0.7}
+                            onPress={() =>
+                              setExpandedBuckets((prev) => ({
+                                ...prev,
+                                [bucketId]: !prev?.[bucketId],
+                              }))
+                            }
+                            accessibilityRole="button"
+                            accessibilityState={{ expanded: bucketOpen }}
+                            accessibilityLabel={`${bucket?.label}, ${formatTaka(
+                              bucket?.total ?? 0,
+                            )}, tap to ${
+                              bucketOpen ? "hide" : "show"
+                            } months`}
+                          >
+                            {rowInner}
+                          </TouchableOpacity>
+
+                          {bucketOpen ? (
+                            <View style={styles.monthRecords}>
+                              {bucket?.children?.map((child) => (
+                                <View key={child?.key} style={styles.monthRow}>
+                                  <Text style={styles.monthLabel}>
+                                    {child?.label}
+                                  </Text>
+                                  <Text style={styles.recordLiters}>
+                                    {child?.liters != null
+                                      ? formatLiters(child?.liters)
+                                      : ""}
+                                  </Text>
+                                  <Text style={styles.recordAmount}>
+                                    {formatTaka(child?.total ?? 0)}
+                                  </Text>
+                                  {/* keeps the amount column aligned with the year rows'
+                                      chevron slot above */}
+                                  <View style={styles.chevronSlot} />
+                                </View>
+                              ))}
+                            </View>
+                          ) : null}
+                        </View>
+                      );
+                    })}
                   </View>
                 )}
               </View>
@@ -312,6 +389,34 @@ const styles = StyleSheet.create({
   recordAmount: {
     fontSize: 12.5,
     color: COLORS.text,
+    fontVariant: ["tabular-nums"],
+  },
+  // Trailing slot for the drill chevron, matched by an empty slot on month rows so the
+  // amount column stays aligned between a year row and its months.
+  chevronSlot: {
+    width: 16,
+    alignItems: "center",
+  },
+  // Spec 72: a year row's expanded months — indented under it, with a hairline rail on the
+  // left so the hierarchy reads at a glance.
+  monthRecords: {
+    marginLeft: 16,
+    paddingLeft: 10,
+    borderLeftWidth: StyleSheet.hairlineWidth,
+    borderLeftColor: COLORS.surface2,
+  },
+  monthRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    paddingVertical: 6,
+    paddingLeft: 16,
+  },
+  monthLabel: {
+    width: 52,
+    fontSize: 12,
+    fontWeight: "500",
+    color: COLORS.textLight,
     fontVariant: ["tabular-nums"],
   },
 });
