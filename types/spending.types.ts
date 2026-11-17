@@ -69,6 +69,11 @@ export type TSpendingPeriodBucket = {
   label: string; // "Jan" / "2026" — pre-formatted server-side
   total: number;
   liters: number | null;
+  // ! Spec 72 / server spec 64: a Lifetime year bucket's per-month children, so the category
+  // ! → year → month drill-down renders from one response. Present (a non-empty array) only
+  // ! on a lifetime year bucket; `null` on a month bucket and on every Year-tab bucket. The
+  // ! accordion keys "does this row drill further?" off this being a non-empty array.
+  children?: TSpendingPeriodBucket[] | null;
 };
 
 export type TSpendingPeriodGroup = {
