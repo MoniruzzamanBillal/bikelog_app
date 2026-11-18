@@ -8,7 +8,7 @@ const RATE_WINDOW_DAYS = 28; // H-G: same window as bikelog_server spec 52 (its 
 const MIN_RATE_SPAN_DAYS = 14;
 const MIN_RATE_DISTANCE_KM = 100;
 
-type TRateBasis = "exact" | "approximate";
+type TRateBasis = "monthly-avg" | "exact" | "approximate";
 
 export type TTankForecast =
   | { state: "unavailable" }
@@ -90,6 +90,48 @@ function computeKmPerDay(records: TMileageRecord[]): number | null {
 }
 
 /**
+ * Distance-weighted average km/L across the full-tank records whose period CLOSED in the
+ * current calendar month.
+ *
+ * ! Why not the single newest record (the old `anchor.mileageKmPerLiter`): one tank is one
+ * ! riding style. A highway tank reads ~50 km/L, a city tank ~30 — forecasting the city
+ * ! commute off a newest-is-highway record overstates the range by the full gap (the whole
+ * ! bug report). Blending this month's tanks is the honest rate for "how I actually ride".
+ * ! Weighted by Σdistance / Σliters, NOT the mean of each record's km/L: that is the real
+ * ! fuel burned, so a short highway tank cannot outvote a long city one. It is also exactly
+ * ! how `mileageKmPerLiter` is defined per record, so the units stay coherent.
+ * ! `periodEndDate` (the closing full-tank fill) is the record's month, not its start. Null
+ * ! when no record closed this month — the caller then falls back to the newest exact record,
+ * ! which is today's behaviour, so an early-in-the-month or city-only rider loses nothing.
+ */
+function currentMonthAvgKmPerLiter(records: TMileageRecord[]): number | null {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth();
+
+  let distanceKm = 0;
+  let litersConsumed = 0;
+
+  for (const record of records) {
+    const end = record?.periodEndDate ? new Date(record.periodEndDate) : null;
+    if (!end || Number.isNaN(end.getTime())) continue;
+    if (end.getFullYear() !== year || end.getMonth() !== month) continue;
+
+    const d = record?.distanceKm ?? 0;
+    const l = record?.litersConsumed ?? 0;
+    // ! Skip a degenerate record rather than poison the sum: a 0 L or 0 km period would
+    // ! either divide by zero or drag the weighted average with no real fuel behind it.
+    if (d > 0 && l > 0) {
+      distanceKm += d;
+      litersConsumed += l;
+    }
+  }
+
+  if (litersConsumed <= 0 || distanceKm <= 0) return null;
+  return distanceKm / litersConsumed;
+}
+
+/**
  * When the tank reaches half, and the standing full-to-half range (spec 55).
  *
  * ! D6: every input is read off a query key another component already owns — `["bikes", id]`
@@ -131,14 +173,31 @@ function deriveForecast(
 ): TTankForecast {
   const anchor = exactRecords[0];
 
-  // ! D4: the newest exact record is specific but a single sample; the rolling approximate is
-  // ! steadier and exists even for a rider who never marks a full tank. A 40 → 45 swing moves
-  // ! the half-range 240 → 270 km, so the card names which figure it used — an unlabelled
-  // ! number here is an unauditable one.
+  // ! D4: the figure drives the WHOLE card (half-range, liters used, days to half), so the
+  // ! card names which one it used — an unlabelled km/L is one the rider cannot audit.
+  // ! Preference order, best first:
+  // !  1. monthly-avg — this month's full tanks blended, so a highway tank and a city tank
+  // !     average out. This is the default whenever the rider has closed a tank this month,
+  // !     and it is the fix for the newest-tank-is-highway over-forecast.
+  // !  2. exact — the single newest full-tank record. Fallback for early in the month or a
+  // !     rider who has not closed a tank this calendar month. Today's behaviour.
+  // !  3. approximate — the rolling estimate, for a rider who never marks a full tank.
+  const monthlyAvgKmPerLiter = currentMonthAvgKmPerLiter(exactRecords);
   const exactKmPerLiter = anchor?.mileageKmPerLiter;
   const usableExact = exactKmPerLiter != null && exactKmPerLiter > 0;
-  const kmPerLiter = usableExact ? exactKmPerLiter : approximateKmPerLiter;
-  const basis: TRateBasis = usableExact ? "exact" : "approximate";
+
+  let kmPerLiter: number | undefined;
+  let basis: TRateBasis;
+  if (monthlyAvgKmPerLiter != null) {
+    kmPerLiter = monthlyAvgKmPerLiter;
+    basis = "monthly-avg";
+  } else if (usableExact) {
+    kmPerLiter = exactKmPerLiter;
+    basis = "exact";
+  } else {
+    kmPerLiter = approximateKmPerLiter;
+    basis = "approximate";
+  }
 
   // H-K: a new bike with no fuel history has neither figure, and a bike is required to carry
   // a tank capacity — but guard both rather than dividing by a missing one.
@@ -160,7 +219,8 @@ function deriveForecast(
   // ! the newer one with no record, so the anchor can be one fill stale — which overstates
   // ! distance ridden and so understates remaining fuel, the safe direction.
   const anchorTime = toTime(anchor?.periodEndDate);
-  if (!anchor || anchorTime == null || currentOdometer == null) return rangeOnly;
+  if (!anchor || anchorTime == null || currentOdometer == null)
+    return rangeOnly;
 
   // H-K: an edited or backdated log, or an odometer correction, can put the reading below
   // the anchor. A negative distance is not a forecast.
@@ -219,6 +279,7 @@ function deriveForecast(
     kmToHalf,
     pastHalf,
     daysToHalf,
-    halfDate: daysToHalf != null ? new Date(Date.now() + daysToHalf * DAY_MS) : null,
+    halfDate:
+      daysToHalf != null ? new Date(Date.now() + daysToHalf * DAY_MS) : null,
   };
 }

@@ -26,8 +26,16 @@ function rangeSentence(halfRangeKm: number): string {
  * ! 55a: now rendered on the same line as the range — at 10px the pair is ~42 characters,
  * ! which fits 360dp where the old 12px/54-character pair did not.
  */
-function basisLine(kmPerLiter: number, basis: "exact" | "approximate"): string {
-  const label = basis === "exact" ? "exact" : "estimated";
+function basisLine(
+  kmPerLiter: number,
+  basis: "monthly-avg" | "exact" | "approximate",
+): string {
+  const label =
+    basis === "monthly-avg"
+      ? "month avg"
+      : basis === "exact"
+        ? "exact"
+        : "estimated";
   return `${kmPerLiter.toFixed(1)} km/L (${label})`;
 }
 
@@ -56,7 +64,11 @@ function headline(halfDate: Date | null, kmToHalf: number): string {
  */
 function subLine(daysToHalf: number, kmToHalf: number): string {
   const when =
-    daysToHalf <= 0 ? "today" : daysToHalf === 1 ? "tomorrow" : `in ${daysToHalf} days`;
+    daysToHalf <= 0
+      ? "today"
+      : daysToHalf === 1
+        ? "tomorrow"
+        : `in ${daysToHalf} days`;
   return `${when} · ~${kmToHalf.toLocaleString()} km to go`;
 }
 

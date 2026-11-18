@@ -39,11 +39,6 @@ function findMileageForLog(
     ?.mileageKmPerLiter;
 }
 
-/**
- * Logs belonging to a closed mileage period can't be edited or deleted — the
- * server rejects it ("part of a closed mileage record"), so the UI says so
- * up front instead of letting the request fail.
- */
 function buildLockMap(records: TMileageRecord[]): Map<string, string> {
   const locks = new Map<string, string>();
   records.forEach((record) => {
@@ -123,9 +118,6 @@ export function FuelLog() {
         }
         showsVerticalScrollIndicator={false}
       >
-        {/* ! Spec 55 §F: above the fill-up count row, and deliberately unlike the bike
-            ! hub's reminder banners — a forecast, not an alert (D7). It renders nothing
-            ! when the bike has no usable mileage figure. */}
         <TankForecastCard bikeId={bikeId} />
 
         <View style={styles.topRow}>
@@ -157,13 +149,13 @@ export function FuelLog() {
         ) : (
           <>
             <View style={styles.list}>
-              {fuelLogs.map((log) => (
+              {fuelLogs?.map((log) => (
                 <FuelLogCard
                   key={log._id}
                   fuelLog={log}
                   bikeId={bikeId}
                   mileageKmPerLiter={findMileageForLog(log, mileageRecords)}
-                  lockedNote={lockMap.get(log._id)}
+                  lockedNote={lockMap?.get(log._id)}
                 />
               ))}
             </View>
