@@ -32,7 +32,7 @@ type TTile = {
 
 const TILES: TTile[] = [
   { label: "Fuel Logs", icon: "gas-station", segment: "fuel-logs" },
-  // ! D6: beside fuel, not after Documents — those are the two the rider opens weekly.
+
   { label: "Engine Oil", icon: "oil", segment: "engine-oil" },
   { label: "Mileage", icon: "speedometer-medium", segment: "mileage" },
   { label: "Maintenance", icon: "wrench-outline", segment: "maintenance-logs" },
