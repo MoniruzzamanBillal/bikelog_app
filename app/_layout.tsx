@@ -69,9 +69,13 @@ export default function RootLayout() {
                   <Slot />
                 </SafeAreaView>
                 <ConfirmDialogHost />
-                <Toast config={toastConfig} />
               </UserProvider>
             </PaperProvider>
+            {/* ! Toast lives OUTSIDE PaperProvider on purpose: Paper's Portal (every form
+                ! Modal in this app) renders inside PaperProvider's host, so a Toast mounted
+                ! within it stacks *behind* an open modal. As a later sibling here it paints
+                ! above the portal layer, so validation toasts show over an open form. */}
+            <Toast config={toastConfig} />
           </GestureHandlerRootView>
         </QueryClientProvider>
       </KeyboardProvider>

@@ -1,5 +1,5 @@
 import { DatePickerField, FormField, PrimaryButton } from "@/components/main/shared";
-import { COLORS } from "@/utils/colors";
+import { COLORS, tint } from "@/utils/colors";
 import { formatTaka } from "@/utils/formatTaka";
 import { StyleSheet, View } from "react-native";
 import { IconButton, Text } from "react-native-paper";
@@ -42,6 +42,11 @@ export function ItemsEditor({ items, onChange, disabled }: ItemsEditorProps) {
     return sum + (Number.isFinite(n) ? n : 0);
   }, 0);
 
+  // ! Can't stack a second blank item on top of an unfilled one: the last row must carry a
+  // ! name before another can be added (empty list is fine to start).
+  const canAdd =
+    items.length === 0 || items[items.length - 1].name.trim() !== "";
+
   return (
     <View style={styles.block}>
       <Text style={styles.sectionLabel}>Line items</Text>
@@ -71,7 +76,8 @@ export function ItemsEditor({ items, onChange, disabled }: ItemsEditorProps) {
           <IconButton
             icon="close"
             size={16}
-            iconColor={COLORS.textLight}
+            iconColor={COLORS.danger}
+            containerColor={tint(COLORS.danger, 0.12)}
             onPress={() => remove(index)}
             disabled={disabled}
             style={styles.removeBtn}
@@ -88,7 +94,7 @@ export function ItemsEditor({ items, onChange, disabled }: ItemsEditorProps) {
         variant="secondary"
         icon="plus"
         compact
-        disabled={disabled}
+        disabled={disabled || !canAdd}
       >
         Add item
       </PrimaryButton>
@@ -124,6 +130,12 @@ export function RecommendationsEditor({
     onChange([...recommendations, { text: "", targetDate: "", done: false }]);
   };
 
+  // ! Can't stack a second blank recommendation on top of an unfilled one: the last row
+  // ! must carry some text before another can be added (empty list is fine to start).
+  const canAdd =
+    recommendations.length === 0 ||
+    recommendations[recommendations.length - 1].text.trim() !== "";
+
   return (
     <View style={styles.block}>
       <Text style={styles.sectionLabel}>Recommendations</Text>
@@ -143,7 +155,8 @@ export function RecommendationsEditor({
             <IconButton
               icon="close"
               size={16}
-              iconColor={COLORS.textLight}
+              iconColor={COLORS.danger}
+              containerColor={tint(COLORS.danger, 0.12)}
               onPress={() => remove(index)}
               disabled={disabled}
               style={styles.removeBtn}
@@ -165,7 +178,7 @@ export function RecommendationsEditor({
         variant="secondary"
         icon="plus"
         compact
-        disabled={disabled}
+        disabled={disabled || !canAdd}
       >
         Add recommendation
       </PrimaryButton>

@@ -425,6 +425,7 @@ export function ServiceLogFormModal({
             onSave={handleSubmit}
             onCancel={onClose}
             saving={isPending}
+            cancelDanger
           >
             {log ? "Save changes" : completed ? "Save service" : "Schedule service"}
           </FormActions>

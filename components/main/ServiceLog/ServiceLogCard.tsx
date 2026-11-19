@@ -18,6 +18,7 @@ import { useState } from "react";
 import { StyleSheet, TouchableOpacity, View } from "react-native";
 import { Text } from "react-native-paper";
 import Toast from "react-native-toast-message";
+import { ServiceLogDetailModal } from "./ServiceLogDetailModal";
 import { ServiceLogFormModal } from "./ServiceLogFormModal";
 
 interface ServiceLogCardProps {
@@ -31,6 +32,7 @@ const daysUntil = (dateStr: string): number =>
 export function ServiceLogCard({ log, bikeId }: ServiceLogCardProps) {
   const [editOpen, setEditOpen] = useState(false);
   const [completeOpen, setCompleteOpen] = useState(false);
+  const [detailOpen, setDetailOpen] = useState(false);
   const [togglingId, setTogglingId] = useState<string | null>(null);
 
   const invalidate = [
@@ -48,7 +50,11 @@ export function ServiceLogCard({ log, bikeId }: ServiceLogCardProps) {
 
   const isCompleted = log?.serviceDate != null;
   const kindTone = toneStyle("accent");
-  const centerTone = toneStyle("neutral");
+  // ! Official vs local get their own tinted badge so the two read as distinct at a glance
+  // ! (and apart from the purple kind tag), rather than the near-invisible neutral surface.
+  const centerTone =
+    log?.centerType === "official" ? toneStyle("success") : toneStyle("warning");
+  const centerLabel = log?.centerType === "official" ? "Official" : "Local";
 
   const kindLabel =
     log?.serviceKind === "warranty"
@@ -169,43 +175,52 @@ export function ServiceLogCard({ log, bikeId }: ServiceLogCardProps) {
 
     return (
       <>
-        <Panel style={styles.card}>
-          <View style={styles.metaRow}>
-            <Text style={styles.date}>
-              Scheduled{" "}
-              {log?.dueDate ? `~ ${formatApiDate(log.dueDate, "d MMM")}` : ""}
-            </Text>
-            {kindTag}
-            <View style={styles.menuSpacer}>{menu}</View>
-          </View>
+        {/* ! Tap the card body to see every field in a read-only modal; the menu and the
+            ! "Mark completed" button capture their own taps and don't open it. */}
+        <TouchableOpacity activeOpacity={0.7} onPress={() => setDetailOpen(true)}>
+          <Panel style={styles.card}>
+            <View style={styles.metaRow}>
+              <Text style={styles.date}>
+                Scheduled{" "}
+                {log?.dueDate ? `~ ${formatApiDate(log.dueDate, "d MMM")}` : ""}
+              </Text>
+              {kindTag}
+              <View style={styles.menuSpacer}>{menu}</View>
+            </View>
 
-          {log?.serviceCenter ? (
-            <Text style={styles.odoLine} numberOfLines={1}>
-              {log.serviceCenter}
-            </Text>
-          ) : null}
+            {log?.serviceCenter ? (
+              <Text style={styles.odoLine} numberOfLines={1}>
+                {log.serviceCenter}
+              </Text>
+            ) : null}
 
-          <Text
-            style={[styles.statusLine, overdue && styles.danger]}
-            numberOfLines={1}
-          >
-            {overdue ? "⚠ " : "⏳ "}
-            {overdue ? "overdue" : "upcoming"}
-            {whenText ? ` · ${whenText}` : ""}
-          </Text>
-
-          <View style={styles.markRow}>
-            <PrimaryButton
-              onPress={() => setCompleteOpen(true)}
-              variant="secondary"
-              icon="check"
-              compact
+            <Text
+              style={[styles.statusLine, overdue && styles.danger]}
+              numberOfLines={1}
             >
-              Mark completed
-            </PrimaryButton>
-          </View>
-        </Panel>
+              {overdue ? "⚠ " : "⏳ "}
+              {overdue ? "overdue" : "upcoming"}
+              {whenText ? ` · ${whenText}` : ""}
+            </Text>
 
+            <View style={styles.markRow}>
+              <PrimaryButton
+                onPress={() => setCompleteOpen(true)}
+                variant="secondary"
+                icon="check"
+                compact
+              >
+                Mark completed
+              </PrimaryButton>
+            </View>
+          </Panel>
+        </TouchableOpacity>
+
+        <ServiceLogDetailModal
+          open={detailOpen}
+          onClose={() => setDetailOpen(false)}
+          log={log}
+        />
         <ServiceLogFormModal
           open={editOpen}
           onClose={() => setEditOpen(false)}
@@ -226,8 +241,11 @@ export function ServiceLogCard({ log, bikeId }: ServiceLogCardProps) {
   // ---------- Completed (visited) row ----------
   return (
     <>
-      <Panel style={styles.cardRow}>
-        <View style={styles.left}>
+      {/* ! Tap the card body for the full read-only detail modal; the menu, the recommendation
+          ! checkboxes and the receipt picker each capture their own taps. */}
+      <TouchableOpacity activeOpacity={0.7} onPress={() => setDetailOpen(true)}>
+        <Panel style={styles.cardRow}>
+          <View style={styles.left}>
           <View style={styles.metaRow}>
             <Text style={styles.date}>
               {formatApiDate(log.serviceDate as string, "dd MMM yyyy")}
@@ -236,7 +254,7 @@ export function ServiceLogCard({ log, bikeId }: ServiceLogCardProps) {
             {log?.centerType ? (
               <View style={[styles.tag, { backgroundColor: centerTone.bg }]}>
                 <Text style={[styles.tagText, { color: centerTone.text }]}>
-                  {log.centerType}
+                  {centerLabel}
                 </Text>
               </View>
             ) : null}
@@ -321,8 +339,14 @@ export function ServiceLogCard({ log, bikeId }: ServiceLogCardProps) {
             uploading={isUploading || isDeletingImage}
           />
         </View>
-      </Panel>
+        </Panel>
+      </TouchableOpacity>
 
+      <ServiceLogDetailModal
+        open={detailOpen}
+        onClose={() => setDetailOpen(false)}
+        log={log}
+      />
       <ServiceLogFormModal
         open={editOpen}
         onClose={() => setEditOpen(false)}

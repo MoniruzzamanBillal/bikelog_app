@@ -1,5 +1,6 @@
 import { ReactNode } from "react";
 import { StyleProp, StyleSheet, View, ViewStyle } from "react-native";
+import { COLORS, tint } from "@/utils/colors";
 import { PrimaryButton } from "./PrimaryButton";
 
 interface FormActionsProps {
@@ -8,6 +9,8 @@ interface FormActionsProps {
   onSave: () => void;
   onCancel: () => void;
   saving?: boolean;
+  /** Render Cancel in a soft red (red border + red text over a light red fill). */
+  cancelDanger?: boolean;
   style?: StyleProp<ViewStyle>;
 }
 
@@ -17,6 +20,7 @@ export function FormActions({
   onSave,
   onCancel,
   saving,
+  cancelDanger,
   style,
 }: FormActionsProps) {
   return (
@@ -24,8 +28,10 @@ export function FormActions({
       <PrimaryButton
         onPress={onCancel}
         disabled={saving}
-        variant="secondary"
-        style={styles.button}
+        // ! destructive gives the red label/icon; the style below adds the red border and
+        // ! the light red fill so the whole button reads soft-red (not harsh).
+        variant={cancelDanger ? "destructive" : "secondary"}
+        style={[styles.button, cancelDanger && styles.cancelDanger]}
       >
         Cancel
       </PrimaryButton>
@@ -45,5 +51,9 @@ const styles = StyleSheet.create({
   button: {
     flex: 1,
     width: "auto",
+  },
+  cancelDanger: {
+    borderColor: COLORS.danger,
+    backgroundColor: tint(COLORS.danger, 0.12),
   },
 });
