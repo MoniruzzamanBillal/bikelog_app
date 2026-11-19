@@ -182,8 +182,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "flex-start",
     justifyContent: "space-between",
-    gap: 12,
-    paddingHorizontal: 14,
+    gap: 10,
+    paddingHorizontal: 12,
     paddingVertical: 11,
   },
   totalLeft: {
@@ -231,11 +231,11 @@ const styles = StyleSheet.create({
     color: COLORS.textLight,
   },
   listPanel: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 14,
     paddingVertical: 4,
   },
   categoryBlock: {
-    paddingVertical: 12,
+    paddingVertical: 10,
   },
   categoryDivider: {
     borderTopWidth: StyleSheet.hairlineWidth,
@@ -297,7 +297,7 @@ const styles = StyleSheet.create({
     alignItems: "flex-start",
     gap: 10,
     paddingVertical: 7,
-    paddingLeft: 16,
+    paddingLeft: 14,
   },
   recordDate: {
     width: 46,

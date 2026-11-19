@@ -256,8 +256,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "flex-start",
     justifyContent: "space-between",
-    gap: 12,
-    paddingHorizontal: 14,
+    gap: 10,
+    paddingHorizontal: 12,
     paddingVertical: 11,
   },
   totalLeft: {
@@ -305,11 +305,11 @@ const styles = StyleSheet.create({
     color: COLORS.textLight,
   },
   listPanel: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 14,
     paddingVertical: 4,
   },
   categoryBlock: {
-    paddingVertical: 12,
+    paddingVertical: 10,
   },
   categoryDivider: {
     borderTopWidth: StyleSheet.hairlineWidth,
@@ -371,7 +371,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 10,
     paddingVertical: 7,
-    paddingLeft: 16,
+    paddingLeft: 14,
   },
   recordLabel: {
     width: 52,
@@ -400,7 +400,7 @@ const styles = StyleSheet.create({
   // Spec 72: a year row's expanded months — indented under it, with a hairline rail on the
   // left so the hierarchy reads at a glance.
   monthRecords: {
-    marginLeft: 16,
+    marginLeft: 14,
     paddingLeft: 10,
     borderLeftWidth: StyleSheet.hairlineWidth,
     borderLeftColor: COLORS.surface2,
@@ -410,7 +410,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 10,
     paddingVertical: 6,
-    paddingLeft: 16,
+    paddingLeft: 14,
   },
   monthLabel: {
     width: 52,

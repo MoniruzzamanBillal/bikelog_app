@@ -106,7 +106,7 @@ export function LifetimeMileageTab({ bikeId }: LifetimeMileageTabProps) {
 
 const styles = StyleSheet.create({
   stack: {
-    gap: 12,
+    gap: 10,
   },
   grid: {
     flexDirection: "row",

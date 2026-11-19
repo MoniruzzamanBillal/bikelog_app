@@ -124,6 +124,6 @@ export function RegisterForm() {
 
 const styles = StyleSheet.create({
   passwordField: {
-    marginBottom: 20,
+    marginBottom: 18,
   },
 });

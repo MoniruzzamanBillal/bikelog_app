@@ -439,8 +439,8 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.card,
     borderWidth: 1,
     borderColor: COLORS.edge,
-    marginHorizontal: 20,
-    padding: 20,
+    marginHorizontal: 18,
+    padding: 18,
     borderRadius: 14,
     maxHeight: "85%",
   },
@@ -448,12 +448,12 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: "500",
     color: COLORS.text,
-    marginBottom: 18,
+    marginBottom: 16,
   },
   row: {
     flexDirection: "row",
     gap: 10,
-    marginBottom: 14,
+    marginBottom: 12,
   },
   rowField: {
     flex: 1,
@@ -464,6 +464,6 @@ const styles = StyleSheet.create({
   advancedLink: {
     fontSize: 12,
     color: COLORS.accentForeground,
-    marginBottom: 14,
+    marginBottom: 12,
   },
 });

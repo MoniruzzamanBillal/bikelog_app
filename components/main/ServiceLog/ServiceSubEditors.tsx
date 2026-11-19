@@ -176,7 +176,7 @@ export function RecommendationsEditor({
 const styles = StyleSheet.create({
   block: {
     gap: 10,
-    marginBottom: 14,
+    marginBottom: 12,
   },
   sectionLabel: {
     fontSize: 11,

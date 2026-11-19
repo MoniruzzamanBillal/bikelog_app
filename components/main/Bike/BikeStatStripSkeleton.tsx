@@ -45,8 +45,8 @@ export function BikeStatStripSkeleton() {
 
 const styles = StyleSheet.create({
   odoPanel: {
-    padding: 13,
-    gap: 12,
+    padding: 11,
+    gap: 10,
   },
   odoTop: {
     flexDirection: "row",

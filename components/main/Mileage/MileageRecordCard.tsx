@@ -86,15 +86,15 @@ export function MileageRecordCard({
 
 const styles = StyleSheet.create({
   record: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
     gap: 8,
   },
   recordRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    gap: 12,
+    gap: 10,
   },
   recordLeft: {
     flex: 1,
@@ -147,7 +147,7 @@ const styles = StyleSheet.create({
 
   // Compact variant (Monthly tab): tighter card + a notch smaller on every line.
   recordCompact: {
-    paddingHorizontal: 12,
+    paddingHorizontal: 10,
     paddingVertical: 9,
     gap: 6,
   },

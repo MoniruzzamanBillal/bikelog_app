@@ -156,8 +156,8 @@ export function BikeCard({
 const styles = StyleSheet.create({
   card: {
     ...panelStyle,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
     gap: 10,
   },
   cardGlow: glowStyle,
@@ -165,7 +165,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    gap: 12,
+    gap: 10,
   },
   titleCol: {
     flex: 1,

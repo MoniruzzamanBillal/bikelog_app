@@ -188,11 +188,11 @@ export function YearlyMileageTab({ bikeId }: YearlyMileageTabProps) {
 
 const styles = StyleSheet.create({
   stack: {
-    gap: 12,
+    gap: 10,
   },
   chartPanel: {
-    paddingHorizontal: 16,
-    paddingTop: 16,
+    paddingHorizontal: 14,
+    paddingTop: 14,
     paddingBottom: 10,
   },
   chartHeader: {
@@ -222,7 +222,7 @@ const styles = StyleSheet.create({
   selStrip: {
     flexDirection: "row",
     gap: 8,
-    marginBottom: 12,
+    marginBottom: 10,
     paddingVertical: 8,
     paddingHorizontal: 10,
     borderRadius: 8,

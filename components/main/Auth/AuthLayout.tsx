@@ -72,14 +72,14 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   container: {
-    paddingHorizontal: 24,
-    paddingVertical: 32,
+    paddingHorizontal: 22,
+    paddingVertical: 30,
   },
   brandRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
-    marginBottom: 28,
+    marginBottom: 26,
   },
   brandChip: {
     width: 26,
@@ -111,13 +111,13 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   form: {
-    marginTop: 24,
+    marginTop: 22,
   },
   switchRow: {
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
-    marginTop: 18,
+    marginTop: 16,
   },
   switchPrompt: {
     fontSize: 13.5,

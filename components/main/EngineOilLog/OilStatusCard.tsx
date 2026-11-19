@@ -289,7 +289,7 @@ export function OilStatusCard({ status }: OilStatusCardProps) {
 // ! they are unchanged. No second pass down without a device look (V21).
 const styles = StyleSheet.create({
   card: {
-    paddingHorizontal: 14,
+    paddingHorizontal: 12,
     paddingVertical: 11,
     gap: 1,
   },

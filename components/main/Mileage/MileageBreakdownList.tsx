@@ -137,8 +137,8 @@ const styles = StyleSheet.create({
   // of the raw figures. Six metrics don't fit one tabular row at phone width, so
   // each value carries its own caption instead of sharing unlabelled columns.
   row: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
     gap: 10,
   },
   headLine: {
@@ -192,7 +192,7 @@ const styles = StyleSheet.create({
   // Compact variant (Yearly tab): tighter rows, smaller text, and the white value
   // lines dimmed to the muted tone so the dense grid reads softer.
   rowCompact: {
-    paddingHorizontal: 14,
+    paddingHorizontal: 12,
     paddingVertical: 9,
     gap: 8,
   },

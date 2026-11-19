@@ -175,10 +175,10 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.background,
   },
   page: {
-    padding: 16,
+    padding: 14,
   },
   card: {
-    padding: 16,
+    padding: 14,
     gap: 4,
   },
   filename: {
@@ -194,13 +194,13 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     gap: 8,
-    marginTop: 12,
+    marginTop: 10,
   },
   assistantLink: {
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-    marginTop: 14,
+    marginTop: 12,
   },
   assistantLinkText: {
     fontSize: 13,

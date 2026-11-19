@@ -204,11 +204,11 @@ export function FuelLogCard({
 const styles = StyleSheet.create({
   card: {
     flexDirection: "row",
-    gap: 12,
-    paddingTop: 12,
-    paddingBottom: 12,
-    paddingLeft: 14,
-    paddingRight: 12,
+    gap: 10,
+    paddingTop: 10,
+    paddingBottom: 10,
+    paddingLeft: 12,
+    paddingRight: 10,
   },
   left: {
     flex: 1,

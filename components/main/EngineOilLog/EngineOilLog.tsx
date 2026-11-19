@@ -227,16 +227,16 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.background,
   },
   page: {
-    paddingHorizontal: 16,
-    paddingTop: 14,
-    paddingBottom: 24,
+    paddingHorizontal: 14,
+    paddingTop: 12,
+    paddingBottom: 22,
     gap: 10,
   },
   topRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    gap: 12,
+    gap: 10,
   },
   topActions: {
     flexDirection: "row",

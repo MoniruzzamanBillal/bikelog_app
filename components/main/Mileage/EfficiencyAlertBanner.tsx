@@ -50,8 +50,8 @@ const styles = StyleSheet.create({
     borderColor: tint(COLORS.danger, 0.4),
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
-    paddingHorizontal: 14,
+    gap: 10,
+    paddingHorizontal: 12,
     paddingVertical: 11,
   },
   textCol: {

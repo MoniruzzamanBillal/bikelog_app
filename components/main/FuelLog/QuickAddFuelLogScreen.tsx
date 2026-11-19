@@ -62,7 +62,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.background,
   },
   pad: {
-    paddingHorizontal: 16,
-    paddingTop: 14,
+    paddingHorizontal: 14,
+    paddingTop: 12,
   },
 });

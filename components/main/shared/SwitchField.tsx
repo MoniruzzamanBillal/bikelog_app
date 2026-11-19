@@ -44,7 +44,7 @@ const styles = StyleSheet.create({
   },
   textCol: {
     flex: 1,
-    paddingRight: 12,
+    paddingRight: 10,
   },
   label: {
     fontSize: 13.5,
@@ -76,6 +76,6 @@ const styles = StyleSheet.create({
     marginLeft: 2,
   },
   knobOn: {
-    marginLeft: 22,
+    marginLeft: 20,
   },
 });

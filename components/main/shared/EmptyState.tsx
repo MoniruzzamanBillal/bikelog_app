@@ -39,8 +39,8 @@ export function EmptyState({
 const styles = StyleSheet.create({
   card: {
     alignItems: "flex-start",
-    paddingHorizontal: 20,
-    paddingVertical: 24,
+    paddingHorizontal: 18,
+    paddingVertical: 22,
     gap: 8,
   },
   chip: {

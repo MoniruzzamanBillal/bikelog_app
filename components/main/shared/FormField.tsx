@@ -68,7 +68,7 @@ export function FormField({
 /** Shared by every field component, so labels/boxes stay identical. */
 export const fieldStyles = StyleSheet.create({
   field: {
-    marginBottom: 14,
+    marginBottom: 12,
   },
   label: {
     fontSize: 11,

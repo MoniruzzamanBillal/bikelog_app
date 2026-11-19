@@ -338,13 +338,13 @@ export function ProfilePanel() {
 
 const styles = StyleSheet.create({
   panel: {
-    padding: 16,
+    padding: 14,
     gap: 10,
   },
   profileRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
+    gap: 10,
   },
   profileTextCol: {
     // ! The house overflow fix (as in `panelTitleCol`): without minWidth 0 a long name
@@ -398,7 +398,7 @@ const styles = StyleSheet.create({
   photoActions: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 18,
+    gap: 16,
   },
   photoBtn: {
     flexDirection: "row",

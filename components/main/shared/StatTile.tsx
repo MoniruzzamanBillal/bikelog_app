@@ -63,7 +63,7 @@ export function StatTile({
 
 const styles = StyleSheet.create({
   tile: {
-    padding: 14,
+    padding: 12,
     gap: 2,
   },
   label: {

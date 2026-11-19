@@ -225,14 +225,14 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.background,
   },
   page: {
-    paddingHorizontal: 16,
-    paddingTop: 12,
-    paddingBottom: 24,
+    paddingHorizontal: 14,
+    paddingTop: 10,
+    paddingBottom: 22,
     gap: 11,
   },
   odoPanel: {
-    padding: 13,
-    gap: 12,
+    padding: 11,
+    gap: 10,
   },
   odoTop: {
     flexDirection: "row",
@@ -272,7 +272,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: COLORS.edge,
     borderRadius: 10,
-    padding: 12,
+    padding: 10,
     alignItems: "flex-start",
     justifyContent: "space-between",
   },

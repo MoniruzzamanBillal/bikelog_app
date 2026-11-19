@@ -106,9 +106,9 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "flex-start",
     justifyContent: "space-between",
-    gap: 12,
-    paddingHorizontal: 18,
-    paddingVertical: 16,
+    gap: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
   },
   totalLeft: {
     flex: 1,
@@ -155,9 +155,9 @@ const styles = StyleSheet.create({
     color: COLORS.textLight,
   },
   listPanel: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    gap: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    gap: 10,
   },
   categoryRow: {
     gap: 6,

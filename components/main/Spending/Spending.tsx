@@ -686,18 +686,18 @@ const styles = StyleSheet.create({
   },
   body: {
     flex: 1,
-    paddingHorizontal: 16,
-    paddingTop: 14,
+    paddingHorizontal: 14,
+    paddingTop: 12,
   },
   tabs: {
-    marginBottom: 12,
+    marginBottom: 10,
   },
   tabHost: {
     flex: 1,
   },
   tabContent: {
-    paddingBottom: 24,
-    gap: 12,
+    paddingBottom: 22,
+    gap: 10,
   },
   controlRow: {
     flexDirection: "row",
@@ -714,15 +714,15 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
   },
   chartPanel: {
-    paddingHorizontal: 16,
-    paddingTop: 16,
+    paddingHorizontal: 14,
+    paddingTop: 14,
     paddingBottom: 10,
   },
   chartTitle: {
     fontSize: 13,
     fontWeight: "500",
     color: COLORS.text,
-    marginBottom: 12,
+    marginBottom: 10,
   },
   // The trend title sits in a flex row with the tap hint, which owns the spacing.
   chartTitleInRow: {
@@ -734,7 +734,7 @@ const styles = StyleSheet.create({
     alignItems: "baseline",
     justifyContent: "space-between",
     gap: 8,
-    marginBottom: 12,
+    marginBottom: 10,
   },
   chartHint: {
     fontSize: 11,
@@ -752,7 +752,7 @@ const styles = StyleSheet.create({
   selStrip: {
     flexDirection: "row",
     gap: 8,
-    marginBottom: 12,
+    marginBottom: 10,
     paddingVertical: 8,
     paddingHorizontal: 10,
     borderRadius: 8,
@@ -784,7 +784,7 @@ const styles = StyleSheet.create({
   donutRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 16,
+    gap: 14,
   },
   legend: {
     flex: 1,

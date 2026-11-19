@@ -127,7 +127,7 @@ export function MonthlyMileageTab({ bikeId }: MonthlyMileageTabProps) {
 
 const styles = StyleSheet.create({
   stack: {
-    gap: 12,
+    gap: 10,
   },
   grid: {
     flexDirection: "row",

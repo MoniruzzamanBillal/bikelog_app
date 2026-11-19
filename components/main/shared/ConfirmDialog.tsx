@@ -151,10 +151,10 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.card,
     borderWidth: 1,
     borderColor: COLORS.edge,
-    marginHorizontal: 28,
-    paddingHorizontal: 22,
-    paddingTop: 22,
-    paddingBottom: 16,
+    marginHorizontal: 26,
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 14,
     borderRadius: 18,
     alignItems: "center",
   },
@@ -164,7 +164,7 @@ const styles = StyleSheet.create({
     borderRadius: 23,
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 14,
+    marginBottom: 12,
   },
   title: {
     fontSize: 17,
@@ -182,7 +182,7 @@ const styles = StyleSheet.create({
   actions: {
     flexDirection: "row",
     gap: 10,
-    marginTop: 20,
+    marginTop: 18,
     alignSelf: "stretch",
   },
   button: {

@@ -212,8 +212,8 @@ export function BikeAccessoryCard({
 const styles = StyleSheet.create({
   card: {
     flexDirection: "row",
-    gap: 12,
-    padding: 14,
+    gap: 10,
+    padding: 12,
   },
   cardCancelled: {
     opacity: 0.6,
