@@ -9,12 +9,6 @@ import { StyleSheet, View } from "react-native";
 import { Text } from "react-native-paper";
 import { MiniStatsSkeleton } from "./BikeStatStripSkeleton";
 
-/**
- * Avg km/l for the hub's mini-stat row — the last ≤5 exact full-tank periods,
- * else the approximate estimate. Same logic as the web's `getAvgMileage`.
- * Returns the raw km/l number (or null when there is no data) so it can be both
- * rendered and reused for the half-tank range — formatting happens at the call site.
- */
 function getAvgMileage(history?: TMileageHistoryResponse): number | null {
   const exact = history?.exactRecords ?? [];
   if (exact?.length > 0) {
@@ -46,16 +40,11 @@ function Stat({ label, value }: { label: string; value: string }) {
 
 type TBikeStatStripProps = {
   bikeId: string;
-  /** From the already-loaded bike; lifetime distance = current − initial, drives Cost/km. */
+
   currentOdometer?: number;
   initialOdometer?: number;
 };
 
-/**
- * The mini-stat strip under the odometer on the bike detail hub. Owns its own
- * read-only fetches — each reuses a query key another screen already owns, so
- * react-query serves them from cache rather than adding a request.
- */
 export function BikeStatStrip({
   bikeId,
   currentOdometer,
@@ -93,9 +82,7 @@ export function BikeStatStrip({
   const avgMileage = getAvgMileage(historyData?.data);
   const monthSpend = spendingData?.data?.totalSpending;
   const totalSpend = lifetimeSpendData?.data?.totalSpending;
-  // ! Cost per km: all-in lifetime spend (fuel+maintenance+oil+accessories — the SAME figure
-  // ! as the "Total spent" tile) over lifetime distance = currentOdometer − initialOdometer.
-  // ! Null (→ "—") when there's no spend yet or no distance ridden (new bike, avoids ÷0).
+
   const lifetimeDistanceKm =
     currentOdometer != null && initialOdometer != null
       ? currentOdometer - initialOdometer
@@ -104,15 +91,11 @@ export function BikeStatStrip({
     totalSpend != null && lifetimeDistanceKm != null && lifetimeDistanceKm > 0
       ? totalSpend / lifetimeDistanceKm
       : null;
-  // ! "On this oil" / "Oil life" are hidden entirely when there is no oil change — a bike with
-  // ! none shows the strip without them rather than tiles reading "0 km" / "0% used".
+
   const oilStatus = oilStatusData?.data;
   const kmOnThisOil = oilStatus?.lastChange ? oilStatus?.kmSinceChange : null;
   const oilLife = oilStatus?.lastChange ? oilStatus?.percentUsed : null;
 
-  // First paint, before these reused queries resolve: show the pulsing skeleton
-  // grid rather than a row of "—" that would flash and then be replaced. Gated on
-  // the three always-visible stats only; the optional oil tiles never block it.
   if (historyLoading || monthLoading || lifetimeLoading) {
     return <MiniStatsSkeleton count={4} />;
   }
@@ -133,12 +116,12 @@ export function BikeStatStrip({
       />
       {kmOnThisOil != null && (
         <Stat
-          label="On this oil"
+          label="On this Engine oil"
           value={`${kmOnThisOil.toLocaleString()} km`}
         />
       )}
       {oilLife != null && (
-        <Stat label="Oil life" value={`${Math.round(oilLife)}% used`} />
+        <Stat label="Engine oil life" value={`${Math.round(oilLife)}% used`} />
       )}
       <Stat
         label="Total spent"
@@ -149,16 +132,12 @@ export function BikeStatStrip({
 }
 
 const styles = StyleSheet.create({
-  // ! Fixed 3-column grid (Avg mileage, month spend, Cost/km, On this oil?, Oil life?, Total spent).
-  // ! Each tile takes a fixed width rather than `flex: 1`, so wrapped rows line up into real
-  // ! columns and a partial last row (3+1 without oil, 3+3 with) packs left under column 1 —
-  // ! `flex: 1` made last-row tiles grow to fill their row and break the alignment.
   miniStats: {
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "flex-start",
-    gap: 6,
-    rowGap: 8,
+    gap: 5,
+    rowGap: 7,
   },
   miniStat: {
     width: "31.5%",

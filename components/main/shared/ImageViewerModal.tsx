@@ -61,7 +61,9 @@ export function ImageViewerModal({
     setCurrentIndex(index);
   };
 
-  if (images?.length === 0) return null;
+  // ! `!images?.length` (not `=== 0`): also bails when `images` is undefined/null,
+  // ! which `=== 0` lets fall through to the `images[0].url` branch below and crash.
+  if (!images?.length) return null;
 
   return (
     <Portal>
@@ -101,7 +103,7 @@ export function ImageViewerModal({
               />
             ) : (
               <Image
-                source={{ uri: images[0].url }}
+                source={{ uri: images?.[0]?.url }}
                 style={styles.image}
                 contentFit="contain"
               />
