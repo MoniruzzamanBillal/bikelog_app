@@ -391,6 +391,31 @@ Three gates, in order, none of them `yarn lint`:
 
 ---
 
+## Live-API verification (2026-11-19, after 73b's migration was applied)
+
+Exercised against the **deployed** server with the test account (`abc@d.com`, bike "Hornet"),
+after the developer ran `yarn db:migrate`. Real data inserted and read back over HTTP:
+
+- **Insert + auto-numbering** — created warranty #1 (completed, free), #2 (completed, ৳300 + ৳250
+  items, 2 recommendations), #3 (upcoming, scheduled 20 Dec), and a regular (completed, ৳150).
+  Warranty numbers auto-assigned 1→2→3 with none sent. ✅ (V3–V6)
+- **`/status`** — `warrantyCompleted: 2, warrantyLogged: 3, warrantyVoidRisk: false,
+  nextWarranty {number: 3, dueDate: 20 Dec, upcoming}, nextService {…}`; `nextWarranty`/
+  `nextService` **omitted** when absent on the empty bike. Matches §C exactly. ✅ (V2)
+- **List** — `sort=-serviceDate` returns the upcoming row first (NULLS FIRST) then completed
+  newest-first; each row carries `_id`, `warrantyNumber`, `status`, `items`, `recommendations`. ✅ (V1)
+- **Spending** — `spending-summary/details` gained a **`Service` ৳700** category and three
+  records with `source: "service"` (Carbon cleaner 300, Engine oil top-up 250, Chain lube 150). ✅ (V4)
+- **§G recommendation toggle** — PATCHed the full array with one `done` flipped; the server
+  preserved the other entry **and every `id`** (round-trip confirmed). Reverted after. ✅ (V10, H-E)
+- **Ownership** — a bogus `bikeId` → `404 Bike not found`. ✅ (V15)
+- **Reminders** — the warranty #3 and the pending recommendation are **correctly not emitted
+  yet**: both are ~31 days out and the reminder rule is the ≤14-day window (server spec 67). Not
+  a defect — they will surface as the due date nears. (V19, partial — a near-term pass is owed.)
+
+**Still owed:** the on-device/simulator layout passes (V11–V13, V16–V18, V20–V21) — this was
+exercised over HTTP, not rendered on a phone, and no EAS build has been cut.
+
 ## Test plan
 
 No test suite exists. Static floor: `yarn lint` clean, `npx tsc --noEmit` clean **after booting the dev server once** (H-I), `npx expo export --platform web` bundling the new `/bikes/[bikeId]/service` route. Everything below needs the deployed server (§J gate 1) and a device/simulator at 360dp.
