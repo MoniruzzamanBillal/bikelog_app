@@ -9,18 +9,15 @@ interface FormActionsProps {
   onSave: () => void;
   onCancel: () => void;
   saving?: boolean;
-  /** Render Cancel in a soft red (red border + red text over a light red fill). */
-  cancelDanger?: boolean;
   style?: StyleProp<ViewStyle>;
 }
 
-/** Nocturne modal footer: Cancel (secondary) + Save (primary), side by side. */
+/** Nocturne modal footer: Cancel (soft red) + Save (primary), side by side. */
 export function FormActions({
   children,
   onSave,
   onCancel,
   saving,
-  cancelDanger,
   style,
 }: FormActionsProps) {
   return (
@@ -28,10 +25,10 @@ export function FormActions({
       <PrimaryButton
         onPress={onCancel}
         disabled={saving}
-        // ! destructive gives the red label/icon; the style below adds the red border and
-        // ! the light red fill so the whole button reads soft-red (not harsh).
-        variant={cancelDanger ? "destructive" : "secondary"}
-        style={[styles.button, cancelDanger && styles.cancelDanger]}
+        // ! Every Cancel button in the app reads soft-red: `destructive` gives the red
+        // ! label/icon, and `cancel` below adds the red border + light red fill.
+        variant="destructive"
+        style={[styles.button, styles.cancel]}
       >
         Cancel
       </PrimaryButton>
@@ -52,7 +49,7 @@ const styles = StyleSheet.create({
     flex: 1,
     width: "auto",
   },
-  cancelDanger: {
+  cancel: {
     borderColor: COLORS.danger,
     backgroundColor: tint(COLORS.danger, 0.12),
   },
