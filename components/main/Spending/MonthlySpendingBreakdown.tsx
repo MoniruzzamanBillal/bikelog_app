@@ -196,7 +196,7 @@ const styles = StyleSheet.create({
     color: COLORS.textLight,
   },
   totalValue: {
-    fontSize: 26,
+    fontSize: 22,
     fontWeight: "500",
     color: COLORS.text,
     fontVariant: ["tabular-nums"],
@@ -206,19 +206,19 @@ const styles = StyleSheet.create({
     maxWidth: "45%",
   },
   avgValue: {
-    fontSize: 12,
+    fontSize: 11,
     color: COLORS.text,
     fontVariant: ["tabular-nums"],
     textAlign: "right",
   },
   avgHint: {
-    fontSize: 11,
+    fontSize: 9,
     fontWeight: "500",
     color: COLORS.textLight,
     textAlign: "right",
   },
   kicker: {
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: "500",
     letterSpacing: 0.9,
     textTransform: "uppercase",

@@ -24,14 +24,6 @@ function formatLiters(liters: number): string {
   return `${text}L`;
 }
 
-/**
- * Spec 65: the Year / Lifetime tabs' spending view. Same total panel + category accordion
- * as the Month tab's MonthlySpendingBreakdown, but a category expands to TIME BUCKETS
- * instead of individual records — per-month rows for a year ("Jan  3.3L  ৳650"), per-year
- * rows for lifetime ("2026  225L  ৳5678"). Fed by `bikelog_server` spec 61's
- * /spending-summary/period-breakdown, which buckets server-side. Litres show on the Fuel
- * category only (null elsewhere).
- */
 export function PeriodSpendingBreakdown({
   data,
   periodLabel,
@@ -47,17 +39,11 @@ export function PeriodSpendingBreakdown({
     daysElapsed !== undefined &&
     daysElapsed > 0;
 
-  // Closed by default, keyed by category name. Reset whenever the period changes — carrying
-  // one year's open rows into another (which may not hold those categories) reads as a
-  // glitch. Mirrors MonthlySpendingBreakdown.
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
-  // Spec 72: the SECOND level — which year rows are expanded to their months, keyed
-  // "category:bucketKey" (unique across categories). Lifetime only; on the Year tab no
-  // bucket carries children, so this stays empty and inert. Reset with the category state so
-  // a stale open month list never survives a period switch.
-  const [expandedBuckets, setExpandedBuckets] = useState<Record<string, boolean>>(
-    {},
-  );
+
+  const [expandedBuckets, setExpandedBuckets] = useState<
+    Record<string, boolean>
+  >({});
   useEffect(() => {
     setExpanded({});
     setExpandedBuckets({});
@@ -162,11 +148,14 @@ export function PeriodSpendingBreakdown({
                       const hasChildren =
                         !!bucket?.children && bucket.children.length > 0;
                       const bucketId = `${cat?.category}:${bucket?.key}`;
-                      const bucketOpen = hasChildren && !!expandedBuckets[bucketId];
+                      const bucketOpen =
+                        hasChildren && !!expandedBuckets[bucketId];
 
                       const rowInner = (
                         <View style={styles.recordRow}>
-                          <Text style={styles.recordLabel}>{bucket?.label}</Text>
+                          <Text style={styles.recordLabel}>
+                            {bucket?.label}
+                          </Text>
                           <Text style={styles.recordLiters}>
                             {bucket?.liters != null
                               ? formatLiters(bucket?.liters)
@@ -178,7 +167,9 @@ export function PeriodSpendingBreakdown({
                           <View style={styles.chevronSlot}>
                             {hasChildren ? (
                               <MaterialCommunityIcons
-                                name={bucketOpen ? "chevron-up" : "chevron-down"}
+                                name={
+                                  bucketOpen ? "chevron-up" : "chevron-down"
+                                }
                                 size={16}
                                 color={COLORS.textLight}
                               />
@@ -205,9 +196,7 @@ export function PeriodSpendingBreakdown({
                             accessibilityState={{ expanded: bucketOpen }}
                             accessibilityLabel={`${bucket?.label}, ${formatTaka(
                               bucket?.total ?? 0,
-                            )}, tap to ${
-                              bucketOpen ? "hide" : "show"
-                            } months`}
+                            )}, tap to ${bucketOpen ? "hide" : "show"} months`}
                           >
                             {rowInner}
                           </TouchableOpacity>
@@ -270,7 +259,7 @@ const styles = StyleSheet.create({
     color: COLORS.textLight,
   },
   totalValue: {
-    fontSize: 26,
+    fontSize: 22,
     fontWeight: "500",
     color: COLORS.text,
     fontVariant: ["tabular-nums"],
@@ -280,19 +269,19 @@ const styles = StyleSheet.create({
     maxWidth: "45%",
   },
   avgValue: {
-    fontSize: 12,
+    fontSize: 11,
     color: COLORS.text,
     fontVariant: ["tabular-nums"],
     textAlign: "right",
   },
   avgHint: {
-    fontSize: 11,
+    fontSize: 9,
     fontWeight: "500",
     color: COLORS.textLight,
     textAlign: "right",
   },
   kicker: {
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: "500",
     letterSpacing: 0.9,
     textTransform: "uppercase",
