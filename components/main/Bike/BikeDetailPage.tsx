@@ -158,7 +158,7 @@ export function BikeDetailPage() {
                   label: "Log fuel",
                   icon: "gas-station",
                   onPress: () =>
-                    router.push(`/bikes/${bikeId}/fuel-logs/new` as never),
+                    router.push(`/bikes/${bikeId}/fuel-logs?add=1` as never),
                 },
                 {
                   label: "Edit bike",

@@ -15,8 +15,8 @@ export type TFuelLogSeed = {
  * ! The newest log comes from its own `?limit=1&sort=-date` query, never from
  * ! the Fuel logs list's paginated query — on page 2 the first rendered row is
  * ! a months-old log, and seeding the price from it would quietly corrupt the
- * ! cost history. The query key matches the one `QuickAddFuelLogScreen` has
- * ! always used, so both screens share a single cache entry.
+ * ! cost history. The query key is shared with the Fuel logs list's Add
+ * ! Fill-up modal, so both read a single cache entry.
  *
  * ! The odometer seed is the bike's `currentOdometer`, *not* the newest fuel
  * ! log's reading: maintenance logs and the Settings odometer panel (spec 47)
