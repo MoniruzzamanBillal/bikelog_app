@@ -51,7 +51,7 @@ import { PeriodSpendingBreakdown } from "./PeriodSpendingBreakdown";
 type TPeriod = "month" | "year" | "lifetime" | "trend";
 
 const EMPTY_MESSAGE =
-  "Fuel logs, maintenance logs and purchased accessories dated in this period will appear here.";
+  "Fuel logs, maintenance logs, engine-oil changes, services and purchased accessories dated in this period will appear here.";
 
 async function exportSpendingPdf(
   bikeId: string,

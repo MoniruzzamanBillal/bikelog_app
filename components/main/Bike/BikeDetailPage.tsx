@@ -36,6 +36,7 @@ const TILES: TTile[] = [
   { label: "Engine Oil", icon: "oil", segment: "engine-oil" },
   { label: "Mileage", icon: "speedometer-medium", segment: "mileage" },
   { label: "Maintenance", icon: "wrench-outline", segment: "maintenance-logs" },
+  { label: "Service", icon: "shield-check-outline", segment: "service" },
   { label: "Spending", icon: "cash-multiple", segment: "spending" },
   { label: "Issues", icon: "alert-circle-outline", segment: "issues" },
   { label: "Accessories", icon: "shopping-outline", segment: "accessories" },
