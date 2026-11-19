@@ -227,7 +227,7 @@ const styles = StyleSheet.create({
   modal: {
     backgroundColor: COLORS.card,
     borderWidth: 1,
-    borderColor: COLORS.edge,
+    borderColor: COLORS.primary,
     marginHorizontal: 18,
     padding: 18,
     borderRadius: 14,
