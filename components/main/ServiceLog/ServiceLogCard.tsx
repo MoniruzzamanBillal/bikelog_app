@@ -241,11 +241,19 @@ export function ServiceLogCard({ log, bikeId }: ServiceLogCardProps) {
   // ---------- Completed (visited) row ----------
   return (
     <>
-      {/* ! Tap the card body for the full read-only detail modal; the menu, the recommendation
-          ! checkboxes and the receipt picker each capture their own taps. */}
-      <TouchableOpacity activeOpacity={0.7} onPress={() => setDetailOpen(true)}>
-        <Panel style={styles.cardRow}>
-          <View style={styles.left}>
+      {/* ! Only the info column opens the detail modal. The receipt picker (and its delete
+          ! badge) are built on react-native-gesture-handler touchables, which do NOT negotiate
+          ! with a react-native TouchableOpacity — so wrapping them would fire BOTH handlers,
+          ! opening this modal on top of the image picker / delete confirm. Keeping the receipt
+          ! and the menu OUTSIDE this touchable is what prevents that double-trigger.
+          ! The recommendation checkboxes stay inside: they're RN touchables and negotiate
+          ! normally (the tap toggles the row without opening the modal). */}
+      <Panel style={styles.cardRow}>
+        <TouchableOpacity
+          style={styles.left}
+          activeOpacity={0.7}
+          onPress={() => setDetailOpen(true)}
+        >
           <View style={styles.metaRow}>
             <Text style={styles.date}>
               {formatApiDate(log.serviceDate as string, "dd MMM yyyy")}
@@ -326,7 +334,7 @@ export function ServiceLogCard({ log, bikeId }: ServiceLogCardProps) {
               ))}
             </View>
           )}
-        </View>
+        </TouchableOpacity>
 
         <View style={styles.right}>
           {menu}
@@ -339,8 +347,7 @@ export function ServiceLogCard({ log, bikeId }: ServiceLogCardProps) {
             uploading={isUploading || isDeletingImage}
           />
         </View>
-        </Panel>
-      </TouchableOpacity>
+      </Panel>
 
       <ServiceLogDetailModal
         open={detailOpen}
