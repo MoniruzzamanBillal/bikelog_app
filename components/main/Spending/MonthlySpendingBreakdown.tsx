@@ -182,8 +182,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "flex-start",
     justifyContent: "space-between",
-    gap: 12,
-    paddingHorizontal: 14,
+    gap: 10,
+    paddingHorizontal: 12,
     paddingVertical: 11,
   },
   totalLeft: {
@@ -196,7 +196,7 @@ const styles = StyleSheet.create({
     color: COLORS.textLight,
   },
   totalValue: {
-    fontSize: 26,
+    fontSize: 22,
     fontWeight: "500",
     color: COLORS.text,
     fontVariant: ["tabular-nums"],
@@ -206,19 +206,19 @@ const styles = StyleSheet.create({
     maxWidth: "45%",
   },
   avgValue: {
-    fontSize: 12,
+    fontSize: 11,
     color: COLORS.text,
     fontVariant: ["tabular-nums"],
     textAlign: "right",
   },
   avgHint: {
-    fontSize: 11,
+    fontSize: 9,
     fontWeight: "500",
     color: COLORS.textLight,
     textAlign: "right",
   },
   kicker: {
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: "500",
     letterSpacing: 0.9,
     textTransform: "uppercase",
@@ -231,11 +231,11 @@ const styles = StyleSheet.create({
     color: COLORS.textLight,
   },
   listPanel: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 14,
     paddingVertical: 4,
   },
   categoryBlock: {
-    paddingVertical: 12,
+    paddingVertical: 10,
   },
   categoryDivider: {
     borderTopWidth: StyleSheet.hairlineWidth,
@@ -297,7 +297,7 @@ const styles = StyleSheet.create({
     alignItems: "flex-start",
     gap: 10,
     paddingVertical: 7,
-    paddingLeft: 16,
+    paddingLeft: 14,
   },
   recordDate: {
     width: 46,

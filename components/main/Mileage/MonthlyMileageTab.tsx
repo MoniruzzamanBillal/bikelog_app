@@ -32,10 +32,6 @@ export function MonthlyMileageTab({ bikeId }: MonthlyMileageTabProps) {
     { enabled: !!bikeId && !!targetMonth },
   );
 
-  // The per-month fill-up cards reuse the full history (same cache key the History
-  // tab owns, so react-query dedupes), filtered client-side to the chosen month —
-  // no extra endpoint. A record is assigned to the month its period *closed* in
-  // (periodEndDate), which is when its fill-up was logged.
   const { data: historyData } = useFetchData<TMileageHistoryResponse>(
     ["mileage", "history", bikeId],
     `/bikes/${bikeId}/mileage`,
@@ -51,8 +47,7 @@ export function MonthlyMileageTab({ bikeId }: MonthlyMileageTabProps) {
   const monthRecords = (historyData?.data?.exactRecords ?? []).filter(
     (r) => formatApiDate(r?.periodEndDate, "yyyy-MM") === targetMonth,
   );
-  // Scale each bar against the best km/l within this month's set (same pattern as
-  // the History tab, but relative to the month rather than all-time).
+
   const maxKmpl = Math.max(...monthRecords.map((r) => r?.mileageKmPerLiter), 0);
 
   return (
@@ -127,7 +122,7 @@ export function MonthlyMileageTab({ bikeId }: MonthlyMileageTabProps) {
 
 const styles = StyleSheet.create({
   stack: {
-    gap: 12,
+    gap: 10,
   },
   grid: {
     flexDirection: "row",

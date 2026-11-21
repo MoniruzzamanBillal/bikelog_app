@@ -244,8 +244,8 @@ const styles = StyleSheet.create({
     fontVariant: ["tabular-nums"],
   },
   modal: {
-    marginHorizontal: 32,
-    padding: 18,
+    marginHorizontal: 30,
+    padding: 16,
     borderRadius: 16,
     borderWidth: 1,
     borderColor: COLORS.border,
@@ -258,14 +258,14 @@ const styles = StyleSheet.create({
     color: COLORS.textLight,
     textTransform: "uppercase",
     textAlign: "center",
-    marginBottom: 12,
+    marginBottom: 10,
   },
   yearRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 20,
-    marginBottom: 16,
+    gap: 18,
+    marginBottom: 14,
   },
   yearButton: {
     width: 40,

@@ -167,8 +167,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "flex-start",
     gap: 8,
-    padding: 12,
-    marginBottom: 14,
+    padding: 10,
+    marginBottom: 12,
     borderRadius: 8,
     borderWidth: 1,
     borderColor: tint(COLORS.danger, 0.4),
@@ -181,6 +181,6 @@ const styles = StyleSheet.create({
     color: COLORS.danger,
   },
   passwordField: {
-    marginBottom: 20,
+    marginBottom: 18,
   },
 });

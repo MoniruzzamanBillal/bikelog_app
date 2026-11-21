@@ -140,14 +140,14 @@ export function OdometerPanel() {
 
 const styles = StyleSheet.create({
   panel: {
-    padding: 16,
+    padding: 14,
     gap: 10,
   },
   panelHeader: {
     flexDirection: "row",
     alignItems: "flex-start",
     justifyContent: "space-between",
-    gap: 12,
+    gap: 10,
   },
   panelTitleCol: {
     flex: 1,

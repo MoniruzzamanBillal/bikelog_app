@@ -436,8 +436,8 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.card,
     borderWidth: 1,
     borderColor: COLORS.edge,
-    marginHorizontal: 20,
-    padding: 20,
+    marginHorizontal: 18,
+    padding: 18,
     borderRadius: 14,
     maxHeight: "85%",
   },
@@ -445,7 +445,7 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: "500",
     color: COLORS.text,
-    marginBottom: 18,
+    marginBottom: 16,
   },
   row: {
     flexDirection: "row",
@@ -457,10 +457,10 @@ const styles = StyleSheet.create({
   hint: {
     fontSize: 12.5,
     color: COLORS.textLight,
-    marginBottom: 14,
+    marginBottom: 12,
   },
   noMarginBottom: {
-    marginBottom: 14,
+    marginBottom: 12,
   },
   seededFieldTight: {
     marginBottom: 4,
@@ -469,6 +469,6 @@ const styles = StyleSheet.create({
     fontSize: 11.5,
     lineHeight: 16,
     color: COLORS.accentForeground,
-    marginBottom: 14,
+    marginBottom: 12,
   },
 });

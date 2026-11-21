@@ -36,6 +36,7 @@ const TILES: TTile[] = [
   { label: "Engine Oil", icon: "oil", segment: "engine-oil" },
   { label: "Mileage", icon: "speedometer-medium", segment: "mileage" },
   { label: "Maintenance", icon: "wrench-outline", segment: "maintenance-logs" },
+  { label: "Service", icon: "shield-check-outline", segment: "service" },
   { label: "Spending", icon: "cash-multiple", segment: "spending" },
   { label: "Issues", icon: "alert-circle-outline", segment: "issues" },
   { label: "Accessories", icon: "shopping-outline", segment: "accessories" },
@@ -157,7 +158,7 @@ export function BikeDetailPage() {
                   label: "Log fuel",
                   icon: "gas-station",
                   onPress: () =>
-                    router.push(`/bikes/${bikeId}/fuel-logs/new` as never),
+                    router.push(`/bikes/${bikeId}/fuel-logs?add=1` as never),
                 },
                 {
                   label: "Edit bike",
@@ -224,14 +225,14 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.background,
   },
   page: {
-    paddingHorizontal: 16,
-    paddingTop: 12,
-    paddingBottom: 24,
+    paddingHorizontal: 14,
+    paddingTop: 10,
+    paddingBottom: 22,
     gap: 11,
   },
   odoPanel: {
-    padding: 13,
-    gap: 12,
+    padding: 11,
+    gap: 10,
   },
   odoTop: {
     flexDirection: "row",
@@ -271,7 +272,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: COLORS.edge,
     borderRadius: 10,
-    padding: 12,
+    padding: 10,
     alignItems: "flex-start",
     justifyContent: "space-between",
   },

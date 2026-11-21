@@ -147,7 +147,7 @@ export function TankForecastCard({ bikeId }: TankForecastCardProps) {
 
 const styles = StyleSheet.create({
   card: {
-    paddingHorizontal: 14,
+    paddingHorizontal: 12,
     paddingVertical: 11,
     gap: 1,
   },

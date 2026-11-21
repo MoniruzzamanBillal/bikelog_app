@@ -1,0 +1,261 @@
+import {
+  EmptyState,
+  ErrorState,
+  PrimaryButton,
+  ScreenHeader,
+  SectionLoading,
+} from "@/components/main/shared";
+import { useFetchData } from "@/hooks/useApi";
+import { useServiceLogSeed } from "@/hooks/useServiceLogSeed";
+import {
+  TServiceLogsApiResponse,
+  TServiceStatus,
+} from "@/types/service-log.types";
+import { COLORS } from "@/utils/colors";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { useLocalSearchParams } from "expo-router";
+import { useState } from "react";
+import {
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { Text } from "react-native-paper";
+import { ServiceLogCard } from "./ServiceLogCard";
+import { ServiceLogFormModal } from "./ServiceLogFormModal";
+import { ServiceStatusCard } from "./ServiceStatusCard";
+
+const LIMIT = 10;
+
+export function ServiceLog() {
+  const { bikeId } = useLocalSearchParams<{ bikeId: string }>();
+  const [page, setPage] = useState(1);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [quickFillOpen, setQuickFillOpen] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const { bike, seed, odometerSeed } = useServiceLogSeed(bikeId);
+
+  const { data, isLoading, isError, refetch } =
+    useFetchData<TServiceLogsApiResponse>(
+      ["serviceLogs", bikeId, page.toString()],
+      `/bikes/${bikeId}/service-logs?page=${page}&limit=${LIMIT}&sort=-serviceDate`,
+      { enabled: !!bikeId },
+    );
+
+  const { data: statusData } = useFetchData<TServiceStatus>(
+    ["serviceStatus", bikeId],
+    `/bikes/${bikeId}/service-logs/status`,
+    { enabled: !!bikeId },
+  );
+
+  const logs = data?.data?.result ?? [];
+  const totalCount = data?.data?.meta ?? 0;
+  const totalPages = Math.ceil(totalCount / LIMIT) || 1;
+  const firstOnPage = (page - 1) * LIMIT + 1;
+  const lastOnPage = (page - 1) * LIMIT + logs?.length;
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await refetch();
+    setRefreshing(false);
+  };
+
+  return (
+    <View style={styles.screen}>
+      <ScreenHeader
+        title="Service"
+        subtitle={bike?.nickname}
+        backLabel={bike?.nickname ?? "Back"}
+      />
+
+      <ScrollView
+        contentContainerStyle={styles.page}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            tintColor={COLORS.accent}
+          />
+        }
+        showsVerticalScrollIndicator={false}
+      >
+        {/* ! H-G: this card is the screen's alert surface. RemindersBanner is NOT rendered
+            ! here — the same overdue warranty service would show twice. */}
+        <ServiceStatusCard status={statusData?.data} />
+
+        <View style={styles.topRow}>
+          <Text style={styles.count}>
+            {isLoading ? "" : `${totalCount} services`}
+          </Text>
+          <View style={styles.topActions}>
+            {seed && (
+              <PrimaryButton
+                onPress={() => setQuickFillOpen(true)}
+                variant="secondary"
+                icon="content-copy"
+                compact
+              >
+                Same as last
+              </PrimaryButton>
+            )}
+            <PrimaryButton onPress={() => setModalOpen(true)} icon="plus" compact>
+              Add
+            </PrimaryButton>
+          </View>
+        </View>
+
+        {isLoading ? (
+          <SectionLoading count={5} />
+        ) : isError ? (
+          <ErrorState title="Couldn’t load services" onRetry={refetch} />
+        ) : logs?.length === 0 ? (
+          <EmptyState
+            icon="shield-check-outline"
+            title="No services yet"
+            message="Log a workshop visit to track your warranty services, line-item costs and the technician’s recommendations."
+            action={
+              <PrimaryButton
+                onPress={() => setModalOpen(true)}
+                icon="plus"
+                compact
+              >
+                Add service
+              </PrimaryButton>
+            }
+          />
+        ) : (
+          <>
+            <View style={styles.list}>
+              {logs?.map((log) => (
+                <ServiceLogCard key={log?._id} log={log} bikeId={bikeId} />
+              ))}
+            </View>
+
+            {totalPages > 1 && (
+              <View style={styles.pager}>
+                <Text style={styles.pagerRange}>
+                  {firstOnPage}–{lastOnPage} of {totalCount}
+                </Text>
+                <View style={styles.pagerControls}>
+                  <TouchableOpacity
+                    disabled={page === 1}
+                    onPress={() => setPage((p) => p - 1)}
+                    style={[styles.pagerBtn, page === 1 && styles.pagerBtnOff]}
+                  >
+                    <MaterialCommunityIcons
+                      name="chevron-left"
+                      size={16}
+                      color={COLORS.text}
+                    />
+                  </TouchableOpacity>
+                  <Text style={styles.pagerPage}>
+                    {page} / {totalPages}
+                  </Text>
+                  <TouchableOpacity
+                    disabled={page === totalPages}
+                    onPress={() => setPage((p) => p + 1)}
+                    style={[
+                      styles.pagerBtn,
+                      page === totalPages && styles.pagerBtnOff,
+                    ]}
+                  >
+                    <MaterialCommunityIcons
+                      name="chevron-right"
+                      size={16}
+                      color={COLORS.text}
+                    />
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )}
+          </>
+        )}
+      </ScrollView>
+
+      <ServiceLogFormModal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        bikeId={bikeId}
+        seedOdometer={odometerSeed}
+      />
+
+      <ServiceLogFormModal
+        open={quickFillOpen}
+        onClose={() => setQuickFillOpen(false)}
+        bikeId={bikeId}
+        seed={seed}
+        seedOdometer={odometerSeed}
+      />
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: COLORS.background,
+  },
+  page: {
+    paddingHorizontal: 14,
+    paddingTop: 12,
+    paddingBottom: 22,
+    gap: 10,
+  },
+  topRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 10,
+  },
+  topActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  count: {
+    fontSize: 13,
+    color: COLORS.textLight,
+    flexShrink: 1,
+  },
+  list: {
+    gap: 10,
+  },
+  pager: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 2,
+    paddingVertical: 4,
+  },
+  pagerRange: {
+    fontSize: 12.5,
+    color: COLORS.textLight,
+    fontVariant: ["tabular-nums"],
+  },
+  pagerControls: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  pagerBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  pagerBtnOff: {
+    opacity: 0.45,
+  },
+  pagerPage: {
+    fontSize: 12.5,
+    color: COLORS.text,
+    paddingHorizontal: 6,
+    fontVariant: ["tabular-nums"],
+  },
+});

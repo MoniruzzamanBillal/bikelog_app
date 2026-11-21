@@ -275,10 +275,10 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.background,
   },
   page: {
-    paddingHorizontal: 16,
-    paddingTop: 14,
-    paddingBottom: 24,
-    gap: 12,
+    paddingHorizontal: 14,
+    paddingTop: 12,
+    paddingBottom: 22,
+    gap: 10,
   },
   topRow: {
     flexDirection: "row",
@@ -292,7 +292,7 @@ const styles = StyleSheet.create({
   },
   chip: {
     paddingVertical: 6,
-    paddingHorizontal: 12,
+    paddingHorizontal: 10,
     borderRadius: 8,
     borderWidth: 1,
     borderColor: COLORS.border,

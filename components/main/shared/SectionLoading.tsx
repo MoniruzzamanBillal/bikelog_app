@@ -80,7 +80,7 @@ const styles = StyleSheet.create({
   },
   panel: {
     ...panelStyle,
-    padding: 14,
+    padding: 12,
     gap: 8,
   },
   bar: {

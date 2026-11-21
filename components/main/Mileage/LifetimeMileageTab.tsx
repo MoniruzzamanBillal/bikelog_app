@@ -47,9 +47,6 @@ export function LifetimeMileageTab({ bikeId }: LifetimeMileageTabProps) {
       ? (lifetime?.totalDistanceKm / lifetime?.totalLitersConsumed).toFixed(2)
       : "—";
 
-  // Per-year breakdown from the SAME single /mileage/lifetime call (server spec 62's
-  // `yearlySummary`), newest-first. Guarded `?? []` so an older/un-deployed server
-  // that omits the field just shows the totals with no year list.
   const years = lifetime?.yearlySummary ?? [];
 
   return (
@@ -106,7 +103,7 @@ export function LifetimeMileageTab({ bikeId }: LifetimeMileageTabProps) {
 
 const styles = StyleSheet.create({
   stack: {
-    gap: 12,
+    gap: 10,
   },
   grid: {
     flexDirection: "row",

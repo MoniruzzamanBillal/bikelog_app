@@ -91,7 +91,7 @@ const styles = StyleSheet.create({
   },
   segment: {
     paddingVertical: 7,
-    paddingHorizontal: 12,
+    paddingHorizontal: 10,
     justifyContent: "center",
   },
   segmentFill: {

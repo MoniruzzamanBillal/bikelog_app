@@ -440,8 +440,8 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.card,
     borderWidth: 1,
     borderColor: COLORS.edge,
-    marginHorizontal: 20,
-    padding: 20,
+    marginHorizontal: 18,
+    padding: 18,
     borderRadius: 14,
     maxHeight: "85%",
   },
@@ -449,7 +449,7 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: "500",
     color: COLORS.text,
-    marginBottom: 18,
+    marginBottom: 16,
   },
   row: {
     flexDirection: "row",
@@ -459,7 +459,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   noMarginBottom: {
-    marginBottom: 14,
+    marginBottom: 12,
   },
   seedHint: {
     backgroundColor: tint(COLORS.accent, 0.1),
@@ -468,7 +468,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingVertical: 9,
     paddingHorizontal: 11,
-    marginBottom: 16,
+    marginBottom: 14,
     gap: 4,
   },
   seedHintText: {
@@ -482,7 +482,7 @@ const styles = StyleSheet.create({
   totalNote: {
     fontSize: 11,
     color: COLORS.textLight,
-    marginBottom: 14,
+    marginBottom: 12,
     fontVariant: ["tabular-nums"],
   },
 });

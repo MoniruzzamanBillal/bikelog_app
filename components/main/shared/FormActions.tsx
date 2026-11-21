@@ -1,5 +1,6 @@
 import { ReactNode } from "react";
 import { StyleProp, StyleSheet, View, ViewStyle } from "react-native";
+import { COLORS, tint } from "@/utils/colors";
 import { PrimaryButton } from "./PrimaryButton";
 
 interface FormActionsProps {
@@ -11,7 +12,7 @@ interface FormActionsProps {
   style?: StyleProp<ViewStyle>;
 }
 
-/** Nocturne modal footer: Cancel (secondary) + Save (primary), side by side. */
+/** Nocturne modal footer: Cancel (soft red) + Save (primary), side by side. */
 export function FormActions({
   children,
   onSave,
@@ -24,8 +25,10 @@ export function FormActions({
       <PrimaryButton
         onPress={onCancel}
         disabled={saving}
-        variant="secondary"
-        style={styles.button}
+        // ! Every Cancel button in the app reads soft-red: `destructive` gives the red
+        // ! label/icon, and `cancel` below adds the red border + light red fill.
+        variant="destructive"
+        style={[styles.button, styles.cancel]}
       >
         Cancel
       </PrimaryButton>
@@ -45,5 +48,9 @@ const styles = StyleSheet.create({
   button: {
     flex: 1,
     width: "auto",
+  },
+  cancel: {
+    borderColor: COLORS.danger,
+    backgroundColor: tint(COLORS.danger, 0.12),
   },
 });

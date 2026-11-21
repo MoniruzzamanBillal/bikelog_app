@@ -51,7 +51,7 @@ import { PeriodSpendingBreakdown } from "./PeriodSpendingBreakdown";
 type TPeriod = "month" | "year" | "lifetime" | "trend";
 
 const EMPTY_MESSAGE =
-  "Fuel logs, maintenance logs and purchased accessories dated in this period will appear here.";
+  "Fuel logs, maintenance logs, engine-oil changes, services and purchased accessories dated in this period will appear here.";
 
 async function exportSpendingPdf(
   bikeId: string,
@@ -147,12 +147,6 @@ function MonthTab({ bikeId }: { bikeId: string }) {
   const [refreshing, setRefreshing] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
 
-  // ! spec 62: the Month tab reads the category drill-down endpoint (each category + its
-  // ! nested records) instead of the plain summary, so the breakdown can render as
-  // ! accordions. A distinct cache key ("month-breakdown") — not ["spending", bikeId,
-  // ! "month", targetMonth], which BikeStatStrip already owns for the differently-shaped
-  // ! summary response — but still under the ["spending", bikeId] prefix every mutation
-  // ! invalidates.
   const { data, isLoading, isError, refetch } =
     useFetchData<TMonthlyCategoryBreakdown>(
       ["spending", bikeId, "month-breakdown", targetMonth],
@@ -232,9 +226,7 @@ function YearTab({ bikeId }: { bikeId: string }) {
   const [isExporting, setIsExporting] = useState(false);
 
   // ! spec 65: the Year tab reads the category drill-down endpoint (each category + its
-  // ! per-month time buckets) so the breakdown renders as accordions. Distinct cache key
-  // ! ("year-breakdown") from BikeStatStrip's ["spending", bikeId, "year", …] summary key,
-  // ! but still under the ["spending", bikeId] prefix every mutation invalidates.
+
   const { data, isLoading, isError, refetch } =
     useFetchData<TPeriodCategoryBreakdown>(
       ["spending", bikeId, "year-breakdown", targetYear],
@@ -243,8 +235,6 @@ function YearTab({ bikeId }: { bikeId: string }) {
     );
   const breakdown = data?.data;
 
-  // Cost per day across the year, mirroring the Month tab: elapsed days for the
-  // current year, the full year for a past one.
   const daysElapsed = getElapsedDaysInYear(targetYear);
   const avgDailyExpense =
     daysElapsed > 0 ? (breakdown?.totalSpending ?? 0) / daysElapsed : 0;
@@ -315,9 +305,6 @@ function LifetimeTab({
   const [refreshing, setRefreshing] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
 
-  // ! spec 65: Lifetime tab reads the category drill-down (each category + its per-year
-  // ! time buckets) for the accordions. Distinct "lifetime-breakdown" cache key, still
-  // ! under the ["spending", bikeId] prefix every mutation invalidates.
   const { data, isLoading, isError, refetch } =
     useFetchData<TPeriodCategoryBreakdown>(
       ["spending", bikeId, "lifetime-breakdown"],
@@ -326,8 +313,6 @@ function LifetimeTab({
     );
   const breakdown = data?.data;
 
-  // Cost per day of ownership: total ÷ days since the bike's purchase date
-  // (inclusive of the purchase day). A missing or future date hides the figure.
   const rawDays = purchaseDate
     ? differenceInCalendarDays(new Date(), parseISO(purchaseDate)) + 1
     : 0;
@@ -686,18 +671,18 @@ const styles = StyleSheet.create({
   },
   body: {
     flex: 1,
-    paddingHorizontal: 16,
-    paddingTop: 14,
+    paddingHorizontal: 14,
+    paddingTop: 12,
   },
   tabs: {
-    marginBottom: 12,
+    marginBottom: 10,
   },
   tabHost: {
     flex: 1,
   },
   tabContent: {
-    paddingBottom: 24,
-    gap: 12,
+    paddingBottom: 22,
+    gap: 10,
   },
   controlRow: {
     flexDirection: "row",
@@ -714,15 +699,15 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
   },
   chartPanel: {
-    paddingHorizontal: 16,
-    paddingTop: 16,
+    paddingHorizontal: 14,
+    paddingTop: 14,
     paddingBottom: 10,
   },
   chartTitle: {
     fontSize: 13,
     fontWeight: "500",
     color: COLORS.text,
-    marginBottom: 12,
+    marginBottom: 10,
   },
   // The trend title sits in a flex row with the tap hint, which owns the spacing.
   chartTitleInRow: {
@@ -734,7 +719,7 @@ const styles = StyleSheet.create({
     alignItems: "baseline",
     justifyContent: "space-between",
     gap: 8,
-    marginBottom: 12,
+    marginBottom: 10,
   },
   chartHint: {
     fontSize: 11,
@@ -752,7 +737,7 @@ const styles = StyleSheet.create({
   selStrip: {
     flexDirection: "row",
     gap: 8,
-    marginBottom: 12,
+    marginBottom: 10,
     paddingVertical: 8,
     paddingHorizontal: 10,
     borderRadius: 8,
@@ -784,7 +769,7 @@ const styles = StyleSheet.create({
   donutRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 16,
+    gap: 14,
   },
   legend: {
     flex: 1,

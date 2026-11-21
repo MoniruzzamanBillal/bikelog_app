@@ -54,14 +54,14 @@ function buildLockMap(records: TMileageRecord[]): Map<string, string> {
 }
 
 export function FuelLog() {
-  const { bikeId } = useLocalSearchParams<{ bikeId: string }>();
+  const { bikeId, add } = useLocalSearchParams<{
+    bikeId: string;
+    add?: string;
+  }>();
   const [page, setPage] = useState(1);
-  const [modalOpen, setModalOpen] = useState(false);
+  const [modalOpen, setModalOpen] = useState(add === "1");
   const [refreshing, setRefreshing] = useState(false);
 
-  // Owns the bike query *and* the newest-log seed for the Add Fill-up modal.
-  // ! Deliberately not seeded from `fuelLogs` below — on page 2 its first row
-  // ! is not the newest log (spec 52 H-B).
   const { bike, seed, odometerSeed } = useFuelLogSeed(bikeId);
 
   const { data, isLoading, isError, refetch } =
@@ -78,6 +78,8 @@ export function FuelLog() {
   );
   const mileageRecords = mileageHistoryData?.data?.exactRecords ?? [];
   const lockMap = buildLockMap(mileageRecords);
+
+  // console.log(mileageRecords);
 
   // console.log("data = ", data?.data?.result);
 
@@ -218,16 +220,16 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.background,
   },
   page: {
-    paddingHorizontal: 16,
-    paddingTop: 14,
-    paddingBottom: 24,
+    paddingHorizontal: 14,
+    paddingTop: 12,
+    paddingBottom: 22,
     gap: 10,
   },
   topRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    gap: 12,
+    gap: 10,
   },
   count: {
     fontSize: 13,

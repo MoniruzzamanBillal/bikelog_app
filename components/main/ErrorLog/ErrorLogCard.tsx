@@ -62,7 +62,7 @@ export function ErrorLogCard({ log, onPress }: ErrorLogCardProps) {
 const styles = StyleSheet.create({
   card: {
     ...panelStyle,
-    padding: 12,
+    padding: 10,
     gap: 6,
   },
   topRow: {

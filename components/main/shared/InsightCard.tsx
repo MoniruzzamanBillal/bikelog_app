@@ -51,8 +51,8 @@ export function InsightCard({
 
 const styles = StyleSheet.create({
   card: {
-    paddingHorizontal: 18,
-    paddingVertical: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     gap: 8,
   },
   kickerRow: {

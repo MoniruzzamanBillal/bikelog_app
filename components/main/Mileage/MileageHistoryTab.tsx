@@ -107,7 +107,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     gap: 10,
-    paddingHorizontal: 14,
+    paddingHorizontal: 12,
     paddingVertical: 11,
   },
   rollingLabel: {

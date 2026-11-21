@@ -218,11 +218,11 @@ const markdownStyles = {
   },
   bullet_list: {
     marginBottom: 6,
-    paddingLeft: 18,
+    paddingLeft: 16,
   },
   ordered_list: {
     marginBottom: 6,
-    paddingLeft: 18,
+    paddingLeft: 16,
   },
   list_item: {
     marginBottom: 2,
@@ -270,9 +270,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   messagesContent: {
-    paddingHorizontal: 16,
-    paddingTop: 14,
-    paddingBottom: 12,
+    paddingHorizontal: 14,
+    paddingTop: 12,
+    paddingBottom: 10,
     gap: 10,
   },
   emptyState: {
@@ -315,7 +315,7 @@ const styles = StyleSheet.create({
     borderColor: COLORS.border,
     borderRadius: 8,
     paddingVertical: 10,
-    paddingHorizontal: 12,
+    paddingHorizontal: 10,
   },
   starterChipText: {
     fontSize: 13,
@@ -323,7 +323,7 @@ const styles = StyleSheet.create({
   },
   bubble: {
     paddingVertical: 9,
-    paddingHorizontal: 13,
+    paddingHorizontal: 11,
   },
   bubbleUser: {
     maxWidth: "80%",
@@ -361,8 +361,8 @@ const styles = StyleSheet.create({
     color: COLORS.text,
   },
   composerWrap: {
-    paddingHorizontal: 16,
-    paddingBottom: 12,
+    paddingHorizontal: 14,
+    paddingBottom: 10,
     paddingTop: 4,
     backgroundColor: COLORS.background,
   },

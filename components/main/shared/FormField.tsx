@@ -25,6 +25,9 @@ export function FormField({
   ...inputProps
 }: FormFieldProps) {
   const [focused, setFocused] = useState(false);
+  // ! A multiline field reads as a web-style textarea: a tall, top-aligned box rather than
+  // ! the 44px centered single-line box. Mirrors the web client's `min-h-[90px]` Textarea.
+  const isMultiline = !!inputProps.multiline;
 
   return (
     <View style={[styles.field, style]}>
@@ -35,6 +38,7 @@ export function FormField({
       <View
         style={[
           styles.box,
+          isMultiline && styles.boxMultiline,
           focused && styles.boxFocused,
           !!errorText && styles.boxError,
         ]}
@@ -48,7 +52,8 @@ export function FormField({
           underlineColor="transparent"
           activeUnderlineColor="transparent"
           underlineStyle={{ display: "none" }}
-          style={styles.input}
+          contentStyle={isMultiline ? styles.inputMultilineContent : undefined}
+          style={[styles.input, isMultiline && styles.inputMultiline]}
           onFocus={(e) => {
             setFocused(true);
             onFocus?.(e);
@@ -68,7 +73,7 @@ export function FormField({
 /** Shared by every field component, so labels/boxes stay identical. */
 export const fieldStyles = StyleSheet.create({
   field: {
-    marginBottom: 14,
+    marginBottom: 12,
   },
   label: {
     fontSize: 11,
@@ -118,5 +123,25 @@ const styles = StyleSheet.create({
     paddingHorizontal: 0,
     fontSize: 12,
     height: 40,
+  },
+  // ! Textarea look: a tall box with top-aligned text and real vertical padding, instead of
+  // ! the single-line box's fixed 44px height + vertical centering.
+  boxMultiline: {
+    height: undefined,
+    minHeight: 92,
+    alignItems: "stretch",
+    justifyContent: "flex-start",
+    paddingVertical: 8,
+  },
+  inputMultiline: {
+    height: undefined,
+    minHeight: 72,
+    textAlignVertical: "top",
+  },
+  // ! Paper renders the text through an inner content view; without this the text keeps
+  // ! centering vertically even though the outer box grew.
+  inputMultilineContent: {
+    paddingTop: 2,
+    textAlignVertical: "top",
   },
 });

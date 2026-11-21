@@ -8,7 +8,7 @@ import { toneStyle, TStatusTone } from "@/components/main/shared/StatusBadge";
 import { useDelete, usePost } from "@/hooks/useApi";
 import { IBikeDocument } from "@/types/bike-document.types";
 import { TPickedFile } from "@/types/document-file.types";
-import { COLORS } from "@/utils/colors";
+import { COLORS, tint } from "@/utils/colors";
 import { formatApiDate, parseApiDate } from "@/utils/formatApiDate";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { differenceInCalendarDays } from "date-fns";
@@ -220,6 +220,8 @@ const styles = StyleSheet.create({
   card: {
     padding: 11,
     gap: 8,
+    borderWidth: 1,
+    borderColor: tint(COLORS.primary, 0.6),
   },
   header: {
     flexDirection: "row",
@@ -263,7 +265,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     alignItems: "center",
-    columnGap: 14,
+    columnGap: 12,
     rowGap: 4,
   },
   metaItem: {

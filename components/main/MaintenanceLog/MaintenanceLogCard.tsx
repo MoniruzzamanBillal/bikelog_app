@@ -226,13 +226,13 @@ export function MaintenanceLogCard({
 
 const styles = StyleSheet.create({
   card: {
-    padding: 14,
-    gap: 12,
+    padding: 12,
+    gap: 10,
   },
   topRow: {
     flexDirection: "row",
     alignItems: "flex-start",
-    gap: 12,
+    gap: 10,
   },
   titleCol: {
     flex: 1,

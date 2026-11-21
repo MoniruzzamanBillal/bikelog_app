@@ -38,30 +38,20 @@ function Metric({
   );
 }
 
-/**
- * The per-period breakdown list shared by the Mileage Yearly tab (a row per
- * month) and the Lifetime tab (a row per year). Each row is a headline
- * (label + average mileage) over a labelled grid of the raw figures.
- *
- * Every value is guarded with `?.` / `&&` so a period with no data — or a field
- * an older API hasn't sent — reads "—", never "৳undefined" or "৳NaN".
- */
 export function MileageBreakdownList({
   items,
   compact,
   hidePricePerLiter,
 }: {
   items: TMileagePeriod[];
-  /** Tighter rows + smaller, dimmer values — used by the Yearly tab. */
+
   compact?: boolean;
-  /** Drop the "Price / L" metric — the Lifetime tab hides it, since a year's
-   *  average pump price blends many different prices and isn't meaningful. */
+
   hidePricePerLiter?: boolean;
 }) {
   return (
     <Panel style={styles.listPanel}>
       {items.map((m, i) => {
-        // Average mileage: distance ÷ litres (same as Monthly/Lifetime totals).
         const avgMileage =
           m?.totalLitersConsumed && m?.totalDistanceKm != null
             ? `${(m?.totalDistanceKm / m?.totalLitersConsumed).toFixed(2)} km/l`
@@ -133,12 +123,10 @@ const styles = StyleSheet.create({
   listPanel: {
     paddingVertical: 2,
   },
-  // Per-period block: a headline (label + average mileage) over a labelled grid
-  // of the raw figures. Six metrics don't fit one tabular row at phone width, so
-  // each value carries its own caption instead of sharing unlabelled columns.
+
   row: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
     gap: 10,
   },
   headLine: {
@@ -192,7 +180,7 @@ const styles = StyleSheet.create({
   // Compact variant (Yearly tab): tighter rows, smaller text, and the white value
   // lines dimmed to the muted tone so the dense grid reads softer.
   rowCompact: {
-    paddingHorizontal: 14,
+    paddingHorizontal: 12,
     paddingVertical: 9,
     gap: 8,
   },

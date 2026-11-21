@@ -39,9 +39,7 @@ export function PurchasedAccessoriesList({
   }
 
   if (isError) {
-    return (
-      <ErrorState title="Couldn’t load purchases" onRetry={refetch} />
-    );
+    return <ErrorState title="Couldn’t load purchases" onRetry={refetch} />;
   }
 
   const summary = data?.data;

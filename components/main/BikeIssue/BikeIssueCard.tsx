@@ -180,7 +180,7 @@ export function BikeIssueCard({ issue, bikeId }: BikeIssueCardProps) {
 
 const styles = StyleSheet.create({
   card: {
-    padding: 14,
+    padding: 12,
     gap: 10,
   },
   titleRow: {

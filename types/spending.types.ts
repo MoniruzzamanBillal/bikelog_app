@@ -18,9 +18,10 @@ export type TSpendingInsight = {
 };
 
 // ! "accessory" and "oil" were both missing from this app's copy of the union (server
-// ! H11); nothing here switches on `source`, so this is type hygiene, not behaviour.
+// ! H11); "service" added by spec 73 (server spec 67 adds it to its own union). Nothing here
+// ! switches on `source`, so this is type hygiene, not behaviour.
 export type TSpendingRecordSource =
-  "fuel" | "maintenance" | "accessory" | "oil";
+  "fuel" | "maintenance" | "accessory" | "oil" | "service";
 
 export type TSpendingRecord = {
   date: string;

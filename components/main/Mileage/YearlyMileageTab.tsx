@@ -28,12 +28,9 @@ interface YearlyMileageTabProps {
 export function YearlyMileageTab({ bikeId }: YearlyMileageTabProps) {
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear().toString());
-  // Which bar is tapped; drives both the focus highlight and the detail strip
-  // rendered ABOVE the chart (gifted-charts' own tooltip clips inside the
-  // chart's scroll container, so we render our own outside it).
+
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
-  // Measured inner width of the chart panel, used to stretch the 12 month bars to
-  // fill it instead of leaving empty space on the right.
+
   const [chartWidth, setChartWidth] = useState(0);
 
   const { data, isLoading, isError, refetch } = useFetchData<TYearlyMileage>(
@@ -44,8 +41,7 @@ export function YearlyMileageTab({ bikeId }: YearlyMileageTabProps) {
 
   const yearly = data?.data;
   const months = yearly?.monthlySummary ?? [];
-  // The backend always returns all 12 months (zero-filled), so emptiness is
-  // "no fuel logs in any month", not an empty array.
+
   const hasData = months.some((m) => m?.fuelLogCount > 0);
 
   const barData = months.map((m, i) => ({
@@ -108,8 +104,6 @@ export function YearlyMileageTab({ bikeId }: YearlyMileageTabProps) {
               )}
             </View>
 
-            {/* Detail strip for the tapped bar — rendered here, outside the
-                chart's own (clipping) container, so nothing is ever cut off. */}
             {selected ? (
               <View style={styles.selStrip}>
                 <View style={styles.selItem}>
@@ -188,11 +182,11 @@ export function YearlyMileageTab({ bikeId }: YearlyMileageTabProps) {
 
 const styles = StyleSheet.create({
   stack: {
-    gap: 12,
+    gap: 10,
   },
   chartPanel: {
-    paddingHorizontal: 16,
-    paddingTop: 16,
+    paddingHorizontal: 14,
+    paddingTop: 14,
     paddingBottom: 10,
   },
   chartHeader: {
@@ -222,7 +216,7 @@ const styles = StyleSheet.create({
   selStrip: {
     flexDirection: "row",
     gap: 8,
-    marginBottom: 12,
+    marginBottom: 10,
     paddingVertical: 8,
     paddingHorizontal: 10,
     borderRadius: 8,
